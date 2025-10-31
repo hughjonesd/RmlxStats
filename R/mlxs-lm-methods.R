@@ -6,6 +6,7 @@
 #' @importFrom stats model.frame model.matrix model.response delete.response terms
 #' @importFrom stats update.default predict fitted residuals nobs lm anova confint
 #' @importFrom stats qt pf pt coef complete.cases na.pass quantile printCoefmat
+#' @importFrom stats vcov
 #' @importFrom generics tidy glance augment
 NULL
 
@@ -175,7 +176,8 @@ update.mlxs_lm <- function(object, ..., evaluate = TRUE) {
 }
 
 #' @export
-model.frame.mlxs_lm <- function(object, ...) {
+model.frame.mlxs_lm <- function(formula, ...) {
+  object <- formula
   mf <- object$model
   if (!is.null(mf) && is.null(attr(mf, "terms"))) {
     attr(mf, "terms") <- object$terms
