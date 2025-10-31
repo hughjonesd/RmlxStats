@@ -82,7 +82,8 @@ mlxs_lm <- function(formula, data, subset) {
     mlx = list(
       qr = qr_fit,
       x = x_mlx,
-      y = y_mlx
+      y = y_mlx,
+      residual = residual_mlx
     )
   )
 

@@ -27,10 +27,26 @@ NULL
   if (is.null(qr_fit)) {
     stop("QR decomposition not stored in mlxs_lm object.", call. = FALSE)
   }
-  r_matrix <- as.matrix(qr_fit$R)
-  rss <- sum(object$residuals^2)
+  r_mlx <- qr_fit$R
+  dim_r <- r_mlx$dim
+  if (length(dim_r) != 2L || dim_r[1L] != dim_r[2L]) {
+    stop("QR decomposition returned a non-square R matrix.", call. = FALSE)
+  }
+
+  eye <- Rmlx::mlx_eye(dim_r[1L])
+  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, eye, upper = TRUE)
+  vcov_mlx <- r_inv %*% t(r_inv)
+
+  residual_mlx <- object$mlx$residual
+  if (!is.null(residual_mlx)) {
+    rss <- drop(as.matrix(crossprod(residual_mlx)))
+  } else {
+    rss <- sum(object$residuals^2)
+  }
   sigma2 <- rss / object$df.residual
-  vc <- sigma2 * chol2inv(r_matrix)
+
+  vcov_mlx <- vcov_mlx * sigma2
+  vc <- as.matrix(vcov_mlx)
   colnames(vc) <- rownames(vc) <- names(object$coefficients)
   vc
 }
