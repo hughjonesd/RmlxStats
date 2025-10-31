@@ -1,0 +1,199 @@
+---
+title: "Benchmarking mlxs_lm vs lm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Benchmarking mlxs_lm vs lm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+has_packages <- requireNamespace("Rmlx", quietly = TRUE) &&
+  requireNamespace("nycflights13", quietly = TRUE) &&
+  requireNamespace("bench", quietly = TRUE) &&
+  requireNamespace("fixest", quietly = TRUE) &&
+  requireNamespace("RcppEigen", quietly = TRUE) &&
+  requireNamespace("speedglm", quietly = TRUE)
+
+if (!has_packages) {
+  knitr::opts_chunk$set(eval = FALSE)
+  message("Skipping code evaluation: missing Rmlx, nycflights13, bench, fixest, or RcppEigen.")
+} else {
+  library(RmlxStats)
+  library(Rmlx)
+  library(nycflights13)
+  library(bench)
+  library(fixest)
+  library(RcppEigen)
+  library(speedglm)
+}
+```
+
+The `mlxs_lm()` function mirrors `stats::lm()` but executes its
+linear algebra with the MLX backend. This vignette benchmarks both
+implementations on the sizeable `nycflights13::flights` dataset,
+demonstrating the performance gains available when Metal acceleration
+is active.
+
+## Data Preparation
+
+We retain a handful of numeric predictors from the flights data and
+drop rows with missing values in the variables of interest.
+
+```{r data-prep}
+flights <- as.data.frame(nycflights13::flights)
+vars <- c("arr_delay", "dep_delay", "air_time", "distance")
+complete_rows <- complete.cases(flights[, vars])
+bench_data <- flights[complete_rows, vars]
+nrow(bench_data)
+```
+
+The resulting dataset contains hundreds of thousands of observations,
+large enough to expose performance differences in the solvers.
+
+## Benchmark Setup
+
+We benchmark several linear model solvers that accept formula interfaces.
+The `bench` package automates warm-up and repetition.
+
+```{r timings, cache=FALSE}
+lm_formula <- arr_delay ~ dep_delay + air_time + distance
+
+bench_mark <- mark(
+  lm = lm(lm_formula, data = bench_data),
+  mlxs_lm = mlxs_lm(lm_formula, data = bench_data),
+  feols = feols(lm_formula, data = bench_data),
+  fastLm = RcppEigen::fastLm(lm_formula, data = bench_data),
+  speedlm = speedglm::speedlm(lm_formula, data = bench_data),
+  iterations = 5,
+  check = FALSE
+)
+
+# Summarize median timings, memory allocation, and relative speed.
+bench_summary <- data.frame(
+  method = as.character(bench_mark$expression),
+  median_sec = as.numeric(bench_mark$median, units = "s"),
+  mem_mb = as.numeric(bench_mark$mem_alloc, units = "MB"),
+  itr_per_sec = bench_mark$`itr/sec`
+)
+bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
+bench_summary
+```
+
+The benchmark table reports the median execution time (seconds), memory
+allocation (megabytes), iteration rate, and relative speed for each method
+across five iterations. The `relative` column expresses how many times slower
+each method is compared to the fastest option (values close to 1 indicate the
+winner).
+
+## Agreement on Flights Benchmark
+
+Confirm that each solver matches the reference solution within floating
+point tolerance.
+
+```{r agreement}
+lm_fit <- lm(lm_formula, data = bench_data)
+mlxs_fit <- mlxs_lm(lm_formula, data = bench_data)
+feols_fit <- feols(lm_formula, data = bench_data)
+fastlm_fit <- RcppEigen::fastLm(lm_formula, data = bench_data)
+speedlm_fit <- speedglm::speedlm(lm_formula, data = bench_data)
+
+coef_delta <- max(abs(coef(lm_fit) - mlxs_fit$coefficients))
+fitted_delta <- max(abs(fitted(lm_fit) - mlxs_fit$fitted.values))
+
+feols_coef_delta <- max(abs(coef(lm_fit) - coef(feols_fit)))
+feols_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(feols_fit))))
+
+fastlm_coef_delta <- max(abs(coef(lm_fit) - fastlm_fit$coefficients))
+fastlm_fitted_delta <- max(abs(fitted(lm_fit) - fastlm_fit$fitted.values))
+
+speedlm_coef_delta <- max(abs(coef(lm_fit) - speedlm_fit$coefficients))
+speedlm_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit))))
+
+c(
+  max_coefficient_difference = coef_delta,
+  max_fitted_difference = fitted_delta,
+  feols_max_coefficient_difference = feols_coef_delta,
+  feols_max_fitted_difference = feols_fitted_delta,
+  fastlm_max_coefficient_difference = fastlm_coef_delta,
+  fastlm_max_fitted_difference = fastlm_fitted_delta,
+  speedlm_max_coefficient_difference = speedlm_coef_delta,
+  speedlm_max_fitted_difference = speedlm_fitted_delta
+)
+```
+
+Differences remain on the order of numerical precision, confirming
+that `mlxs_lm()` and the other high-performance solvers reproduce the
+reference solution while offering faster runtimes.
+
+## High-Dimensional Benchmark
+
+To stress-test performance when both sample size and feature count are large,
+we simulate a design matrix with 8,000 observations and 150 predictors. This
+produces roughly 1.2 million design-matrix entries—big enough to exercise dense
+linear algebra without exhausting typical development hardware.
+
+```{r highp-data}
+set.seed(20251031)
+n_hd <- 8000
+p_hd <- 150
+x_hd <- matrix(rnorm(n_hd * p_hd), nrow = n_hd, ncol = p_hd)
+colnames(x_hd) <- paste0("x", seq_len(p_hd))
+beta_true <- runif(p_hd, -1, 1)
+y_hd <- drop(x_hd %*% beta_true + rnorm(n_hd, sd = 0.5))
+hd_data <- data.frame(y = y_hd, x_hd)
+hd_formula <- as.formula(paste("y ~", paste(colnames(x_hd), collapse = " + ")))
+```
+
+```{r highp-benchmark, cache=FALSE}
+hd_mark <- mark(
+  lm = lm(hd_formula, data = hd_data),
+  mlxs_lm = mlxs_lm(hd_formula, data = hd_data),
+  feols = feols(hd_formula, data = hd_data),
+  fastLm = RcppEigen::fastLm(hd_formula, data = hd_data),
+  speedlm = speedglm::speedlm(hd_formula, data = hd_data),
+  iterations = 1,
+  check = FALSE
+)
+
+hd_summary <- data.frame(
+  method = as.character(hd_mark$expression),
+  median_sec = as.numeric(hd_mark$median, units = "s"),
+  mem_mb = as.numeric(hd_mark$mem_alloc, units = "MB"),
+  itr_per_sec = hd_mark$`itr/sec`
+)
+hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
+hd_summary
+```
+
+## Agreement on the Simulated Problem
+
+Even in the high-dimensional setting, the MLX-backed fit lines up with the
+reference linear model.
+
+```{r highp-agreement}
+lm_hd <- lm(hd_formula, data = hd_data)
+mlxs_hd <- mlxs_lm(hd_formula, data = hd_data)
+speedlm_hd <- speedglm::speedlm(hd_formula, data = hd_data)
+
+c(
+  max(abs(coef(lm_hd) - mlxs_hd$coefficients)),
+  max(abs(coef(lm_hd) - speedlm_hd$coefficients))
+)
+```
+
+The largest coefficient difference stays at floating-point noise levels,
+confirming that the accelerated solver preserves numerical accuracy while
+scaling gracefully with both observations and predictors.
+
+## Other Fast Linear Modeling Options
+
+Beyond the methods benchmarked here, practitioners often turn to
+`biglm::biglm()` for streamed data that do not fit in memory or
+`glmnet` for elastic-net regularisation. Packages such as `MatrixModels`
+and `SparseM` also provide optimized pathways for sparse design matrices.

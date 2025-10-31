@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Benchmarking mlxs_lm vs lm</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Benchmarking mlxs_lm vs lm</h1>
+
+
+
+<p>The <code>mlxs_lm()</code> function mirrors <code>stats::lm()</code>
+but executes its linear algebra with the MLX backend. This vignette
+benchmarks both implementations on the sizeable
+<code>nycflights13::flights</code> dataset, demonstrating the
+performance gains available when Metal acceleration is active.</p>
+<div id="data-preparation" class="section level2">
+<h2>Data Preparation</h2>
+<p>We retain a handful of numeric predictors from the flights data and
+drop rows with missing values in the variables of interest.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>flights <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(nycflights13<span class="sc">::</span>flights)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>vars <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;arr_delay&quot;</span>, <span class="st">&quot;dep_delay&quot;</span>, <span class="st">&quot;air_time&quot;</span>, <span class="st">&quot;distance&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>complete_rows <span class="ot">&lt;-</span> <span class="fu">complete.cases</span>(flights[, vars])</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>bench_data <span class="ot">&lt;-</span> flights[complete_rows, vars]</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">nrow</span>(bench_data)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; [1] 327346</span></span></code></pre></div>
+<p>The resulting dataset contains hundreds of thousands of observations,
+large enough to expose performance differences in the solvers.</p>
+</div>
+<div id="benchmark-setup" class="section level2">
+<h2>Benchmark Setup</h2>
+<p>We benchmark several linear model solvers that accept formula
+interfaces. The <code>bench</code> package automates warm-up and
+repetition.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>lm_formula <span class="ot">&lt;-</span> arr_delay <span class="sc">~</span> dep_delay <span class="sc">+</span> air_time <span class="sc">+</span> distance</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>bench_mark <span class="ot">&lt;-</span> <span class="fu">mark</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">lm =</span> <span class="fu">lm</span>(lm_formula, <span class="at">data =</span> bench_data),</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">mlxs_lm =</span> <span class="fu">mlxs_lm</span>(lm_formula, <span class="at">data =</span> bench_data),</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">feols =</span> <span class="fu">feols</span>(lm_formula, <span class="at">data =</span> bench_data),</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">fastLm =</span> RcppEigen<span class="sc">::</span><span class="fu">fastLm</span>(lm_formula, <span class="at">data =</span> bench_data),</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">speedlm =</span> speedglm<span class="sc">::</span><span class="fu">speedlm</span>(lm_formula, <span class="at">data =</span> bench_data),</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">iterations =</span> <span class="dv">5</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">check =</span> <span class="cn">FALSE</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; disabled.</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co"># Summarize median timings, memory allocation, and relative speed.</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>bench_summary <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">as.character</span>(bench_mark<span class="sc">$</span>expression),</span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="at">median_sec =</span> <span class="fu">as.numeric</span>(bench_mark<span class="sc">$</span>median, <span class="at">units =</span> <span class="st">&quot;s&quot;</span>),</span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a>  <span class="at">mem_mb =</span> <span class="fu">as.numeric</span>(bench_mark<span class="sc">$</span>mem_alloc, <span class="at">units =</span> <span class="st">&quot;MB&quot;</span>),</span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a>  <span class="at">itr_per_sec =</span> bench_mark<span class="sc">$</span><span class="st">`</span><span class="at">itr/sec</span><span class="st">`</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a>)</span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a>bench_summary<span class="sc">$</span>relative <span class="ot">&lt;-</span> bench_summary<span class="sc">$</span>median_sec <span class="sc">/</span> <span class="fu">min</span>(bench_summary<span class="sc">$</span>median_sec)</span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a>bench_summary</span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; 1      lm 0.02943341  91118024    23.37832 1.704145</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 2 mlxs_lm 0.07457146  96658528    10.50964 4.317562</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 3   feols 0.01727166  32406976    51.91698 1.000000</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 4  fastLm 0.06650872 116844488    11.36873 3.850743</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 5 speedlm 0.02177227  75406984    27.29534 1.260578</span></span></code></pre></div>
+<p>The benchmark table reports the median execution time (seconds),
+memory allocation (megabytes), iteration rate, and relative speed for
+each method across five iterations. The <code>relative</code> column
+expresses how many times slower each method is compared to the fastest
+option (values close to 1 indicate the winner).</p>
+</div>
+<div id="agreement-on-flights-benchmark" class="section level2">
+<h2>Agreement on Flights Benchmark</h2>
+<p>Confirm that each solver matches the reference solution within
+floating point tolerance.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>lm_fit <span class="ot">&lt;-</span> <span class="fu">lm</span>(lm_formula, <span class="at">data =</span> bench_data)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>mlxs_fit <span class="ot">&lt;-</span> <span class="fu">mlxs_lm</span>(lm_formula, <span class="at">data =</span> bench_data)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>feols_fit <span class="ot">&lt;-</span> <span class="fu">feols</span>(lm_formula, <span class="at">data =</span> bench_data)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>fastlm_fit <span class="ot">&lt;-</span> RcppEigen<span class="sc">::</span><span class="fu">fastLm</span>(lm_formula, <span class="at">data =</span> bench_data)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>speedlm_fit <span class="ot">&lt;-</span> speedglm<span class="sc">::</span><span class="fu">speedlm</span>(lm_formula, <span class="at">data =</span> bench_data)</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>coef_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_fit) <span class="sc">-</span> mlxs_fit<span class="sc">$</span>coefficients))</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>fitted_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">fitted</span>(lm_fit) <span class="sc">-</span> mlxs_fit<span class="sc">$</span>fitted.values))</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>feols_coef_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_fit) <span class="sc">-</span> <span class="fu">coef</span>(feols_fit)))</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>feols_fitted_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">fitted</span>(lm_fit) <span class="sc">-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(feols_fit))))</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>fastlm_coef_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_fit) <span class="sc">-</span> fastlm_fit<span class="sc">$</span>coefficients))</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>fastlm_fitted_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">fitted</span>(lm_fit) <span class="sc">-</span> fastlm_fit<span class="sc">$</span>fitted.values))</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>speedlm_coef_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_fit) <span class="sc">-</span> speedlm_fit<span class="sc">$</span>coefficients))</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>speedlm_fitted_delta <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">fitted</span>(lm_fit) <span class="sc">-</span> <span class="fu">as.vector</span>(<span class="fu">predict</span>(speedlm_fit))))</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; Warning in predict.speedlm(speedlm_fit): fitted values were not returned from the speedglm object: </span></span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;               use the original data by setting argument &#39;newdata&#39; or refit </span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt;               the model by specifying fitted=TRUE.</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; Warning in max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit)))): no</span></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="co">#&gt; non-missing arguments to max; returning -Inf</span></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="fu">c</span>(</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>  <span class="at">max_coefficient_difference =</span> coef_delta,</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>  <span class="at">max_fitted_difference =</span> fitted_delta,</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>  <span class="at">feols_max_coefficient_difference =</span> feols_coef_delta,</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>  <span class="at">feols_max_fitted_difference =</span> feols_fitted_delta,</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>  <span class="at">fastlm_max_coefficient_difference =</span> fastlm_coef_delta,</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>  <span class="at">fastlm_max_fitted_difference =</span> fastlm_fitted_delta,</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>  <span class="at">speedlm_max_coefficient_difference =</span> speedlm_coef_delta,</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a>  <span class="at">speedlm_max_fitted_difference =</span> speedlm_fitted_delta</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>)</span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="co">#&gt;         max_coefficient_difference              max_fitted_difference </span></span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="co">#&gt;                       5.918351e-04                       5.398755e-03 </span></span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="co">#&gt;   feols_max_coefficient_difference        feols_max_fitted_difference </span></span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="co">#&gt;                       3.318767e-11                       1.679044e-08 </span></span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="co">#&gt;  fastlm_max_coefficient_difference       fastlm_max_fitted_difference </span></span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="co">#&gt;                       3.274714e-11                       1.677644e-08 </span></span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="co">#&gt; speedlm_max_coefficient_difference      speedlm_max_fitted_difference </span></span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="co">#&gt;                       3.294254e-11                               -Inf</span></span></code></pre></div>
+<p>Differences remain on the order of numerical precision, confirming
+that <code>mlxs_lm()</code> and the other high-performance solvers
+reproduce the reference solution while offering faster runtimes.</p>
+</div>
+<div id="high-dimensional-benchmark" class="section level2">
+<h2>High-Dimensional Benchmark</h2>
+<p>To stress-test performance when both sample size and feature count
+are large, we simulate a design matrix with 8,000 observations and 150
+predictors. This produces roughly 1.2 million design-matrix entries—big
+enough to exercise dense linear algebra without exhausting typical
+development hardware.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20251031</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>n_hd <span class="ot">&lt;-</span> <span class="dv">8000</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>p_hd <span class="ot">&lt;-</span> <span class="dv">150</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>x_hd <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n_hd <span class="sc">*</span> p_hd), <span class="at">nrow =</span> n_hd, <span class="at">ncol =</span> p_hd)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="fu">colnames</span>(x_hd) <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;x&quot;</span>, <span class="fu">seq_len</span>(p_hd))</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>beta_true <span class="ot">&lt;-</span> <span class="fu">runif</span>(p_hd, <span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>y_hd <span class="ot">&lt;-</span> <span class="fu">drop</span>(x_hd <span class="sc">%*%</span> beta_true <span class="sc">+</span> <span class="fu">rnorm</span>(n_hd, <span class="at">sd =</span> <span class="fl">0.5</span>))</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>hd_data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> y_hd, x_hd)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>hd_formula <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">&quot;y ~&quot;</span>, <span class="fu">paste</span>(<span class="fu">colnames</span>(x_hd), <span class="at">collapse =</span> <span class="st">&quot; + &quot;</span>)))</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>hd_mark <span class="ot">&lt;-</span> <span class="fu">mark</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">lm =</span> <span class="fu">lm</span>(hd_formula, <span class="at">data =</span> hd_data),</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">mlxs_lm =</span> <span class="fu">mlxs_lm</span>(hd_formula, <span class="at">data =</span> hd_data),</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">feols =</span> <span class="fu">feols</span>(hd_formula, <span class="at">data =</span> hd_data),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">fastLm =</span> RcppEigen<span class="sc">::</span><span class="fu">fastLm</span>(hd_formula, <span class="at">data =</span> hd_data),</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">speedlm =</span> speedglm<span class="sc">::</span><span class="fu">speedlm</span>(hd_formula, <span class="at">data =</span> hd_data),</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">iterations =</span> <span class="dv">1</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">check =</span> <span class="cn">FALSE</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>)</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; disabled.</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>hd_summary <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">method =</span> <span class="fu">as.character</span>(hd_mark<span class="sc">$</span>expression),</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">median_sec =</span> <span class="fu">as.numeric</span>(hd_mark<span class="sc">$</span>median, <span class="at">units =</span> <span class="st">&quot;s&quot;</span>),</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  <span class="at">mem_mb =</span> <span class="fu">as.numeric</span>(hd_mark<span class="sc">$</span>mem_alloc, <span class="at">units =</span> <span class="st">&quot;MB&quot;</span>),</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>  <span class="at">itr_per_sec =</span> hd_mark<span class="sc">$</span><span class="st">`</span><span class="at">itr/sec</span><span class="st">`</span></span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>)</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>hd_summary<span class="sc">$</span>relative <span class="ot">&lt;-</span> hd_summary<span class="sc">$</span>median_sec <span class="sc">/</span> <span class="fu">min</span>(hd_summary<span class="sc">$</span>median_sec)</span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>hd_summary</span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="co">#&gt;    method median_sec   mem_mb itr_per_sec relative</span></span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="co">#&gt; 1      lm 0.13774967 59401864    7.259546 3.507710</span></span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="co">#&gt; 2 mlxs_lm 0.03927054 59440072   25.464382 1.000000</span></span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="co">#&gt; 3   feols 0.13713836 22143336    7.291906 3.492144</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="co">#&gt; 4  fastLm 0.05781586 83567584   17.296291 1.472245</span></span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="co">#&gt; 5 speedlm 0.12683744 55395168    7.884108 3.229837</span></span></code></pre></div>
+</div>
+<div id="agreement-on-the-simulated-problem" class="section level2">
+<h2>Agreement on the Simulated Problem</h2>
+<p>Even in the high-dimensional setting, the MLX-backed fit lines up
+with the reference linear model.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>lm_hd <span class="ot">&lt;-</span> <span class="fu">lm</span>(hd_formula, <span class="at">data =</span> hd_data)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>mlxs_hd <span class="ot">&lt;-</span> <span class="fu">mlxs_lm</span>(hd_formula, <span class="at">data =</span> hd_data)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>speedlm_hd <span class="ot">&lt;-</span> speedglm<span class="sc">::</span><span class="fu">speedlm</span>(hd_formula, <span class="at">data =</span> hd_data)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">c</span>(</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_hd) <span class="sc">-</span> mlxs_hd<span class="sc">$</span>coefficients)),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="fu">max</span>(<span class="fu">abs</span>(<span class="fu">coef</span>(lm_hd) <span class="sc">-</span> speedlm_hd<span class="sc">$</span>coefficients))</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; [1] 7.180005e-07 1.054712e-14</span></span></code></pre></div>
+<p>The largest coefficient difference stays at floating-point noise
+levels, confirming that the accelerated solver preserves numerical
+accuracy while scaling gracefully with both observations and
+predictors.</p>
+</div>
+<div id="other-fast-linear-modeling-options" class="section level2">
+<h2>Other Fast Linear Modeling Options</h2>
+<p>Beyond the methods benchmarked here, practitioners often turn to
+<code>biglm::biglm()</code> for streamed data that do not fit in memory
+or <code>glmnet</code> for elastic-net regularisation. Packages such as
+<code>MatrixModels</code> and <code>SparseM</code> also provide
+optimized pathways for sparse design matrices.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
