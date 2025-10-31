@@ -1,2 +1,5 @@
 /doc/
 /Meta/
+vignettes/*.html
+vignettes/*.R
+vignettes/.build.timestamp
