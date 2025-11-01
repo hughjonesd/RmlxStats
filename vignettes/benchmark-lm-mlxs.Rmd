@@ -3,35 +3,27 @@ title: "Benchmarking mlxs_lm vs lm"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Benchmarking mlxs_lm vs lm}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 
-has_packages <- requireNamespace("Rmlx", quietly = TRUE) &&
-  requireNamespace("nycflights13", quietly = TRUE) &&
-  requireNamespace("bench", quietly = TRUE) &&
-  requireNamespace("fixest", quietly = TRUE) &&
-  requireNamespace("RcppEigen", quietly = TRUE) &&
-  requireNamespace("speedglm", quietly = TRUE)
 
-if (!has_packages) {
-  knitr::opts_chunk$set(eval = FALSE)
-  message("Skipping code evaluation: missing Rmlx, nycflights13, bench, fixest, or RcppEigen.")
-} else {
-  library(RmlxStats)
-  library(Rmlx)
-  library(nycflights13)
-  library(bench)
-  library(fixest)
-  library(RcppEigen)
-  library(speedglm)
-}
+library(RmlxStats)
+library(Rmlx)
+library(nycflights13)
+library(bench)
+library(fixest)
+library(RcppEigen)
+library(speedglm)
+library(ggplot2)
 ```
 
 The `mlxs_lm()` function mirrors `stats::lm()` but executes its
@@ -83,6 +75,7 @@ bench_summary <- data.frame(
 )
 bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
 bench_summary
+ggplot2::autoplot(bench_mark, type = "boxplot")
 ```
 
 The benchmark table reports the median execution time (seconds), memory
@@ -134,14 +127,12 @@ reference solution while offering faster runtimes.
 ## High-Dimensional Benchmark
 
 To stress-test performance when both sample size and feature count are large,
-we simulate a design matrix with 8,000 observations and 150 predictors. This
-produces roughly 1.2 million design-matrix entries—big enough to exercise dense
-linear algebra without exhausting typical development hardware.
+we simulate a design matrix with many rows and columns.
 
 ```{r highp-data}
 set.seed(20251031)
-n_hd <- 8000
-p_hd <- 150
+n_hd <- 10000
+p_hd <- 400
 x_hd <- matrix(rnorm(n_hd * p_hd), nrow = n_hd, ncol = p_hd)
 colnames(x_hd) <- paste0("x", seq_len(p_hd))
 beta_true <- runif(p_hd, -1, 1)
@@ -157,7 +148,7 @@ hd_mark <- mark(
   feols = feols(hd_formula, data = hd_data),
   fastLm = RcppEigen::fastLm(hd_formula, data = hd_data),
   speedlm = speedglm::speedlm(hd_formula, data = hd_data),
-  iterations = 1,
+  iterations = 3,
   check = FALSE
 )
 
@@ -169,6 +160,7 @@ hd_summary <- data.frame(
 )
 hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
 hd_summary
+ggplot2::autoplot(hd_mark, type = "beeswarm")
 ```
 
 ## Agreement on the Simulated Problem
