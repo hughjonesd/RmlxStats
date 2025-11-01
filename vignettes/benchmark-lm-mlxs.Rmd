@@ -24,6 +24,8 @@ library(fixest)
 library(RcppEigen)
 library(speedglm)
 library(ggplot2)
+library(tidyr)
+library(ggbeeswarm)
 ```
 
 The `mlxs_lm()` function mirrors `stats::lm()` but executes its
