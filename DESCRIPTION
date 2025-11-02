@@ -6,7 +6,7 @@ Authors@R:
 Description: GPU-backed linear algebra helpers that wrap the Rmlx package,
     providing familiar formula interfaces and diagnostics for statistical
     models on Apple Silicon.
-License: MIT + file LICENSE
+License: GPL (>= 2)
 Imports: 
     Rmlx,
     generics
