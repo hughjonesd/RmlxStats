@@ -23,6 +23,7 @@ Suggests:
     RcppEigen,
     speedglm,
     ggplot2,
+    fastglm,
     tidyr,
     ggbeeswarm
 Config/testthat/edition: 3

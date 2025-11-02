@@ -1,11 +1,11 @@
 ---
-title: "Benchmarking mlxs_lm vs lm"
+title: "Benchmarking MLX-backed Linear and Generalized Linear Models"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Benchmarking mlxs_lm vs lm}
+  %\VignetteIndexEntry{Benchmarking MLX-backed Linear and Generalized Linear Models}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -23,14 +23,17 @@ library(bench)
 library(fixest)
 library(RcppEigen)
 library(speedglm)
+library(fastglm)
 library(ggplot2)
 library(tidyr)
 library(ggbeeswarm)
 ```
 
-The `mlxs_lm()` function mirrors `stats::lm()` but executes its
-linear algebra with the MLX backend. This vignette benchmarks both
-implementations on the sizeable `nycflights13::flights` dataset,
+The `mlxs_lm()` and `mlxs_glm()` functions mirror `stats::lm()` and
+`stats::glm()` but execute their linear algebra with the MLX backend.
+This vignette benchmarks these implementations against standard R
+functions and specialized fast fitting packages (fixest, RcppEigen,
+speedglm, fastglm) using the sizeable `nycflights13::flights` dataset,
 demonstrating the performance gains available when Metal acceleration
 is active.
 
@@ -140,7 +143,9 @@ colnames(x_hd) <- paste0("x", seq_len(p_hd))
 beta_true <- runif(p_hd, -1, 1)
 y_hd <- drop(x_hd %*% beta_true + rnorm(n_hd, sd = 0.5))
 hd_data <- data.frame(y = y_hd, x_hd)
-hd_formula <- as.formula(paste("y ~", paste(colnames(x_hd), collapse = " + ")))
+
+options(expressions = 15000) # to avoid errors due to nested evaluation
+hd_formula <- DF2formula(hd_data)
 ```
 
 ```{r highp-benchmark, cache=FALSE}
@@ -184,6 +189,63 @@ c(
 The largest coefficient difference stays at floating-point noise levels,
 confirming that the accelerated solver preserves numerical accuracy while
 scaling gracefully with both observations and predictors.
+
+## GLM Benchmark: Logistic Regression
+
+The `mlxs_glm()` function extends the MLX backend to generalized linear models.
+We benchmark it against `stats::glm()` and `speedglm::speedglm()` using a
+binomial family on the flights data.
+
+```{r glm-data-prep}
+# Create binary outcome: whether arrival delay exceeds 15 minutes
+bench_data$late <- as.integer(bench_data$arr_delay > 15)
+glm_formula <- late ~ dep_delay + air_time + distance
+```
+
+```{r glm-timings, cache=FALSE}
+glm_mark <- mark(
+  glm = glm(glm_formula, family = binomial(), data = bench_data),
+  mlxs_glm = mlxs_glm(glm_formula, family = binomial(), data = bench_data),
+  speedglm = speedglm::speedglm(glm_formula, family = binomial(), data = bench_data),
+  iterations = 5,
+  check = FALSE
+)
+
+glm_summary <- data.frame(
+  method = as.character(glm_mark$expression),
+  median_sec = as.numeric(glm_mark$median, units = "s"),
+  mem_mb = as.numeric(glm_mark$mem_alloc, units = "MB"),
+  itr_per_sec = glm_mark$`itr/sec`
+)
+glm_summary$relative <- glm_summary$median_sec / min(glm_summary$median_sec)
+glm_summary
+ggplot2::autoplot(glm_mark, type = "boxplot")
+```
+
+## Agreement on GLM Benchmark
+
+Check that the MLX-backed GLM matches the reference implementation:
+
+```{r glm-agreement}
+glm_fit <- glm(glm_formula, family = binomial(), data = bench_data)
+mlxs_glm_fit <- mlxs_glm(glm_formula, family = binomial(), data = bench_data)
+speedglm_fit <- speedglm::speedglm(glm_formula, family = binomial(), data = bench_data)
+
+glm_coef_delta <- max(abs(coef(glm_fit) - mlxs_glm_fit$coefficients))
+glm_fitted_delta <- max(abs(fitted(glm_fit) - mlxs_glm_fit$fitted.values))
+speedglm_coef_delta <- max(abs(coef(glm_fit) - speedglm_fit$coefficients))
+speedglm_fitted_delta <- max(abs(fitted(glm_fit) - as.vector(predict(speedglm_fit))))
+
+c(
+  mlxs_max_coefficient_difference = glm_coef_delta,
+  mlxs_max_fitted_difference = glm_fitted_delta,
+  speedglm_max_coefficient_difference = speedglm_coef_delta,
+  speedglm_max_fitted_difference = speedglm_fitted_delta
+)
+```
+
+All implementations agree within numerical tolerance, confirming that `mlxs_glm()`
+produces accurate results for generalized linear models.
 
 ## Other Fast Linear Modeling Options
 

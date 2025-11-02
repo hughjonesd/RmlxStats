@@ -64,11 +64,7 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
   mu <- .mlxs_glm_clamp_mu(mu, family)
 
   if (!is.null(family$initialize)) {
-    base_env <- environment(family$initialize)
-    if (is.null(base_env)) {
-      base_env <- parent.frame()
-    }
-    env <- new.env(parent = base_env)
+    env <- new.env(parent = environment())
     initialize_vars <- list(
       y = y,
       weights = weights,
@@ -79,7 +75,9 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
       nobs = n_obs,
       n = weights
     )
-    list2env(initialize_vars, envir = env)
+    for (nm in names(initialize_vars)) {
+      assign(nm, initialize_vars[[nm]], envir = env)
+    }
     eval(family$initialize, envir = env)
     if (exists("mustart", envir = env, inherits = FALSE)) {
       mu <- get("mustart", envir = env, inherits = FALSE)
