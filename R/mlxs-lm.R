@@ -30,9 +30,6 @@ mlxs_lm <- function(formula, data, subset) {
 
   terms <- attr(mf, "terms")
   response <- model.response(mf)
-  if (is.matrix(response)) {
-    response <- drop(response)
-  }
 
   design <- model.matrix(terms, mf)
 
@@ -52,7 +49,7 @@ mlxs_lm <- function(formula, data, subset) {
   qr_fit <- qr(x_mlx)
   qty <- crossprod(qr_fit$Q, y_mlx)
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
-
+  
   fitted_mlx <- x_mlx %*% coef_mlx
   residual_mlx <- y_mlx - fitted_mlx
 
