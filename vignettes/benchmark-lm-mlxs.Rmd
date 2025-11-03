@@ -345,7 +345,7 @@ enet_design <- model.matrix(
 )
 
 x_enet <- enet_design[, -1, drop = FALSE]
-y_enet <- enet_base$late
+y_enet <- enet_base$arr_delay > 15
 lambda_enet <- 0.01
 ```
 

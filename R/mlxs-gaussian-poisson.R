@@ -28,22 +28,12 @@ mlxs_gaussian <- function(link = "identity") {
   }
 
   base_family$dev.resids <- function(y, mu, wt) {
-    if (inherits(y, "mlx") || inherits(mu, "mlx") || inherits(wt, "mlx")) {
-      y_mlx <- Rmlx::as_mlx(y)
-      mu_mlx <- Rmlx::as_mlx(mu)
-      wt_mlx <- Rmlx::as_mlx(wt)
-      diff <- y_mlx - mu_mlx
-      wt_mlx * (diff * diff)
-    } else {
-      wt * ((y - mu)^2)
-    }
+    wt * ((y - mu)^2)
   }
 
   base_family$aic <- function(y, n, mu, wt, dev) {
-    y_num <- as.numeric(as.matrix(y))
-    wt_num <- as.numeric(as.matrix(wt))
-    nobs <- length(y_num)
-    nobs * (log(dev / nobs * 2 * pi) + 1) + 2 - sum(log(wt_num))
+    nobs <- length(y)
+    nobs * (log(dev / nobs * 2 * pi) + 1) + 2 - sum(log(wt))
   }
 
   base_family
@@ -70,35 +60,16 @@ mlxs_poisson <- function(link = "log") {
   base_family$mu.eta <- link_parts$mu.eta
   base_family$valideta <- link_parts$valideta
 
-  base_family$variance <- function(mu) {
-    if (inherits(mu, "mlx")) {
-      mu
-    } else {
-      mu
-    }
-  }
-
   base_family$dev.resids <- function(y, mu, wt) {
-    if (inherits(y, "mlx") || inherits(mu, "mlx") || inherits(wt, "mlx")) {
-      y_mlx <- Rmlx::as_mlx(y)
-      mu_mlx <- Rmlx::as_mlx(mu)
-      wt_mlx <- Rmlx::as_mlx(wt)
-
-      eps <- Rmlx::as_mlx(1e-6)
-      mu_clamped <- Rmlx::mlx_where(mu_mlx < eps, eps, mu_mlx)
-      y_positive <- y_mlx > eps
-      safe_y <- Rmlx::mlx_where(y_positive, y_mlx, eps)
-      log_ratio <- log(safe_y / mu_clamped)
-      term <- wt_mlx * (safe_y * log_ratio - (y_mlx - mu_mlx))
-      base <- wt_mlx * mu_mlx
-      res <- Rmlx::mlx_where(y_positive, term, base)
-      2 * res
-    } else {
-      r <- mu * wt
-      p <- which(y > 0)
-      r[p] <- (wt * (y * log(y/mu) - (y - mu)))[p]
-      2 * r
-    }
+    eps <- 1e-6
+    mu_clamped <- Rmlx::mlx_where(mu < eps, eps, mu)
+    y_positive <- y > eps
+    safe_y <- Rmlx::mlx_where(y_positive, y, eps)
+    log_ratio <- log(safe_y / mu_clamped)
+    term <- wt * (safe_y * log_ratio - (y - mu))
+    base <- wt * mu
+    res <- Rmlx::mlx_where(y_positive, term, base)
+    2 * res
   }
 
   base_family$aic <- function(y, n, mu, wt, dev) {
@@ -106,11 +77,6 @@ mlxs_poisson <- function(link = "log") {
     mu_num <- as.numeric(as.matrix(mu))
     wt_num <- as.numeric(as.matrix(wt))
     -2 * sum(dpois(y_num, mu_num, log = TRUE) * wt_num)
-  }
-
-  base_family$validmu <- function(mu) {
-    mu_num <- as.numeric(as.matrix(mu))
-    all(is.finite(mu_num)) && all(mu_num > 0)
   }
 
   base_family
