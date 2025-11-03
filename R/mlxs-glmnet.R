@@ -174,12 +174,13 @@ mlxs_glmnet <- function(x,
 }
 
 .mlxs_soft_threshold <- function(z, thresh) {
-  dim_z <- dim(as.matrix(z))
-  thresh_vec <- Rmlx::as_mlx(matrix(thresh, nrow = dim_z[1], ncol = dim_z[2]))
-  zero <- Rmlx::as_mlx(matrix(0, nrow = dim_z[1], ncol = dim_z[2]))
+  thresh_vec <- Rmlx::as_mlx(thresh)
+  zero_like <- Rmlx::mlx_zeros_like(z)
+  one_like <- zero_like + Rmlx::as_mlx(1)
+  neg_one_like <- zero_like - Rmlx::as_mlx(1)
   abs_z <- abs(z)
   magnitude <- abs_z - thresh_vec
-  magnitude <- Rmlx::mlx_where(magnitude > zero, magnitude, zero)
-  sign_vec <- Rmlx::mlx_where(z >= zero, Rmlx::as_mlx(matrix(1, nrow = dim_z[1], ncol = dim_z[2])), Rmlx::as_mlx(matrix(-1, nrow = dim_z[1], ncol = dim_z[2])))
+  magnitude <- Rmlx::mlx_where(magnitude > zero_like, magnitude, zero_like)
+  sign_vec <- Rmlx::mlx_where(z >= zero_like, one_like, neg_one_like)
   magnitude * sign_vec
 }
