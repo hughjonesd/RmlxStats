@@ -2,7 +2,17 @@ Package: RmlxStats
 Title: MLX-Accelerated Statistical Models
 Version: 0.1.0
 Authors@R: 
-    person("David", "Hugh-Jones", , "davidhughjones@gmail.com", role = c("aut", "cre"))
+    c(
+      person("David", "Hugh-Jones", , "davidhughjones@gmail.com", role = c("aut", "cre")),
+      person("R Core Team", role = "ctb"),
+      person("Trevor", "Hastie", role = "ctb"),
+      person("Jerome", "Friedman", role = "ctb"),
+      person("Rob", "Tibshirani", role = "ctb"),
+      person("Balasubramanian", "Narasimhan", role = "ctb"),
+      person("Kenneth", "Tay", role = "ctb"),
+      person("Noah", "Simon", role = "ctb"),
+      person("James", "Yang", role = "ctb")
+    )
 Description: GPU-backed linear algebra helpers that wrap the Rmlx package,
     providing familiar formula interfaces and diagnostics for statistical
     models on Apple Silicon.
