@@ -4,6 +4,10 @@
 #' the heavy linear algebra. Currently supports Gaussian and binomial families
 #' with an optional intercept and column standardisation.
 #'
+#' @note This function is a proof-of-concept. On large dense problems it is
+#'   typically several times slower than the highly optimised
+#'   [glmnet::glmnet()] implementation.
+#'
 #' @param x Numeric matrix of predictors (observations in rows).
 #' @param y Numeric response vector (for binomial, values must be 0/1).
 #' @param family MLX-aware family object, e.g. [mlxs_gaussian()] or
@@ -101,12 +105,18 @@ mlxs_glmnet <- function(x,
 
   beta_store <- matrix(0, nrow = n_pred, ncol = n_lambda)
   intercept_store <- numeric(n_lambda)
+  grad_prev <- z0
+  lambda_prev <- lambda[1]
 
   col_sq_sums <- colSums(x_std^2)
   base_lipschitz <- max(col_sq_sums) / n_obs
   if (family_name %in% c("binomial", "quasibinomial")) {
     base_lipschitz <- 0.25 * base_lipschitz
   }
+
+  eta_mlx <- x_mlx %*% beta_mlx + ones_mlx * Rmlx::as_mlx(intercept_val)
+  mu_mlx <- family$linkinv(eta_mlx)
+  residual_mlx <- mu_mlx - y_mlx
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
@@ -115,37 +125,62 @@ mlxs_glmnet <- function(x,
       step <- 1e-3
     }
 
+    if (idx == 1) {
+      active_idx <- seq_len(n_pred)
+    } else {
+      cutoff <- alpha * (2 * lambda_val - lambda_prev)
+      strong_set <- which(abs(grad_prev) > cutoff)
+      beta_numeric <- beta_store[, idx - 1]
+      nonzero_set <- which(beta_numeric != 0)
+      active_idx <- sort(unique(c(strong_set, nonzero_set)))
+      if (length(active_idx) == 0) {
+        active_idx <- which.max(abs(grad_prev))
+      }
+    }
+
     for (iter in seq_len(maxit)) {
-      beta_prev_mlx <- beta_mlx
+      x_active <- x_mlx[, active_idx, drop = FALSE]
+      beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
 
-      intercept_scalar <- Rmlx::as_mlx(intercept_val)
-      eta_mlx <- x_mlx %*% beta_mlx + ones_mlx * intercept_scalar
-      mu_mlx <- family$linkinv(eta_mlx)
-      residual_mlx <- mu_mlx - y_mlx
-
-      grad <- crossprod(x_mlx, residual_mlx) / n_obs
+      grad_active <- crossprod(x_active, residual_mlx) / n_obs
       if (alpha < 1) {
-        grad <- grad + beta_mlx * (lambda_val * (1 - alpha))
+        grad_active <- grad_active + beta_prev_subset * (lambda_val * (1 - alpha))
       }
 
-      beta_temp <- beta_mlx - grad * step
+      beta_temp <- beta_prev_subset - grad_active * step
       thresh <- lambda_val * alpha * step
-      beta_mlx <- .mlxs_soft_threshold(beta_temp, thresh)
+      beta_new_subset <- .mlxs_soft_threshold(beta_temp, thresh)
+      delta_beta <- beta_new_subset - beta_prev_subset
+
+      beta_mlx[active_idx, ] <- beta_new_subset
 
       residual_sum <- Rmlx::mlx_sum(residual_mlx)
       intercept_grad <- residual_sum / n_obs
-      intercept_val <- intercept_val - step * intercept_grad
+      intercept_delta <- step * as.vector(intercept_grad)
+      intercept_val <- intercept_val - intercept_delta
 
-      abs_diff <- abs(beta_mlx - beta_prev_mlx)
-      exceeds <- abs_diff > tol
+      delta_exceeds <- Rmlx::mlx_any(abs(delta_beta) > tol)
+      if (isTRUE(as.vector(delta_exceeds))) {
+        eta_mlx <- eta_mlx + x_active %*% delta_beta
+      }
+      if (abs(intercept_delta) > tol) {
+        eta_mlx <- eta_mlx - ones_mlx * intercept_delta
+      }
 
-      if (! as.vector(any(exceeds))) {
+      mu_mlx <- family$linkinv(eta_mlx)
+      residual_mlx <- mu_mlx - y_mlx
+
+      max_change <- max(abs(as.vector(delta_beta)))
+      if (max_change < tol && abs(intercept_delta) < tol) {
         break
       }
     }
 
-      beta_store[, idx] <- as.matrix(beta_mlx)
-      intercept_store[idx] <- as.vector(intercept_val)
+    beta_store[, idx] <- as.vector(beta_mlx)
+    intercept_store[idx] <- intercept_val
+
+    grad_prev <- as.vector(crossprod(x_mlx, residual_mlx) / n_obs)
+    lambda_prev <- lambda_val
   }
 
   if (standardize) {

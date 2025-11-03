@@ -55,3 +55,8 @@ Fit lasso or elastic-net penalised regression paths using MLX tensors for
 the heavy linear algebra. Currently supports Gaussian and binomial families
 with an optional intercept and column standardisation.
 }
+\note{
+This function is a proof-of-concept. On large dense problems it is
+typically several times slower than the highly optimised
+\code{\link[glmnet:glmnet]{glmnet::glmnet()}} implementation.
+}
