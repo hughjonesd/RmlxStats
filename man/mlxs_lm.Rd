@@ -18,6 +18,8 @@ variables in the model.}
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing
 components similar to an \code{"lm"} fit, along with MLX intermediates stored in
 the \code{mlx} element.
+Note that MLX currently operates in single precision, so fitted values and
+diagnostics may differ from \code{stats::lm()} at around the 1e-6 level.
 }
 \description{
 Fit a linear model via QR decomposition using MLX arrays on Apple Silicon

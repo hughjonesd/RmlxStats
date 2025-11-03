@@ -4,16 +4,16 @@
 #' with MLX providing the heavy lifting for weighted least squares solves.
 #'
 #' @inheritParams stats::glm
-#' @param family A GLM family object or specification. For MLX-backed fits,
-#'   prefer the dedicated helpers (e.g., [mlxs_gaussian()], [mlxs_binomial()],
-#'   [mlxs_poisson()]) so link derivatives and deviance residuals operate on
-#'   MLX tensors without falling back to C routines.
+#' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
+#'   [mlxs_poisson()]).
 #' @param control Optional list of control parameters passed to
 #'   [stats::glm.control()].
 #'
 #' @return An object of class `c("mlxs_glm", "mlxs_model")` containing elements
 #'   similar to the result of [stats::glm()]. MLX intermediates are stored in the
-#'   `mlx` field for downstream reuse.
+#'   `mlx` field for downstream reuse. Computations use single-precision MLX
+#'   tensors, so results typically agree with [stats::glm()] to around 1e-6
+#'   unless a tighter tolerance is supplied via `control`.
 #' @export
 #'
 #' @examples

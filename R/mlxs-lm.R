@@ -11,6 +11,8 @@
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
 #'   the `mlx` element.
+#'   Note that MLX currently operates in single precision, so fitted values and
+#'   diagnostics may differ from `stats::lm()` at around the 1e-6 level.
 #' @export
 #'
 #' @examples

@@ -6,7 +6,7 @@
 \usage{
 mlxs_glm(
   formula,
-  family = stats::gaussian(),
+  family = mlxs_gaussian(),
   data,
   subset,
   na.action,
@@ -21,7 +21,8 @@ mlxs_glm(
     model to be fitted.  The details of model specification are given
     under \sQuote{Details}.}
 
-\item{family}{A GLM family object or specification.}
+\item{family}{A mlxs family object (e.g., \code{\link[=mlxs_gaussian]{mlxs_gaussian()}}, \code{\link[=mlxs_binomial]{mlxs_binomial()}},
+\code{\link[=mlxs_poisson]{mlxs_poisson()}}).}
 
 \item{data}{an optional data frame, list or environment (or object
     coercible by \code{\link{as.data.frame}} to a data frame) containing
@@ -54,7 +55,9 @@ mlxs_glm(
 \value{
 An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements
 similar to the result of \code{\link[stats:glm]{stats::glm()}}. MLX intermediates are stored in the
-\code{mlx} field for downstream reuse.
+\code{mlx} field for downstream reuse. Computations use single-precision MLX
+tensors, so results typically agree with \code{\link[stats:glm]{stats::glm()}} to around 1e-6
+unless a tighter tolerance is supplied via \code{control}.
 }
 \description{
 Fit generalized linear models using iterative reweighted least squares (IRLS)
@@ -62,7 +65,7 @@ with MLX providing the heavy lifting for weighted least squares solves.
 }
 \examples{
 if (requireNamespace("Rmlx", quietly = TRUE)) {
-  fit <- mlxs_glm(mpg ~ cyl + disp, family = stats::gaussian(), data = mtcars)
+  fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
   coef(fit)
 }
 }
