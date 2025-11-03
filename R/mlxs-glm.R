@@ -304,9 +304,9 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
 
 
 .mlxs_wls <- function(x_mlx, z_mlx) {
-  xtx <- crossprod(x_mlx)
-  xtz <- crossprod(x_mlx, z_mlx)
-  coef_mlx <- solve(xtx, xtz)
+  qr_fit <- qr(x_mlx)
+  qty <- crossprod(qr_fit$Q, z_mlx)
+  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
   fitted_mlx <- x_mlx %*% coef_mlx
   residual_mlx <- z_mlx - fitted_mlx
 
@@ -315,7 +315,7 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
     fitted.values = fitted_mlx,
     residuals = residual_mlx,
     mlx = list(
-      xtx = xtx,
+      qr = qr_fit,
       x = x_mlx,
       y = z_mlx,
       residual = residual_mlx,
