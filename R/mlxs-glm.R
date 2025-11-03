@@ -66,14 +66,6 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     Rmlx::as_mlx(matrix(x, ncol = 1))
   }
 
-  .mlx_to_scalar <- function(x) {
-    as.numeric(as.matrix(x))
-  }
-
-  .mlx_to_vector <- function(x) {
-    as.numeric(as.matrix(x))
-  }
-
   X_mlx <- Rmlx::as_mlx(X)
   y_mlx <- .as_mlx_col(y)
   weights_mlx <- .as_mlx_col(weights)
@@ -86,8 +78,8 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   }
   mu_mlx <- family$linkinv(eta_mlx)
   mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
-  eta <- .mlx_to_vector(eta_mlx)
-  mu <- .mlx_to_vector(mu_mlx)
+  eta <- as.numeric(as.matrix(eta_mlx))
+  mu <- as.numeric(as.matrix(mu_mlx))
 
   if (!is.null(family$initialize)) {
     env <- new.env(parent = environment())
@@ -122,11 +114,11 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     }
   } else {
     mu_mlx <- family$linkinv(eta_mlx)
-    mu <- .mlx_to_vector(mu_mlx)
+      mu <- as.numeric(as.matrix(mu_mlx))
   }
 
-  eta <- .mlx_to_vector(eta_mlx)
-  mu <- .mlx_to_vector(mu_mlx)
+  eta <- as.numeric(as.matrix(eta_mlx))
+  mu <- as.numeric(as.matrix(mu_mlx))
 
   dev_prev <- Inf
   converged <- FALSE
@@ -140,12 +132,12 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
 
   for (iter in seq_len(control$maxit)) {
     var_mu_mlx <- family$variance(mu_mlx)
-    if (isTRUE(.mlx_to_scalar(any(!is.finite(var_mu_mlx))))) {
+    if (any(!is.finite(as.numeric(as.matrix(var_mu_mlx))))) {
       stop("Non-finite variance function result.", call. = FALSE)
     }
 
     mu_eta_mlx <- family$mu.eta(eta_mlx)
-    if (isTRUE(.mlx_to_scalar(any(mu_eta_mlx == 0)))) {
+    if (any(as.numeric(as.matrix(mu_eta_mlx)) == 0)) {
       stop("Zero derivative of link function detected.", call. = FALSE)
     }
 
@@ -158,7 +150,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
 
     wls_fit <- .mlxs_wls(x_w_mlx, z_w_mlx)
     beta_new_mlx <- wls_fit$coefficients
-    delta_val <- .mlx_to_scalar(max(abs(beta_new_mlx - beta_mlx)))
+    delta_val <- max(abs(as.numeric(as.matrix(beta_new_mlx - beta_mlx))))
 
     eta_mlx <- X_mlx %*% beta_new_mlx
     if (!all(offset == 0)) {
@@ -168,7 +160,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
     dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-    deviance_val <- .mlx_to_scalar(sum(dev_res_mlx))
+    deviance_val <- sum(as.numeric(as.matrix(dev_res_mlx)))
     dev_change_val <- abs(deviance_val - dev_prev) / (0.1 + abs(deviance_val))
 
     if (control$trace) {
@@ -206,14 +198,14 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
   }
 
-  beta <- .mlx_to_vector(beta_mlx)
-  eta <- .mlx_to_vector(eta_mlx)
-  mu <- .mlx_to_vector(mu_mlx)
-  w <- .mlx_to_vector(w_mlx)
-  mu_eta_val <- .mlx_to_vector(mu_eta_mlx)
+  beta <- as.numeric(as.matrix(beta_mlx))
+  eta <- as.numeric(as.matrix(eta_mlx))
+  mu <- as.numeric(as.matrix(mu_mlx))
+  w <- as.numeric(as.matrix(w_mlx))
+  mu_eta_val <- as.numeric(as.matrix(mu_eta_mlx))
 
   dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-  dev_res_vec <- .mlx_to_vector(dev_res_mlx)
+  dev_res_vec <- as.numeric(as.matrix(dev_res_mlx))
   deviance <- sum(dev_res_vec)
 
   fitted_values <- mu
@@ -251,7 +243,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     null_mu <- rep(mean(y), n_obs)
   }
   null_mu_mlx <- .as_mlx_col(null_mu)
-  null_dev <- sum(.mlx_to_vector(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx)))
+  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx))))
 
   aic <- family$aic(y, weights, fitted_values, weights, deviance) + 2 * n_coef
 
