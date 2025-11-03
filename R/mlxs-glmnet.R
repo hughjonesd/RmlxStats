@@ -176,8 +176,8 @@ mlxs_glmnet <- function(x,
 .mlxs_soft_threshold <- function(z, thresh) {
   thresh_vec <- Rmlx::as_mlx(thresh)
   zero_like <- Rmlx::mlx_zeros_like(z)
-  one_like <- zero_like + Rmlx::as_mlx(1)
-  neg_one_like <- zero_like - Rmlx::as_mlx(1)
+  one_like <- Rmlx::mlx_full(dim(z), 1)
+  neg_one_like <- Rmlx::mlx_full(dim(z), -1)
   abs_z <- abs(z)
   magnitude <- abs_z - thresh_vec
   magnitude <- Rmlx::mlx_where(magnitude > zero_like, magnitude, zero_like)
