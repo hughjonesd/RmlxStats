@@ -72,3 +72,26 @@ test_that("mlxs_glm binomial matches stats::glm", {
   aug_df <- augment(mlx_fit)
   expect_equal(unname(aug_df$.fitted), unname(fitted(base_fit)), tolerance = 1e-5)
 })
+
+test_that("mlxs_glm poisson matches stats::glm", {
+  skip_if_not_installed("Rmlx")
+
+  data <- mtcars
+  data$cyl_count <- round(abs(data$cyl + rnorm(nrow(data), sd = 0.25)))
+  formula <- cyl_count ~ mpg + wt
+
+  base_fit <- glm(formula, data = data, family = poisson())
+  mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_poisson())
+
+  expect_true(mlx_fit$converged)
+  expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-5)
+  expect_equal(unname(mlx_fit$fitted.values), as.vector(fitted(base_fit)), tolerance = 1e-5)
+  expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
+
+  newdata <- head(data)
+  expect_equal(
+    predict(mlx_fit, newdata = newdata, type = "response"),
+    predict(base_fit, newdata = newdata, type = "response"),
+    tolerance = 1e-5
+  )
+})
