@@ -59,9 +59,32 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
 
   weights <- rep.int(1, n_obs)
   offset <- rep.int(0, n_obs)
-  eta <- drop(X %*% coef_start)
-  mu <- family$linkinv(eta)
-  mu <- .mlxs_glm_clamp_mu(mu, family)
+  .as_mlx_col <- function(x) {
+    Rmlx::as_mlx(matrix(x, ncol = 1))
+  }
+
+  .mlx_to_scalar <- function(x) {
+    as.numeric(as.matrix(x))
+  }
+
+  .mlx_to_vector <- function(x) {
+    as.numeric(as.matrix(x))
+  }
+
+  X_mlx <- Rmlx::as_mlx(X)
+  y_mlx <- .as_mlx_col(y)
+  weights_mlx <- .as_mlx_col(weights)
+  offset_mlx <- .as_mlx_col(offset)
+
+  beta_mlx <- .as_mlx_col(coef_start)
+  eta_mlx <- X_mlx %*% beta_mlx
+  if (!all(offset == 0)) {
+    eta_mlx <- eta_mlx + offset_mlx
+  }
+  mu_mlx <- family$linkinv(eta_mlx)
+  mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
+  eta <- .mlx_to_vector(eta_mlx)
+  mu <- .mlx_to_vector(mu_mlx)
 
   if (!is.null(family$initialize)) {
     env <- new.env(parent = environment())
@@ -81,78 +104,97 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
     eval(family$initialize, envir = env)
     if (exists("mustart", envir = env, inherits = FALSE)) {
       mu <- get("mustart", envir = env, inherits = FALSE)
+      mu_mlx <- .as_mlx_col(mu)
     }
     if (exists("etastart", envir = env, inherits = FALSE)) {
       eta_candidate <- get("etastart", envir = env, inherits = FALSE)
       if (!is.null(eta_candidate)) {
         eta <- eta_candidate
+        eta_mlx <- .as_mlx_col(eta)
       } else {
-        eta <- family$linkfun(mu)
+        eta_mlx <- family$linkfun(mu_mlx)
       }
     } else {
-      eta <- family$linkfun(mu)
+      eta_mlx <- family$linkfun(mu_mlx)
     }
   } else {
-    mu <- family$linkinv(eta)
+    mu_mlx <- family$linkinv(eta_mlx)
+    mu <- .mlx_to_vector(mu_mlx)
   }
 
+  eta <- .mlx_to_vector(eta_mlx)
+  mu <- .mlx_to_vector(mu_mlx)
+
   dev_prev <- Inf
-  beta <- coef_start
   converged <- FALSE
   mlx_state <- NULL
   iter_count <- control$maxit
+  eps_mlx <- Rmlx::as_mlx(.Machine$double.eps)
+  epsilon_target <- max(control$epsilon, 1e-6)
+
+  mu_eta_mlx <- family$mu.eta(eta_mlx)
+  w_mlx <- mu_eta_mlx / sqrt(family$variance(mu_mlx))
 
   for (iter in seq_len(control$maxit)) {
-    var_mu <- family$variance(mu)
-    mu_eta_val <- family$mu.eta(eta)
-    if (any(!is.finite(var_mu))) {
+    var_mu_mlx <- family$variance(mu_mlx)
+    if (isTRUE(.mlx_to_scalar(any(!is.finite(var_mu_mlx))))) {
       stop("Non-finite variance function result.", call. = FALSE)
     }
-    if (any(mu_eta_val == 0)) {
+
+    mu_eta_mlx <- family$mu.eta(eta_mlx)
+    if (isTRUE(.mlx_to_scalar(any(mu_eta_mlx == 0)))) {
       stop("Zero derivative of link function detected.", call. = FALSE)
     }
 
-    z <- eta + (y - mu) / mu_eta_val
-    w <- mu_eta_val / sqrt(var_mu)
-    w <- pmax(w, .Machine$double.eps)
+    z_mlx <- eta_mlx + (y_mlx - mu_mlx) / mu_eta_mlx
+    w_mlx <- mu_eta_mlx / sqrt(var_mu_mlx)
+    w_mlx <- Rmlx::mlx_where(w_mlx < eps_mlx, eps_mlx, w_mlx)
 
-    x_w <- sweep(X, 1L, w, `*`)
-    z_w <- z * w
+    x_w_mlx <- Rmlx::mlx_broadcast_to(w_mlx, dim(X_mlx)) * X_mlx
+    z_w_mlx <- z_mlx * w_mlx
 
-    wls_fit <- .mlxs_wls(x_w, z_w)
-    beta_new <- wls_fit$coefficients
-    delta <- max(abs(beta_new - beta))
+    wls_fit <- .mlxs_wls(x_w_mlx, z_w_mlx)
+    beta_new_mlx <- wls_fit$coefficients
+    delta_val <- .mlx_to_scalar(max(abs(beta_new_mlx - beta_mlx)))
 
-    eta <- drop(X %*% beta_new)
-    mu <- family$linkinv(eta)
-    mu <- .mlxs_glm_clamp_mu(mu, family)
+    eta_mlx <- X_mlx %*% beta_new_mlx
+    if (!all(offset == 0)) {
+      eta_mlx <- eta_mlx + offset_mlx
+    }
+    mu_mlx <- family$linkinv(eta_mlx)
+    mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
-    deviance <- sum(family$dev.resids(y, mu, weights))
-    dev_change <- abs(deviance - dev_prev) / (0.1 + abs(deviance))
+    dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
+    deviance_val <- .mlx_to_scalar(sum(dev_res_mlx))
+    dev_change_val <- abs(deviance_val - dev_prev) / (0.1 + abs(deviance_val))
 
     if (control$trace) {
-      message("Iter ", iter, ": deviance = ", format(deviance, digits = 6),
-              ", delta = ", format(delta, digits = 6),
-              ", dev_change = ", format(dev_change, digits = 6))
+      message(
+        "Iter ", iter, ": deviance = ", format(deviance_val, digits = 6),
+        ", delta = ", format(delta_val, digits = 6),
+        ", dev_change = ", format(dev_change_val, digits = 6)
+      )
     }
 
-    if (delta < control$epsilon || dev_change < control$epsilon) {
+    if (delta_val < epsilon_target || dev_change_val < epsilon_target) {
       converged <- TRUE
       mlx_state <- wls_fit$mlx
-      beta <- beta_new
+      beta_mlx <- beta_new_mlx
+      dev_prev <- deviance_val
       iter_count <- iter
       break
     }
-    if (!is.finite(deviance) || (deviance > dev_prev && abs(deviance - dev_prev) > control$epsilon)) {
+    if (!is.finite(deviance_val) || (deviance_val > dev_prev && abs(deviance_val - dev_prev) > epsilon_target)) {
       warning("Divergence detected in mlxs_glm; stopping iterations.", call. = FALSE)
-      beta <- beta_new
+      beta_mlx <- beta_new_mlx
       mlx_state <- wls_fit$mlx
+      dev_prev <- deviance_val
       iter_count <- iter
       break
     }
 
-    beta <- beta_new
-    dev_prev <- deviance
+    beta_mlx <- beta_new_mlx
+    dev_prev <- deviance_val
     mlx_state <- wls_fit$mlx
     iter_count <- iter
   }
@@ -161,10 +203,19 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
     warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
   }
 
+  beta <- .mlx_to_vector(beta_mlx)
+  eta <- .mlx_to_vector(eta_mlx)
+  mu <- .mlx_to_vector(mu_mlx)
+  w <- .mlx_to_vector(w_mlx)
+  mu_eta_val <- .mlx_to_vector(mu_eta_mlx)
+
+  dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
+  dev_res_vec <- .mlx_to_vector(dev_res_mlx)
+  deviance <- sum(dev_res_vec)
+
   fitted_values <- mu
   residuals <- y - fitted_values
-  deviance_residuals <- sign(residuals) * sqrt(family$dev.resids(y, fitted_values, weights))
-  deviance <- sum(family$dev.resids(y, fitted_values, weights))
+  deviance_residuals <- sign(residuals) * sqrt(dev_res_vec)
   working_weights <- pmax(w, .Machine$double.eps)^2
   working_residuals <- (y - fitted_values) / mu_eta_val
 
@@ -196,13 +247,14 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
   } else {
     null_mu <- rep(mean(y), n_obs)
   }
-  null_dev <- sum(family$dev.resids(y, null_mu, weights))
+  null_mu_mlx <- .as_mlx_col(null_mu)
+  null_dev <- sum(.mlx_to_vector(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx)))
 
   aic <- family$aic(y, weights, fitted_values, weights, deviance) + 2 * n_coef
 
-  eta_mlx <- Rmlx::as_mlx(matrix(eta, ncol = 1))
-  fitted_mlx <- Rmlx::as_mlx(matrix(fitted_values, ncol = 1))
-  resid_mlx <- Rmlx::as_mlx(matrix(residuals, ncol = 1))
+  eta_mlx_out <- eta_mlx
+  fitted_mlx <- mu_mlx
+  resid_mlx <- y_mlx - mu_mlx
 
   result <- list(
     coefficients = beta,
@@ -230,7 +282,7 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
       y = mlx_state$y,
       residual = mlx_state$residual,
       coef = mlx_state$coef,
-      eta = eta_mlx,
+      eta = eta_mlx_out,
       fitted = fitted_mlx,
       residual_vector = resid_mlx
     ),
@@ -250,10 +302,8 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
   result
 }
 
-.mlxs_wls <- function(x, z) {
-  x_mlx <- Rmlx::as_mlx(x)
-  z_mlx <- Rmlx::as_mlx(matrix(z, ncol = 1))
 
+.mlxs_wls <- function(x_mlx, z_mlx) {
   qr_fit <- qr(x_mlx)
   qty <- crossprod(qr_fit$Q, z_mlx)
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
@@ -261,9 +311,9 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
   residual_mlx <- z_mlx - fitted_mlx
 
   list(
-    coefficients = drop(as.matrix(coef_mlx)),
-    fitted.values = drop(as.matrix(fitted_mlx)),
-    residuals = drop(as.matrix(residual_mlx)),
+    coefficients = coef_mlx,
+    fitted.values = fitted_mlx,
+    residuals = residual_mlx,
     mlx = list(
       qr = qr_fit,
       x = x_mlx,
@@ -278,9 +328,14 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
   fam <- family$family
   if (fam %in% c("binomial", "quasibinomial")) {
     eps <- .Machine$double.eps
-    mu <- pmin(pmax(mu, eps), 1 - eps)
+    eps_mlx <- Rmlx::as_mlx(eps)
+    upper_mlx <- Rmlx::as_mlx(1 - eps)
+    mu <- Rmlx::mlx_where(mu < eps_mlx, eps_mlx, mu)
+    mu <- Rmlx::mlx_where(mu > upper_mlx, upper_mlx, mu)
   } else if (fam %in% c("poisson", "quasipoisson")) {
-    mu <- pmax(mu, .Machine$double.eps)
+    eps <- .Machine$double.eps
+    eps_mlx <- Rmlx::as_mlx(eps)
+    mu <- Rmlx::mlx_where(mu < eps_mlx, eps_mlx, mu)
   }
   mu
 }

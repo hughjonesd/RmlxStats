@@ -20,6 +20,26 @@
 #' @name mlxs_glm_methods
 NULL
 
+.mlxs_family_as_base <- function(family) {
+  fam_name <- family$family
+  link_name <- family$link
+  factory <- switch(
+    fam_name,
+    binomial = stats::binomial,
+    quasibinomial = stats::quasibinomial,
+    poisson = stats::poisson,
+    quasipoisson = stats::quasipoisson,
+    gaussian = stats::gaussian,
+    Gamma = stats::Gamma,
+    inverse.gaussian = stats::inverse.gaussian,
+    NULL
+  )
+  if (is.null(factory)) {
+    return(family)
+  }
+  factory(link = link_name)
+}
+
 .mlxs_glm_as_glm <- function(object) {
   X <- stats::model.matrix(object$terms, object$model)
   ww <- object$working.weights
@@ -37,7 +57,7 @@ NULL
     effects = NULL,
     R = NULL,
     rank = object$rank,
-    family = object$family,
+    family = .mlxs_family_as_base(object$family),
     linear.predictors = object$linear.predictors,
     deviance = object$deviance,
     aic = object$aic,
