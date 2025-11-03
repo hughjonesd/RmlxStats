@@ -98,6 +98,9 @@ mlxs_glmnet <- function(x,
   x_mlx <- Rmlx::as_mlx(x_std)
   y_mlx <- Rmlx::as_mlx(matrix(y, ncol = 1))
   beta_mlx <- Rmlx::as_mlx(matrix(0, nrow = n_pred, ncol = 1))
+  tol_mlx <- Rmlx::as_mlx(matrix(tol, nrow = n_pred, ncol = 1))
+  one_mlx <- Rmlx::as_mlx(matrix(1, nrow = n_pred, ncol = 1))
+  zero_mlx <- Rmlx::as_mlx(matrix(0, nrow = n_pred, ncol = 1))
 
   beta_store <- matrix(0, nrow = n_pred, ncol = n_lambda)
   intercept_store <- numeric(n_lambda)
@@ -116,6 +119,8 @@ mlxs_glmnet <- function(x,
     }
 
     for (iter in seq_len(maxit)) {
+      beta_prev_mlx <- beta_mlx
+
       intercept_scalar <- Rmlx::as_mlx(matrix(intercept_val, nrow = 1, ncol = 1))
       eta_mlx <- x_mlx %*% beta_mlx + ones_mlx * intercept_scalar
       mu_mlx <- family$linkinv(eta_mlx)
@@ -126,7 +131,6 @@ mlxs_glmnet <- function(x,
         grad <- grad + beta_mlx * (lambda_val * (1 - alpha))
       }
 
-      beta_prev_vec <- .mlxs_to_numeric(beta_mlx)
       beta_temp <- beta_mlx - grad * step
       thresh <- lambda_val * alpha * step
       beta_mlx <- .mlxs_soft_threshold(beta_temp, thresh)
@@ -135,9 +139,10 @@ mlxs_glmnet <- function(x,
       intercept_grad <- residual_sum / n_obs
       intercept_val <- intercept_val - step * intercept_grad
 
-      beta_curr_vec <- .mlxs_to_numeric(beta_mlx)
-      delta <- max(abs(beta_curr_vec - beta_prev_vec))
-      if (delta < tol) {
+      abs_diff <- abs(beta_mlx - beta_prev_mlx)
+      exceeds <- Rmlx::mlx_where(abs_diff > tol_mlx, one_mlx, zero_mlx)
+      active_updates <- .mlxs_to_numeric(Rmlx::mlx_sum(exceeds))
+      if (active_updates < 0.5) {
         break
       }
     }
