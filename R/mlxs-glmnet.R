@@ -132,19 +132,20 @@ mlxs_glmnet <- function(x,
       thresh <- lambda_val * alpha * step
       beta_mlx <- .mlxs_soft_threshold(beta_temp, thresh)
 
-      residual_sum <- as.numeric(as.matrix(Rmlx::mlx_sum(residual_mlx)))
+      residual_sum <- Rmlx::mlx_sum(residual_mlx)
       intercept_grad <- residual_sum / n_obs
       intercept_val <- intercept_val - step * intercept_grad
 
       abs_diff <- abs(beta_mlx - beta_prev_mlx)
       exceeds <- abs_diff > tol
-      if (!any(as.logical(as.matrix(exceeds)))) {
+
+      if (! as.vector(any(exceeds))) {
         break
       }
     }
 
-      beta_store[, idx] <- as.numeric(as.matrix(beta_mlx))
-      intercept_store[idx] <- intercept_val
+      beta_store[, idx] <- as.matrix(beta_mlx)
+      intercept_store[idx] <- as.vector(intercept_val)
   }
 
   if (standardize) {
