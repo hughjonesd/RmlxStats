@@ -84,7 +84,8 @@ mlxs_binomial <- function(link = "logit") {
   }
   mu_eta <- function(eta) {
     mu <- linkinv(eta)
-    mu * (1 - mu)
+    eps <- Rmlx::as_mlx(1e-6)
+    Rmlx::mlx_where(mu * (1 - mu) < eps, eps, mu * (1 - mu))
   }
   list(
     linkfun = function(mu) {
@@ -105,7 +106,11 @@ mlxs_binomial <- function(link = "logit") {
       log(mu)
     },
     linkinv = linkinv,
-    mu.eta = linkinv,
+    mu.eta = function(eta) {
+      eps <- Rmlx::as_mlx(1e-6)
+      deriv <- linkinv(eta)
+      Rmlx::mlx_where(deriv < eps, eps, deriv)
+    },
     valideta = function(eta) all(is.finite(eta))
   )
 }
@@ -120,7 +125,9 @@ mlxs_binomial <- function(link = "logit") {
     },
     linkinv = linkinv,
     mu.eta = function(eta) {
-      exp(eta - exp(eta))
+      eps <- Rmlx::as_mlx(1e-6)
+      deriv <- exp(eta - exp(eta))
+      Rmlx::mlx_where(deriv < eps, eps, deriv)
     },
     valideta = function(eta) all(is.finite(eta))
   )
@@ -136,7 +143,9 @@ mlxs_binomial <- function(link = "logit") {
     },
     linkinv = linkinv,
     mu.eta = function(eta) {
-      1 / (pi * (1 + eta^2))
+      eps <- Rmlx::as_mlx(1e-6)
+      deriv <- 1 / (pi * (1 + eta^2))
+      Rmlx::mlx_where(deriv < eps, eps, deriv)
     },
     valideta = function(eta) all(is.finite(eta))
   )

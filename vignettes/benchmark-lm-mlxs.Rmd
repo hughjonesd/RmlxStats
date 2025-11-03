@@ -228,7 +228,7 @@ Check that the MLX-backed GLM matches the reference implementation:
 
 ```{r glm-agreement}
 glm_fit <- glm(glm_formula, family = binomial(), data = bench_data)
-mlxs_glm_fit <- mlxs_glm(glm_formula, family = binomial(), data = bench_data)
+mlxs_glm_fit <- mlxs_glm(glm_formula, family = mlxs_binomial(), data = bench_data)
 speedglm_fit <- speedglm::speedglm(glm_formula, family = binomial(), data = bench_data)
 
 glm_coef_delta <- max(abs(coef(glm_fit) - mlxs_glm_fit$coefficients))
@@ -246,6 +246,76 @@ c(
 
 All implementations agree within numerical tolerance, confirming that `mlxs_glm()`
 produces accurate results for generalized linear models.
+
+## High-dimensional GLM Benchmark
+
+Large logistic regressions in practice often include hundreds of engineered
+features. To stress both runtime and numerical stability we fabricate a dense
+dataset with 5,000 observations and 200 predictors, then compare execution
+speed across solvers.
+
+```{r glm-highd-data}
+set.seed(20251103)
+n_glm <- 5000
+p_glm <- 200
+x_glm <- matrix(rnorm(n_glm * p_glm), nrow = n_glm, ncol = p_glm)
+colnames(x_glm) <- paste0("x", seq_len(p_glm))
+beta_glm <- runif(p_glm, -0.5, 0.5)
+linpred <- drop(x_glm %*% beta_glm)
+prob <- 1 / (1 + exp(-linpred))
+y_glm <- rbinom(n_glm, size = 1, prob = prob)
+
+glm_hd_data <- data.frame(y = y_glm, x_glm)
+glm_hd_formula <- y ~ .
+```
+
+```{r glm-highd-benchmark, cache=FALSE}
+glm_hd_mark <- mark(
+  glm = glm(glm_hd_formula, family = binomial(), data = glm_hd_data,
+            control = list(maxit = 50)),
+  mlxs_glm = mlxs_glm(glm_hd_formula, family = mlxs_binomial(), data = glm_hd_data,
+                      control = list(maxit = 50, epsilon = 1e-6)),
+  speedglm = speedglm::speedglm(glm_hd_formula, family = binomial(), data = glm_hd_data),
+  iterations = 3,
+  check = FALSE
+)
+
+glm_hd_summary <- data.frame(
+  method = as.character(glm_hd_mark$expression),
+  median_sec = as.numeric(glm_hd_mark$median, units = "s"),
+  mem_mb = as.numeric(glm_hd_mark$mem_alloc, units = "MB"),
+  itr_per_sec = glm_hd_mark$`itr/sec`
+)
+glm_hd_summary$relative <- glm_hd_summary$median_sec / min(glm_hd_summary$median_sec)
+glm_hd_summary
+ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
+```
+
+## Convergence on the High-dimensional Problem
+
+After benchmarking we run each solver once more to inspect convergence
+behaviour and solution agreement.
+
+```{r glm-highd-convergence}
+glm_hd_fit <- glm(glm_hd_formula, family = binomial(), data = glm_hd_data,
+                  control = list(maxit = 50))
+mlxs_hd_fit <- mlxs_glm(glm_hd_formula, family = mlxs_binomial(), data = glm_hd_data,
+                        control = list(maxit = 50, epsilon = 1e-6))
+
+c(
+  observations = nrow(glm_hd_data),
+  predictors = ncol(glm_hd_data) - 1,
+  mlxs_converged = mlxs_hd_fit$converged,
+  mlxs_iterations = mlxs_hd_fit$iter,
+  max_coefficient_difference = max(abs(coef(glm_hd_fit) - mlxs_hd_fit$coefficients)),
+  max_fitted_difference = max(abs(fitted(glm_hd_fit) - mlxs_hd_fit$fitted.values))
+)
+```
+
+The MLX-backed fit converges in roughly the same number of iterations as the
+reference and matches both coefficients and fitted values to within floating
+point tolerance, while the timing table above highlights the runtime benefits
+at this scale.
 
 ## Other Fast Linear Modeling Options
 

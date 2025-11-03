@@ -123,16 +123,12 @@ residuals.mlxs_glm <- function(object,
 }
 
 .mlxs_glm_vcov <- function(object) {
-  qr_fit <- object$mlx$qr
-  if (is.null(qr_fit)) {
+  xtx <- object$mlx$xtx
+  if (is.null(xtx)) {
     return(stats::vcov(.mlxs_glm_as_glm(object)))
   }
-  r_mlx <- qr_fit$R
-  n_coef <- length(object$coefficients)
-  identity_mlx <- Rmlx::mlx_eye(n_coef)
-  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, identity_mlx, upper = TRUE)
-  vcov_mlx <- r_inv %*% t(r_inv)
-  vc <- as.matrix(vcov_mlx) * object$dispersion
+  xtx_inv <- solve(xtx)
+  vc <- as.matrix(xtx_inv) * object$dispersion
   dimnames(vc) <- list(names(object$coefficients), names(object$coefficients))
   vc
 }

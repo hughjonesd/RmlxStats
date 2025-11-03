@@ -304,9 +304,9 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
 
 
 .mlxs_wls <- function(x_mlx, z_mlx) {
-  qr_fit <- qr(x_mlx)
-  qty <- crossprod(qr_fit$Q, z_mlx)
-  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
+  xtx <- crossprod(x_mlx)
+  xtz <- crossprod(x_mlx, z_mlx)
+  coef_mlx <- solve(xtx, xtz)
   fitted_mlx <- x_mlx %*% coef_mlx
   residual_mlx <- z_mlx - fitted_mlx
 
@@ -315,7 +315,7 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
     fitted.values = fitted_mlx,
     residuals = residual_mlx,
     mlx = list(
-      qr = qr_fit,
+      xtx = xtx,
       x = x_mlx,
       y = z_mlx,
       residual = residual_mlx,
@@ -327,13 +327,13 @@ mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
 .mlxs_glm_clamp_mu <- function(mu, family) {
   fam <- family$family
   if (fam %in% c("binomial", "quasibinomial")) {
-    eps <- .Machine$double.eps
+    eps <- 1e-6
     eps_mlx <- Rmlx::as_mlx(eps)
     upper_mlx <- Rmlx::as_mlx(1 - eps)
     mu <- Rmlx::mlx_where(mu < eps_mlx, eps_mlx, mu)
     mu <- Rmlx::mlx_where(mu > upper_mlx, upper_mlx, mu)
   } else if (fam %in% c("poisson", "quasipoisson")) {
-    eps <- .Machine$double.eps
+    eps <- 1e-6
     eps_mlx <- Rmlx::as_mlx(eps)
     mu <- Rmlx::mlx_where(mu < eps_mlx, eps_mlx, mu)
   }
