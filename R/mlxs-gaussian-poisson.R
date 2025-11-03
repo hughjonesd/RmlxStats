@@ -29,9 +29,9 @@ mlxs_gaussian <- function(link = "identity") {
 
   base_family$dev.resids <- function(y, mu, wt) {
     if (inherits(y, "mlx") || inherits(mu, "mlx") || inherits(wt, "mlx")) {
-      y_mlx <- .mlxs_as_mlx(y)
-      mu_mlx <- .mlxs_as_mlx(mu)
-      wt_mlx <- .mlxs_as_mlx(wt)
+      y_mlx <- Rmlx::as_mlx(y)
+      mu_mlx <- Rmlx::as_mlx(mu)
+      wt_mlx <- Rmlx::as_mlx(wt)
       diff <- y_mlx - mu_mlx
       wt_mlx * (diff * diff)
     } else {
@@ -40,8 +40,8 @@ mlxs_gaussian <- function(link = "identity") {
   }
 
   base_family$aic <- function(y, n, mu, wt, dev) {
-    y_num <- .mlxs_to_numeric(y)
-    wt_num <- .mlxs_to_numeric(wt)
+    y_num <- as.numeric(as.matrix(y))
+    wt_num <- as.numeric(as.matrix(wt))
     nobs <- length(y_num)
     nobs * (log(dev / nobs * 2 * pi) + 1) + 2 - sum(log(wt_num))
   }
@@ -80,9 +80,9 @@ mlxs_poisson <- function(link = "log") {
 
   base_family$dev.resids <- function(y, mu, wt) {
     if (inherits(y, "mlx") || inherits(mu, "mlx") || inherits(wt, "mlx")) {
-      y_mlx <- .mlxs_as_mlx(y)
-      mu_mlx <- .mlxs_as_mlx(mu)
-      wt_mlx <- .mlxs_as_mlx(wt)
+      y_mlx <- Rmlx::as_mlx(y)
+      mu_mlx <- Rmlx::as_mlx(mu)
+      wt_mlx <- Rmlx::as_mlx(wt)
 
       eps <- Rmlx::as_mlx(1e-6)
       mu_clamped <- Rmlx::mlx_where(mu_mlx < eps, eps, mu_mlx)
@@ -102,14 +102,14 @@ mlxs_poisson <- function(link = "log") {
   }
 
   base_family$aic <- function(y, n, mu, wt, dev) {
-    y_num <- .mlxs_to_numeric(y)
-    mu_num <- .mlxs_to_numeric(mu)
-    wt_num <- .mlxs_to_numeric(wt)
+    y_num <- as.numeric(as.matrix(y))
+    mu_num <- as.numeric(as.matrix(mu))
+    wt_num <- as.numeric(as.matrix(wt))
     -2 * sum(dpois(y_num, mu_num, log = TRUE) * wt_num)
   }
 
   base_family$validmu <- function(mu) {
-    mu_num <- .mlxs_to_numeric(mu)
+    mu_num <- as.numeric(as.matrix(mu))
     all(is.finite(mu_num)) && all(mu_num > 0)
   }
 
