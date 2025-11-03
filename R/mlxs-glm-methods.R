@@ -145,6 +145,17 @@ vcov.mlxs_glm <- function(object, ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
+print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  glm_obj <- .mlxs_glm_as_glm(x)
+  if (!is.null(glm_obj$call)) {
+    glm_obj$call[[1]] <- quote(mlxs_glm)
+  }
+  print(glm_obj, digits = digits, ...)
+  invisible(x)
+}
+
+#' @rdname mlxs_glm_methods
+#' @export
 summary.mlxs_glm <- function(object, ...) {
   sum_glm <- summary(.mlxs_glm_as_glm(object), dispersion = object$dispersion, ...)
   class(sum_glm) <- c("summary.mlxs_glm", setdiff(class(sum_glm), "summary.mlxs_glm"))

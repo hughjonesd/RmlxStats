@@ -7,6 +7,7 @@
 \alias{fitted.mlxs_glm}
 \alias{residuals.mlxs_glm}
 \alias{vcov.mlxs_glm}
+\alias{print.mlxs_glm}
 \alias{summary.mlxs_glm}
 \alias{print.summary.mlxs_glm}
 \alias{anova.mlxs_glm}
@@ -34,6 +35,8 @@
 \method{residuals}{mlxs_glm}(object, type = c("deviance", "pearson", "working", "response"), ...)
 
 \method{vcov}{mlxs_glm}(object, ...)
+
+\method{print}{mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
 \method{summary}{mlxs_glm}(object, ...)
 

@@ -205,7 +205,7 @@ glm_formula <- late ~ dep_delay + air_time + distance
 ```{r glm-timings, cache=FALSE}
 glm_mark <- mark(
   glm = glm(glm_formula, family = binomial(), data = bench_data),
-  mlxs_glm = mlxs_glm(glm_formula, family = binomial(), data = bench_data),
+  mlxs_glm = mlxs_glm(glm_formula, family = mlxs_binomial(), data = bench_data),
   speedglm = speedglm::speedglm(glm_formula, family = binomial(), data = bench_data),
   iterations = 5,
   check = FALSE
