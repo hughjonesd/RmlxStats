@@ -150,3 +150,59 @@ mlxs_binomial <- function(link = "logit") {
     valideta = function(eta) all(is.finite(eta))
   )
 }
+
+.mlxs_identity_link <- function() {
+  list(
+    linkfun = function(mu) mu,
+    linkinv = function(eta) eta,
+    mu.eta = function(eta) {
+      if (inherits(eta, "mlx")) {
+        eta - eta + Rmlx::as_mlx(1)
+      } else {
+        rep.int(1, length(eta))
+      }
+    },
+    valideta = function(eta) all(is.finite(eta))
+  )
+}
+
+.mlxs_inverse_link <- function() {
+  list(
+    linkfun = function(mu) 1 / mu,
+    linkinv = function(eta) {
+      eps <- Rmlx::as_mlx(1e-6)
+      eta_adj <- if (inherits(eta, "mlx")) {
+        Rmlx::mlx_where(abs(eta) < eps, Rmlx::mlx_where(eta >= 0, eps, -eps), eta)
+      } else {
+        pmax(pmin(eta, -1e-6), 1e-6)
+      }
+      1 / eta_adj
+    },
+    mu.eta = function(eta) {
+      if (inherits(eta, "mlx")) {
+        eta_adj <- Rmlx::mlx_where(abs(eta) < Rmlx::as_mlx(1e-6),
+                                   Rmlx::mlx_where(eta >= 0, Rmlx::as_mlx(1e-6), Rmlx::as_mlx(-1e-6)),
+                                   eta)
+        -1 / (eta_adj^2)
+      } else {
+        -1 / (pmax(pmin(eta, -1e-6), 1e-6)^2)
+      }
+    },
+    valideta = function(eta) all(is.finite(eta)) && all(eta != 0)
+  )
+}
+
+.mlxs_sqrt_link <- function() {
+  list(
+    linkfun = function(mu) sqrt(mu),
+    linkinv = function(eta) eta^2,
+    mu.eta = function(eta) {
+      if (inherits(eta, "mlx")) {
+        2 * eta
+      } else {
+        2 * eta
+      }
+    },
+    valideta = function(eta) all(is.finite(eta)) && all(eta > 0)
+  )
+}
