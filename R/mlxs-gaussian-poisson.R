@@ -76,7 +76,7 @@ mlxs_poisson <- function(link = "log") {
     y_num <- as.numeric(as.matrix(y))
     mu_num <- as.numeric(as.matrix(mu))
     wt_num <- as.numeric(as.matrix(wt))
-    -2 * sum(dpois(y_num, mu_num, log = TRUE) * wt_num)
+    -2 * sum(stats::dpois(y_num, mu_num, log = TRUE) * wt_num)
   }
 
   base_family

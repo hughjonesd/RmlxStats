@@ -81,6 +81,8 @@ supported?}
 
 \item{x}{An \code{mlxs_glm} model fit (for methods with a leading \code{x} argument).}
 
+\item{digits}{Number of significant digits to print for summaries.}
+
 \item{formula, data}{Optional formula and data overrides used by
 \code{augment.mlxs_glm()}.}
 

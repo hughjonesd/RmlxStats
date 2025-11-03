@@ -22,7 +22,7 @@ Suggests:
     fixest,
     RcppEigen,
     speedglm,
-    ggplot2,
+    glmnet,
     fastglm,
     tidyr,
     ggbeeswarm

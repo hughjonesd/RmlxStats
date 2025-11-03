@@ -11,6 +11,7 @@
 #' @param se.fit Logical. Should standard errors of the fit be returned when
 #'   supported?
 #' @param x An `mlxs_glm` model fit (for methods with a leading `x` argument).
+#' @param digits Number of significant digits to print for summaries.
 #' @param formula,data Optional formula and data overrides used by
 #'   `augment.mlxs_glm()`.
 #' @param type.predict,type.residuals Character strings controlling the scale of
