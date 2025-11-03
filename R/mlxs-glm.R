@@ -4,7 +4,10 @@
 #' with MLX providing the heavy lifting for weighted least squares solves.
 #'
 #' @inheritParams stats::glm
-#' @param family A GLM family object or specification.
+#' @param family A GLM family object or specification. For MLX-backed fits,
+#'   prefer the dedicated helpers (e.g., [mlxs_gaussian()], [mlxs_binomial()],
+#'   [mlxs_poisson()]) so link derivatives and deviance residuals operate on
+#'   MLX tensors without falling back to C routines.
 #' @param control Optional list of control parameters passed to
 #'   [stats::glm.control()].
 #'
@@ -15,10 +18,10 @@
 #'
 #' @examples
 #' if (requireNamespace("Rmlx", quietly = TRUE)) {
-#'   fit <- mlxs_glm(mpg ~ cyl + disp, family = stats::gaussian(), data = mtcars)
+#'   fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
 #'   coef(fit)
 #' }
-mlxs_glm <- function(formula, family = stats::gaussian(), data, subset,
+mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
                      na.action, start = NULL, control = list(), ...) {
   call <- match.call()
 
