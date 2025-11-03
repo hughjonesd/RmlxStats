@@ -56,10 +56,13 @@ mlxs_glmnet <- function(x,
   n_pred <- ncol(x)
 
   if (standardize) {
-    x_std <- scale(x, center = TRUE, scale = TRUE)
-    x_center <- attr(x_std, "scaled:center")
-    x_scale <- attr(x_std, "scaled:scale")
+    x_center <- colMeans(x)
+    x_scale <- apply(x, 2, stats::sd)
     x_scale[is.na(x_scale) | x_scale == 0] <- 1
+    x_mlx_scaled <- scale(Rmlx::as_mlx(x), center = x_center, scale = x_scale)
+    x_std <- as.matrix(x_mlx_scaled)
+    attr(x_std, "scaled:center") <- x_center
+    attr(x_std, "scaled:scale") <- x_scale
   } else {
     x_std <- x
     x_center <- rep(0, n_pred)
