@@ -98,7 +98,6 @@ mlxs_glmnet <- function(x,
   x_mlx <- Rmlx::as_mlx(x_std)
   y_mlx <- Rmlx::as_mlx(matrix(y, ncol = 1))
   beta_mlx <- Rmlx::as_mlx(matrix(0, nrow = n_pred, ncol = 1))
-  tol_mlx <- Rmlx::as_mlx(tol)
 
   beta_store <- matrix(0, nrow = n_pred, ncol = n_lambda)
   intercept_store <- numeric(n_lambda)
@@ -138,9 +137,8 @@ mlxs_glmnet <- function(x,
       intercept_val <- intercept_val - step * intercept_grad
 
       abs_diff <- abs(beta_mlx - beta_prev_mlx)
-      exceeds <- Rmlx::mlx_where(abs_diff > tol_mlx, Rmlx::as_mlx(1), Rmlx::as_mlx(0))
-      active_updates <- as.numeric(as.matrix(Rmlx::mlx_sum(exceeds)))
-      if (active_updates < 0.5) {
+      exceeds <- abs_diff > tol
+      if (!any(as.logical(as.matrix(exceeds)))) {
         break
       }
     }
