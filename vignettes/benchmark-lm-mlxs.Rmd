@@ -323,3 +323,68 @@ Beyond the methods benchmarked here, practitioners often turn to
 `biglm::biglm()` for streamed data that do not fit in memory or
 `glmnet` for elastic-net regularisation. Packages such as `MatrixModels`
 and `SparseM` also provide optimized pathways for sparse design matrices.
+
+## Elastic Net on Flights Data
+
+Finally we try the MLX-backed elastic-net solver on flights, expanding the
+feature set with interaction terms to create a challenging regression. The
+benchmark compares `glmnet::glmnet()` with the new [mlxs_glmnet()] helper.
+
+```{r glmnet-flights-data}
+set.seed(20251103)
+enet_rows <- 50000
+enet_idx <- sample.int(nrow(bench_data), enet_rows)
+enet_base <- bench_data[enet_idx, ]
+
+enet_design <- model.matrix(
+  ~ poly(dep_delay, 3) + poly(air_time, 3) + poly(distance, 3)
+    + poly(dep_delay, 2):poly(air_time, 2)
+    + poly(dep_delay, 2):poly(distance, 2)
+    + poly(air_time, 2):poly(distance, 2),
+  data = enet_base
+)
+
+x_enet <- enet_design[, -1, drop = FALSE]
+y_enet <- enet_base$late
+lambda_enet <- 0.01
+```
+
+```{r glmnet-flights-benchmark, cache=FALSE}
+enet_mark <- mark(
+  glmnet = glmnet::glmnet(x_enet, y_enet, family = "binomial", alpha = 1,
+                          lambda = lambda_enet, standardize = TRUE,
+                          thresh = 1e-6, maxit = 100000),
+  mlxs_glmnet = mlxs_glmnet(x_enet, y_enet, family = mlxs_binomial(), alpha = 1,
+                            lambda = lambda_enet, standardize = TRUE,
+                            maxit = 2000, tol = 1e-6),
+  iterations = 3,
+  check = FALSE
+)
+
+enet_summary <- data.frame(
+  method = as.character(enet_mark$expression),
+  median_sec = as.numeric(enet_mark$median, units = "s"),
+  mem_mb = as.numeric(enet_mark$mem_alloc, units = "MB"),
+  itr_per_sec = enet_mark$`itr/sec`
+)
+enet_summary$relative <- enet_summary$median_sec / min(enet_summary$median_sec)
+enet_summary
+ggplot2::autoplot(enet_mark, type = "beeswarm")
+```
+
+```{r glmnet-flights-agreement}
+enet_ref <- glmnet::glmnet(x_enet, y_enet, family = "binomial", alpha = 1,
+                           lambda = lambda_enet, standardize = TRUE,
+                           thresh = 1e-6, maxit = 100000)
+enet_fit <- mlxs_glmnet(x_enet, y_enet, family = mlxs_binomial(), alpha = 1,
+                        lambda = lambda_enet, standardize = TRUE,
+                        maxit = 2000, tol = 1e-6)
+
+c(
+  coefficients_max_difference = max(abs(as.numeric(enet_ref$beta) - enet_fit$beta[, 1])),
+  intercept_difference = abs(as.numeric(enet_ref$a0) - enet_fit$a0[1])
+)
+```
+
+Even with a rich feature expansion, the MLX implementation matches `glmnet`
+within modest tolerances while keeping all updates on the GPU.
