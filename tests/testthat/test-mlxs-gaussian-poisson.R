@@ -1,4 +1,3 @@
-skip_if_not_installed("Rmlx")
 
 mlx_to_vec <- function(x) as.numeric(as.matrix(x))
 

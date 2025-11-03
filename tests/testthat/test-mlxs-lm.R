@@ -1,5 +1,4 @@
 test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
-  skip_if_not_installed("Rmlx")
 
   tryCatch(
     Rmlx::as_mlx(matrix(1, nrow = 1)),

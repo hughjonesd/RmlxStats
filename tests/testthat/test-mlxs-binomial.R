@@ -3,7 +3,6 @@ mlx_to_vec <- function(x) {
 }
 
 test_that("mlxs_binomial reproduces logit link helpers", {
-  skip_if_not_installed("Rmlx")
 
   fam_ref <- stats::binomial()
   fam_mlx <- mlxs_binomial()
@@ -37,7 +36,6 @@ test_that("mlxs_binomial reproduces logit link helpers", {
 })
 
 test_that("mlxs_binomial handles alternative supported links", {
-  skip_if_not_installed("Rmlx")
 
   supported <- c("log", "cloglog", "cauchit")
   eta <- c(-2, -0.5, 0, 0.5, 2)

@@ -1,4 +1,3 @@
-skip_if_not_installed("Rmlx")
 skip_if_not_installed("glmnet")
 
 test_that("mlxs_glmnet matches glmnet for gaussian lasso", {

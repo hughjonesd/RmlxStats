@@ -38,10 +38,6 @@ mlxs_glmnet <- function(x,
                         intercept = TRUE,
                         maxit = 1000,
                         tol = 1e-6) {
-  if (!requireNamespace("Rmlx", quietly = TRUE)) {
-    stop("Rmlx is required for mlxs_glmnet().", call. = FALSE)
-  }
-
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
     stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)

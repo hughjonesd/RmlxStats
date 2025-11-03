@@ -26,8 +26,6 @@ Fit a linear model via QR decomposition using MLX arrays on Apple Silicon
 devices. The interface mirrors \code{\link[stats:lm]{stats::lm()}} for the common arguments.
 }
 \examples{
-if (requireNamespace("Rmlx", quietly = TRUE)) {
-  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
-  coef(fit)
-}
+fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
+coef(fit)
 }

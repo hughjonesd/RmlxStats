@@ -64,8 +64,6 @@ Fit generalized linear models using iterative reweighted least squares (IRLS)
 with MLX providing the heavy lifting for weighted least squares solves.
 }
 \examples{
-if (requireNamespace("Rmlx", quietly = TRUE)) {
-  fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
-  coef(fit)
-}
+fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
+coef(fit)
 }

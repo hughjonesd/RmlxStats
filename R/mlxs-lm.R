@@ -16,10 +16,8 @@
 #' @export
 #'
 #' @examples
-#' if (requireNamespace("Rmlx", quietly = TRUE)) {
-#'   fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
-#'   coef(fit)
-#' }
+#' fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
+#' coef(fit)
 mlxs_lm <- function(formula, data, subset) {
   call <- match.call()
 

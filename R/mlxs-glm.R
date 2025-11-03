@@ -17,10 +17,8 @@
 #' @export
 #'
 #' @examples
-#' if (requireNamespace("Rmlx", quietly = TRUE)) {
-#'   fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
-#'   coef(fit)
-#' }
+#' fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
+#' coef(fit)
 mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
                      na.action, start = NULL, control = list(), ...) {
   call <- match.call()

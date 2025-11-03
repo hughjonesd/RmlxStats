@@ -1,5 +1,4 @@
 test_that("mlxs_glm gaussian matches stats::glm", {
-  skip_if_not_installed("Rmlx")
 
   formula <- mpg ~ cyl + disp
   base_fit <- glm(formula, data = mtcars, family = gaussian())
@@ -39,7 +38,6 @@ test_that("mlxs_glm gaussian matches stats::glm", {
 })
 
 test_that("mlxs_glm binomial matches stats::glm", {
-  skip_if_not_installed("Rmlx")
 
   data <- mtcars
   data$vs <- ifelse(data$vs > 0, 1, 0)
@@ -74,7 +72,6 @@ test_that("mlxs_glm binomial matches stats::glm", {
 })
 
 test_that("mlxs_glm poisson matches stats::glm", {
-  skip_if_not_installed("Rmlx")
 
   data <- mtcars
   data$cyl_count <- round(abs(data$cyl + rnorm(nrow(data), sd = 0.25)))
