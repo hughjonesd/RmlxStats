@@ -5,3 +5,4 @@ vignettes/*.R
 vignettes/.build.timestamp
 .Rproj.user
 .Rhistory
+docs
