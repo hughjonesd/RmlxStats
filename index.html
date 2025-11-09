@@ -56,6 +56,15 @@
 </h1></div>
 <p>Statistical modelling front-ends that run on Apple GPU hardware via the <a href="https://github.com/hughjonesd/Rmlx" class="external-link">Rmlx</a> array library.</p>
 <div class="section level2">
+<h2 id="when-to-use-mlxs_glm">When to use mlxs_(g)lm<a class="anchor" aria-label="anchor" href="#when-to-use-mlxs_glm"></a>
+</h2>
+<ul>
+<li>GPU acceleration shines once the design matrix is large (tens of thousands of rows/columns) or you need to refit many times (e.g., bootstraps or cross-validation). In these cases the MLX QR/solve path can be several times faster than repeated <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> fits.</li>
+<li>For small problems (think classic textbook data) the overhead of launching GPU kernels and shuttling data usually outweighs any benefit; base R’s CPU solvers will be faster.</li>
+<li>Residual bootstraps for Gaussian models are particularly effective: we reuse the original MLX QR factorisation and only resample residuals, so each replicate avoids a fresh factorisation.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <ol style="list-style-type: decimal">
