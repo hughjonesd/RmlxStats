@@ -1,3 +1,11 @@
+as_vec <- function(x) {
+  if (inherits(x, "mlx")) {
+    drop(as.matrix(x))
+  } else {
+    x
+  }
+}
+
 test_that("mlxs_glm gaussian matches stats::glm", {
 
   formula <- mpg ~ cyl + disp
@@ -6,7 +14,12 @@ test_that("mlxs_glm gaussian matches stats::glm", {
 
   expect_true(mlx_fit$converged)
   expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-6)
-  expect_equal(mlx_fit$fitted.values, fitted(base_fit), tolerance = 1e-6)
+  expect_equal(
+    as_vec(mlx_fit$fitted.values),
+    fitted(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-6)
   expect_equal(unname(vcov(mlx_fit)), unname(vcov(base_fit)), tolerance = 1e-6)
 
@@ -48,7 +61,7 @@ test_that("mlxs_glm binomial matches stats::glm", {
 
   expect_true(mlx_fit$converged)
   expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-5)
-  expect_equal(unname(mlx_fit$fitted.values), as.vector(fitted(base_fit)), tolerance = 1e-5)
+  expect_equal(unname(as_vec(mlx_fit$fitted.values)), as.vector(fitted(base_fit)), tolerance = 1e-5)
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
 
   newdata <- head(data)
@@ -82,7 +95,7 @@ test_that("mlxs_glm poisson matches stats::glm", {
 
   expect_true(mlx_fit$converged)
   expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-5)
-  expect_equal(unname(mlx_fit$fitted.values), as.vector(fitted(base_fit)), tolerance = 1e-5)
+  expect_equal(unname(as_vec(mlx_fit$fitted.values)), as.vector(fitted(base_fit)), tolerance = 1e-5)
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
 
   newdata <- head(data)

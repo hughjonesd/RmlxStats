@@ -30,7 +30,6 @@ mlxs_lm <- function(formula, data, subset) {
 
   terms <- attr(mf, "terms")
   response <- model.response(mf)
-
   design <- model.matrix(terms, mf)
 
   n_obs <- nrow(design)
@@ -43,47 +42,50 @@ mlxs_lm <- function(formula, data, subset) {
     stop("No coefficients to estimate; provide predictors in the formula.", call. = FALSE)
   }
 
-  x_mlx <- Rmlx::as_mlx(design)
-  y_mlx <- Rmlx::as_mlx(matrix(response, ncol = 1))
-
-  qr_fit <- qr(x_mlx)
-  qty <- crossprod(qr_fit$Q, y_mlx)
-  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
-  
-  fitted_mlx <- x_mlx %*% coef_mlx
-  residual_mlx <- y_mlx - fitted_mlx
-
-  coefficients <- drop(as.matrix(coef_mlx))
-  names(coefficients) <- colnames(design)
-
-  fitted_values <- drop(as.matrix(fitted_mlx))
-  residuals <- drop(as.matrix(residual_mlx))
-  effects <- drop(as.matrix(qty))
-  names(effects) <- colnames(design)
-
-  if (!is.null(rownames(design))) {
-    names(fitted_values) <- rownames(design)
-    names(residuals) <- rownames(design)
-  }
+  fit_res <- mlxs_lm_fit(x = design, y = response)
 
   result <- list(
-    coefficients = coefficients,
-    residuals = residuals,
-    effects = effects,
-    fitted.values = fitted_values,
+    coefficients = fit_res$coefficients,
+    fitted.values = fit_res$fitted.values,
+    residuals = fit_res$residuals,
+    effects = fit_res$effects,
     rank = n_coef,
     df.residual = n_obs - n_coef,
     call = call,
     terms = terms,
     model = mf,
-    mlx = list(
-      qr = qr_fit,
-      x = x_mlx,
-      y = y_mlx,
-      residual = residual_mlx
-    )
+    mlx = fit_res$mlx,
+    coef_names = colnames(design)
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")
   result
+}
+
+mlxs_lm_fit <- function (x, y) {
+  x_mlx <- Rmlx::as_mlx(x)
+  y_mlx <- Rmlx::as_mlx(y)
+  y_mlx <- Rmlx::mlx_reshape(y_mlx, c(length(y_mlx), 1L))
+  
+  qr_fit <- qr(x_mlx)
+  qty_mlx <- crossprod(qr_fit$Q, y_mlx)
+  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE)
+  
+  fitted_mlx <- x_mlx %*% coef_mlx
+  residual_mlx <- y_mlx - fitted_mlx
+  
+  list(
+    coefficients = coef_mlx,
+    fitted.values = fitted_mlx,
+    residuals = residual_mlx,
+    effects = qty_mlx,
+    mlx = list(
+      qr = qr_fit,
+      x = x_mlx,
+      y = y_mlx,
+      fitted = fitted_mlx,
+      residual = residual_mlx,
+      coef = coef_mlx
+    )
+  )
 }
