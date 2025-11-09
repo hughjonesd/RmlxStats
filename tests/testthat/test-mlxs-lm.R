@@ -102,3 +102,18 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   expect_s3_class(sum_obj, "summary.mlxs_lm")
   expect_equal(sum_obj$coefficients[, "Estimate"], coef(base_fit), tolerance = 1e-6)
 })
+
+test_that("mlxs_lm bootstrap summary provides se", {
+  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
+  sum_boot <- summary(fit, bootstrap = TRUE, bootstrap_args = list(B = 20, seed = 123, progress = FALSE))
+  expect_true(!is.null(sum_boot$bootstrap))
+  expect_equal(length(sum_boot$bootstrap$se), length(coef(fit)))
+  tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 123, progress = FALSE))
+  expect_true(all(!is.na(tidy_boot$std.error)))
+
+  sum_resid <- summary(fit,
+                       bootstrap = TRUE,
+                       bootstrap_args = list(bootstrap_type = "residual", B = 10, seed = 321, progress = FALSE))
+  expect_true(!is.null(sum_resid$bootstrap))
+  expect_equal(length(sum_resid$bootstrap$se), length(coef(fit)))
+})

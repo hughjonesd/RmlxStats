@@ -173,10 +173,61 @@ print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
-summary.mlxs_glm <- function(object, ...) {
-  sum_glm <- summary(.mlxs_glm_as_glm(object), dispersion = object$dispersion, ...)
-  class(sum_glm) <- c("summary.mlxs_glm", setdiff(class(sum_glm), "summary.mlxs_glm"))
-  sum_glm
+summary.mlxs_glm <- function(object,
+                             bootstrap = FALSE,
+                             bootstrap_args = list(),
+                             ...) {
+  default_args <- list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case",
+    batch_size = 32L
+  )
+  if (!is.list(bootstrap_args)) {
+    stop("bootstrap_args must be a list.", call. = FALSE)
+  }
+  user_args <- utils::modifyList(default_args, bootstrap_args)
+  bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
+  if (isTRUE(bootstrap)) {
+    boot_info <- .mlxs_bootstrap_coefs(
+      object,
+      fit_type = "glm",
+      B = user_args$B,
+      seed = user_args$seed,
+      progress = user_args$progress,
+      batch_size = user_args$batch_size,
+      method = bootstrap_type
+    )
+    se <- boot_info$se
+    est <- coef(object)
+    zvals <- est / se
+    pvals <- 2 * stats::pnorm(-abs(zvals))
+    coef_table <- cbind(Estimate = est, `Std. Error` = se, `z value` = zvals, `Pr(>|z|)` = pvals)
+    rownames(coef_table) <- names(est)
+    cov_unscaled <- diag(se^2)
+    dimnames(cov_unscaled) <- list(names(est), names(est))
+    sum_list <- list(
+      coefficients = coef_table,
+      dispersion = object$dispersion,
+      df.residual = object$df.residual,
+      null.deviance = object$null.deviance,
+      df.null = object$df.null,
+      aic = object$aic,
+      deviance = object$deviance,
+      cov.unscaled = cov_unscaled,
+      bootstrap = boot_info,
+      family = object$family,
+      call = object$call,
+      deviance.resid = object$deviance.resid
+    )
+    class(sum_list) <- c("summary.mlxs_glm", "summary.glm")
+    sum_list
+  } else {
+    sum_glm <- summary(.mlxs_glm_as_glm(object), dispersion = object$dispersion, ...)
+    class(sum_glm) <- c("summary.mlxs_glm", setdiff(class(sum_glm), "summary.mlxs_glm"))
+    sum_glm
+  }
 }
 
 #' @rdname mlxs_glm_methods
@@ -230,7 +281,7 @@ nobs.mlxs_glm <- function(object, ...) {
 #' @rdname mlxs_glm_methods
 #' @export
 tidy.mlxs_glm <- function(x, ...) {
-  sum_obj <- summary(x)
+  sum_obj <- summary(x, ...)
   coef_df <- sum_obj$coefficients
   statistic_col <- if ("z value" %in% colnames(coef_df)) "z value" else "t value"
   data.frame(

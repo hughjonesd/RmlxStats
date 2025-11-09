@@ -131,9 +131,37 @@ anova.mlxs_lm <- function(object, ...) {
 }
 
 #' @export
-summary.mlxs_lm <- function(object, ...) {
+summary.mlxs_lm <- function(object,
+                            bootstrap = FALSE,
+                            bootstrap_args = list(),
+                            ...) {
+  default_args <- list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case",
+    batch_size = 32L
+  )
+  if (!is.list(bootstrap_args)) {
+    stop("bootstrap_args must be a list.", call. = FALSE)
+  }
+  user_args <- utils::modifyList(default_args, bootstrap_args)
+  bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
   vc <- vcov(object)
   se <- sqrt(diag(vc))
+  bootstrap_info <- NULL
+  if (isTRUE(bootstrap)) {
+    bootstrap_info <- .mlxs_bootstrap_coefs(
+      object,
+      fit_type = "lm",
+      B = user_args$B,
+      seed = user_args$seed,
+      progress = user_args$progress,
+      batch_size = user_args$batch_size,
+      method = bootstrap_type
+    )
+    se <- bootstrap_info$se
+  }
   est <- coef(object)
   tvals <- est / se
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
@@ -171,7 +199,8 @@ summary.mlxs_lm <- function(object, ...) {
     adj.r.squared = if (rdf > 0) 1 - (1 - r.squared) * (length(response) - 1) / rdf else NA_real_,
     fstatistic = c(value = fstat, numdf = df_model, dendf = rdf),
     p.value = p_f,
-    vcov = vc
+    vcov = vc,
+    bootstrap = bootstrap_info
   )
   class(result) <- c("summary.mlxs_lm", "mlxs_lm_summary")
   result
@@ -236,7 +265,7 @@ nobs.mlxs_lm <- function(object, ...) {
 
 #' @export
 tidy.mlxs_lm <- function(x, ...) {
-  sum_obj <- summary(x)
+  sum_obj <- summary(x, ...)
   coef_df <- sum_obj$coefficients
   data.frame(
     term = rownames(coef_df),
@@ -250,7 +279,7 @@ tidy.mlxs_lm <- function(x, ...) {
 
 #' @export
 glance.mlxs_lm <- function(x, ...) {
-  sum_obj <- summary(x)
+  sum_obj <- summary(x, ...)
   n <- nobs(x)
   resid_vec <- .mlxs_as_numeric(residuals(x))
   rss <- sum(resid_vec^2)

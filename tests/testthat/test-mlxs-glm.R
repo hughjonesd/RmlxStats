@@ -50,6 +50,29 @@ test_that("mlxs_glm gaussian matches stats::glm", {
   expect_equal(anova(mlx_fit)$Deviance, anova(base_fit)$Deviance, tolerance = 1e-6)
 })
 
+test_that("mlxs_glm bootstrap summary works", {
+  formula <- vs ~ mpg + wt
+  data <- transform(mtcars, vs = as.integer(vs > 0))
+  fit <- mlxs_glm(formula, data = data, family = mlxs_binomial())
+  sum_boot <- summary(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 42, progress = FALSE))
+  expect_true(!is.null(sum_boot$bootstrap))
+  expect_equal(length(sum_boot$bootstrap$se), length(coef(fit)))
+  tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 12, seed = 42, progress = FALSE))
+  expect_true(all(!is.na(tidy_boot$std.error)))
+})
+
+test_that("mlxs_glm residual bootstrap works for gaussian", {
+  formula <- mpg ~ cyl + disp + wt
+  fit <- mlxs_glm(formula, data = mtcars, family = mlxs_gaussian())
+  sum_resid <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(bootstrap_type = "residual", B = 10, seed = 11, progress = FALSE)
+  )
+  expect_true(!is.null(sum_resid$bootstrap))
+  expect_equal(length(sum_resid$bootstrap$se), length(coef(fit)))
+})
+
 test_that("mlxs_glm binomial matches stats::glm", {
 
   data <- mtcars
