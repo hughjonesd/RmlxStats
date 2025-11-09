@@ -13,34 +13,45 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   base_fit <- lm(formula, data = mtcars, subset = subset_expr)
   mlx_fit <- mlxs_lm(formula, data = mtcars, subset = subset_expr)
 
+  as_vec <- function(x) {
+    if (inherits(x, "mlx")) {
+      drop(as.matrix(x))
+    } else {
+      x
+    }
+  }
+
   expect_equal(
-    mlx_fit$coefficients,
+    as_vec(mlx_fit$coefficients),
     base_fit$coefficients,
-    tolerance = 1e-6
+    tolerance = 1e-6,
+    ignore_attr = TRUE
   )
 
   expect_equal(
-    mlx_fit$fitted.values,
+    as_vec(mlx_fit$fitted.values),
     base_fit$fitted.values,
-    tolerance = 1e-6
+    tolerance = 1e-6,
+    ignore_attr = TRUE
   )
 
   expect_equal(
-    mlx_fit$residuals,
+    as_vec(mlx_fit$residuals),
     base_fit$residuals,
-    tolerance = 1e-6
+    tolerance = 1e-6,
+    ignore_attr = TRUE
   )
 
   expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-6)
-  expect_equal(fitted(mlx_fit), fitted(base_fit), tolerance = 1e-6)
-  expect_equal(residuals(mlx_fit), residuals(base_fit), tolerance = 1e-6)
+  expect_equal(as_vec(fitted(mlx_fit)), fitted(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(as_vec(residuals(mlx_fit)), residuals(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(vcov(mlx_fit), vcov(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(confint(mlx_fit), confint(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(nobs(mlx_fit), nobs(base_fit))
 
   newdata <- head(mtcars, 5)
   expect_equal(
-    predict(mlx_fit, newdata = newdata),
+    as_vec(predict(mlx_fit, newdata = newdata)),
     predict(base_fit, newdata = newdata),
     tolerance = 1e-6,
     ignore_attr = TRUE

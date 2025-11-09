@@ -21,6 +21,14 @@
 #' @name mlxs_glm_methods
 NULL
 
+.mlxs_glm_coef_names <- function(object) {
+  if (!is.null(object$coef_names)) {
+    return(object$coef_names)
+  }
+  mm <- stats::model.matrix(object$terms, object$model)
+  colnames(mm)
+}
+
 .mlxs_family_as_base <- function(family) {
   fam_name <- family$family
   link_name <- family$link
@@ -51,15 +59,20 @@ NULL
     glm_call[[1]] <- quote(stats::glm)
   }
 
+  coef_vec <- .mlxs_as_numeric(object$coefficients)
+  names(coef_vec) <- .mlxs_glm_coef_names(object)
+  fitted_vec <- .mlxs_as_numeric(object$fitted.values)
+  linear_predictors <- .mlxs_as_numeric(object$linear.predictors)
+
   glm_obj <- list(
-    coefficients = object$coefficients,
+    coefficients = coef_vec,
     residuals = object$deviance.resid,
-    fitted.values = object$fitted.values,
+    fitted.values = fitted_vec,
     effects = NULL,
     R = NULL,
     rank = object$rank,
     family = .mlxs_family_as_base(object$family),
-    linear.predictors = object$linear.predictors,
+    linear.predictors = linear_predictors,
     deviance = object$deviance,
     aic = object$aic,
     null.deviance = object$null.deviance,
@@ -94,7 +107,9 @@ NULL
 #' @rdname mlxs_glm_methods
 #' @export
 coef.mlxs_glm <- function(object, ...) {
-  object$coefficients
+  coef_vec <- .mlxs_as_numeric(object$coefficients)
+  names(coef_vec) <- .mlxs_glm_coef_names(object)
+  coef_vec
 }
 
 #' @rdname mlxs_glm_methods
@@ -134,7 +149,8 @@ residuals.mlxs_glm <- function(object,
   r_inv <- Rmlx::mlx_solve_triangular(r_mlx, identity_mlx, upper = TRUE)
   vcov_mlx <- r_inv %*% t(r_inv)
   vc <- as.matrix(vcov_mlx) * object$dispersion
-  dimnames(vc) <- list(names(object$coefficients), names(object$coefficients))
+  coef_names <- .mlxs_glm_coef_names(object)
+  dimnames(vc) <- list(coef_names, coef_names)
   vc
 }
 

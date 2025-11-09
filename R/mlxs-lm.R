@@ -43,16 +43,23 @@ mlxs_lm <- function(formula, data, subset) {
   }
 
   fit_res <- mlxs_lm_fit(x = design, y = response)
-  
-  fit_res$coef_names <- colnames(design)
-  fit_res$rank <- n_coef
-  fit_res$df.residual <- n_obs - n_coef
-  fit_res$call <- call
-  fit_res$terms <- terms
-  fit_res$model <- mf
 
-  class(fit_res) <- c("mlxs_lm", "mlxs_model")
-  fit_res
+  result <- list(
+    coefficients = fit_res$coefficients,
+    fitted.values = fit_res$fitted.values,
+    residuals = fit_res$residuals,
+    effects = fit_res$effects,
+    rank = n_coef,
+    df.residual = n_obs - n_coef,
+    call = call,
+    terms = terms,
+    model = mf,
+    mlx = fit_res$mlx,
+    coef_names = colnames(design)
+  )
+
+  class(result) <- c("mlxs_lm", "mlxs_model")
+  result
 }
 
 mlxs_lm_fit <- function (x, y) {
@@ -69,8 +76,16 @@ mlxs_lm_fit <- function (x, y) {
   
   list(
     coefficients = coef_mlx,
-    fitted = fitted_mlx,
+    fitted.values = fitted_mlx,
     residuals = residual_mlx,
-    effects = qty_mlx
+    effects = qty_mlx,
+    mlx = list(
+      qr = qr_fit,
+      x = x_mlx,
+      y = y_mlx,
+      fitted = fitted_mlx,
+      residual = residual_mlx,
+      coef = coef_mlx
+    )
   )
 }
