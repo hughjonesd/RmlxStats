@@ -5,10 +5,13 @@
     return(x)
   }
   if (inherits(x, "mlx")) {
-    drop(as.matrix(x))
-  } else {
-    x
+    vals <- as.vector(as.matrix(x))
+    if (!is.numeric(vals)) {
+      vals <- as.numeric(vals)
+    }
+    return(vals)
   }
+  x
 }
 
 .mlxs_as_matrix <- function(x) {

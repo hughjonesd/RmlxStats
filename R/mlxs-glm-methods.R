@@ -29,87 +29,12 @@ NULL
   colnames(mm)
 }
 
-.mlxs_family_as_base <- function(family) {
-  fam_name <- family$family
-  link_name <- family$link
-  factory <- switch(
-    fam_name,
-    binomial = stats::binomial,
-    quasibinomial = stats::quasibinomial,
-    poisson = stats::poisson,
-    quasipoisson = stats::quasipoisson,
-    gaussian = stats::gaussian,
-    Gamma = stats::Gamma,
-    inverse.gaussian = stats::inverse.gaussian,
-    NULL
-  )
-  if (is.null(factory)) {
-    return(family)
-  }
-  factory(link = link_name)
-}
-
-.mlxs_glm_as_glm <- function(object) {
-  X <- stats::model.matrix(object$terms, object$model)
-  ww <- object$working.weights
-  ww_sqrt <- sqrt(pmax(ww, .Machine$double.eps))
-  qr <- base::qr(X * ww_sqrt)
-  glm_call <- object$call
-  if (!is.null(glm_call)) {
-    glm_call[[1]] <- quote(stats::glm)
-  }
-
-  coef_vec <- .mlxs_as_numeric(object$coefficients)
-  names(coef_vec) <- .mlxs_glm_coef_names(object)
-  fitted_vec <- .mlxs_as_numeric(object$fitted.values)
-  linear_predictors <- .mlxs_as_numeric(object$linear.predictors)
-
-  glm_obj <- list(
-    coefficients = coef_vec,
-    residuals = object$deviance.resid,
-    fitted.values = fitted_vec,
-    effects = NULL,
-    R = NULL,
-    rank = object$rank,
-    family = .mlxs_family_as_base(object$family),
-    linear.predictors = linear_predictors,
-    deviance = object$deviance,
-    aic = object$aic,
-    null.deviance = object$null.deviance,
-    iter = object$iter,
-    weights = object$prior.weights,
-    prior.weights = object$prior.weights,
-    working.weights = object$working.weights,
-    working.residuals = object$working.residuals,
-    y = object$y,
-    converged = object$converged,
-    boundary = FALSE,
-    df.residual = object$df.residual,
-    df.null = object$df.null,
-    dispersion = object$dispersion,
-    call = glm_call,
-    formula = stats::formula(object$terms),
-    terms = object$terms,
-    data = object$model,
-    model = object$model,
-    offset = object$offset,
-    control = object$control,
-    method = "mlxs_glm",
-    contrasts = object$contrasts,
-    xlevels = object$xlevels,
-    na.action = object$na.action,
-    qr = qr
-  )
-  class(glm_obj) <- c("glm", "lm")
-  glm_obj
-}
-
 #' @rdname mlxs_glm_methods
 #' @export
 coef.mlxs_glm <- function(object, ...) {
-  coef_vec <- .mlxs_as_numeric(object$coefficients)
-  names(coef_vec) <- .mlxs_glm_coef_names(object)
-  coef_vec
+  coef_mlx <- object$coefficients
+  attr(coef_mlx, "coef_names") <- .mlxs_glm_coef_names(object)
+  coef_mlx
 }
 
 #' @rdname mlxs_glm_methods
@@ -118,8 +43,35 @@ predict.mlxs_glm <- function(object, newdata = NULL,
                               type = c("link", "response"),
                               se.fit = FALSE, ...) {
   type <- match.arg(type)
-  glm_obj <- .mlxs_glm_as_glm(object)
-  stats::predict(glm_obj, newdata = newdata, type = type, se.fit = se.fit, ...)
+  if (isTRUE(se.fit)) {
+    stop("Prediction standard errors are not implemented for mlxs_glm.", call. = FALSE)
+  }
+  if (is.null(newdata)) {
+    return(if (type == "response") object$fitted.values else object$linear.predictors)
+  }
+
+  terms_obj <- object$terms
+  mf <- stats::model.frame(
+    stats::delete.response(terms_obj),
+    data = newdata,
+    na.action = stats::na.pass,
+    xlev = object$xlevels
+  )
+  mm <- stats::model.matrix(
+    stats::delete.response(terms_obj),
+    mf,
+    contrasts.arg = object$contrasts
+  )
+  mm_mlx <- Rmlx::as_mlx(mm)
+  eta <- mm_mlx %*% object$coefficients
+  offset_new <- stats::model.offset(mf)
+  if (!is.null(offset_new)) {
+    eta <- eta + Rmlx::mlx_matrix(offset_new, ncol = 1)
+  }
+  if (type == "response") {
+    return(object$family$linkinv(eta))
+  }
+  eta
 }
 
 #' @rdname mlxs_glm_methods
@@ -134,40 +86,43 @@ residuals.mlxs_glm <- function(object,
                                type = c("deviance", "pearson", "working", "response"),
                                ...) {
   type <- match.arg(type)
-  glm_obj <- .mlxs_glm_as_glm(object)
-  stats::residuals(glm_obj, type = type, ...)
+  if (type == "response") {
+    return(object$residuals)
+  }
+  if (type == "deviance") {
+    return(object$deviance.resid)
+  }
+  if (type == "working") {
+    return(object$working.residuals)
+  }
+
+  y_mlx <- object$y
+  mu_mlx <- object$fitted.values
+  var_mu <- object$family$variance(mu_mlx)
+  pearson <- (y_mlx - mu_mlx) / sqrt(var_mu)
+  if (!is.null(object$prior.weights)) {
+    pearson <- pearson * sqrt(object$prior.weights)
+  }
+  pearson
 }
 
-.mlxs_glm_vcov <- function(object) {
-  qr_fit <- object$mlx$qr
+vcov.mlxs_glm <- function(object, ...) {
+  qr_fit <- object$qr
   if (is.null(qr_fit)) {
-    return(stats::vcov(.mlxs_glm_as_glm(object)))
+    stop("QR decomposition not available; refit mlxs_glm to expose vcov.", call. = FALSE)
   }
   r_mlx <- qr_fit$R
-  n_coef <- length(object$coefficients)
+  n_coef <- length(.mlxs_glm_coef_names(object))
   identity_mlx <- Rmlx::mlx_eye(n_coef)
   r_inv <- Rmlx::mlx_solve_triangular(r_mlx, identity_mlx, upper = TRUE)
-  vcov_mlx <- r_inv %*% t(r_inv)
-  vc <- as.matrix(vcov_mlx) * object$dispersion
-  coef_names <- .mlxs_glm_coef_names(object)
-  dimnames(vc) <- list(coef_names, coef_names)
-  vc
-}
-
-#' @rdname mlxs_glm_methods
-#' @export
-vcov.mlxs_glm <- function(object, ...) {
-  .mlxs_glm_vcov(object)
+  object$dispersion * (r_inv %*% t(r_inv))
 }
 
 #' @rdname mlxs_glm_methods
 #' @export
 print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
-  glm_obj <- .mlxs_glm_as_glm(x)
-  if (!is.null(glm_obj$call)) {
-    glm_obj$call[[1]] <- quote(mlxs_glm)
-  }
-  print(glm_obj, digits = digits, ...)
+  sum_obj <- summary(x, ...)
+  print.summary.mlxs_glm(sum_obj, digits = digits, ...)
   invisible(x)
 }
 
@@ -189,8 +144,24 @@ summary.mlxs_glm <- function(object,
   }
   user_args <- utils::modifyList(default_args, bootstrap_args)
   bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
+
+  coef_names <- .mlxs_glm_coef_names(object)
+  coef_mlx <- object$coefficients
+  est_num <- .mlxs_as_numeric(coef_mlx)
+  vcov_mlx <- vcov(object)
+  vcov_mat <- as.matrix(vcov_mlx)
+  se_num <- sqrt(diag(vcov_mat))
+  stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
+  stat_num <- est_num / se_num
+  p_num <- if (stat_label == "t value") {
+    2 * stats::pt(-abs(stat_num), df = object$df.residual)
+  } else {
+    2 * stats::pnorm(-abs(stat_num))
+  }
+
+  bootstrap_info <- NULL
   if (isTRUE(bootstrap)) {
-    boot_info <- .mlxs_bootstrap_coefs(
+    bootstrap_info <- .mlxs_bootstrap_coefs(
       object,
       fit_type = "glm",
       B = user_args$B,
@@ -199,59 +170,85 @@ summary.mlxs_glm <- function(object,
       batch_size = user_args$batch_size,
       method = bootstrap_type
     )
-    se <- boot_info$se
-    est <- coef(object)
-    zvals <- est / se
-    pvals <- 2 * stats::pnorm(-abs(zvals))
-    coef_table <- cbind(Estimate = est, `Std. Error` = se, `z value` = zvals, `Pr(>|z|)` = pvals)
-    rownames(coef_table) <- names(est)
-    cov_unscaled <- diag(se^2)
-    dimnames(cov_unscaled) <- list(names(est), names(est))
-    sum_list <- list(
-      coefficients = coef_table,
-      dispersion = object$dispersion,
-      df.residual = object$df.residual,
-      null.deviance = object$null.deviance,
-      df.null = object$df.null,
-      aic = object$aic,
-      deviance = object$deviance,
-      cov.unscaled = cov_unscaled,
-      bootstrap = boot_info,
-      family = object$family,
-      call = object$call,
-      deviance.resid = object$deviance.resid
-    )
-    class(sum_list) <- c("summary.mlxs_glm", "summary.glm")
-    sum_list
-  } else {
-    sum_glm <- summary(.mlxs_glm_as_glm(object), dispersion = object$dispersion, ...)
-    class(sum_glm) <- c("summary.mlxs_glm", setdiff(class(sum_glm), "summary.mlxs_glm"))
-    sum_glm
+    se_num <- bootstrap_info$se
+    stat_num <- est_num / se_num
+    p_num <- if (stat_label == "t value") {
+      2 * stats::pt(-abs(stat_num), df = object$df.residual)
+    } else {
+      2 * stats::pnorm(-abs(stat_num))
+    }
+    vcov_mat <- diag(se_num^2)
+    dimnames(vcov_mat) <- list(coef_names, coef_names)
+    vcov_mlx <- Rmlx::as_mlx(vcov_mat)
   }
+
+  sum_list <- list(
+    call = object$call,
+    family = object$family,
+    coef_names = coef_names,
+    coefficients = coef_mlx,
+    std.error = Rmlx::mlx_matrix(se_num, ncol = 1),
+    statistic = Rmlx::mlx_matrix(stat_num, ncol = 1),
+    p.value = Rmlx::mlx_matrix(p_num, ncol = 1),
+    stat_label = stat_label,
+    dispersion = object$dispersion,
+    df.residual = object$df.residual,
+    df.null = object$df.null,
+    null.deviance = object$null.deviance,
+    deviance = object$deviance,
+    aic = object$aic,
+    deviance.resid = object$deviance.resid,
+    residuals = object$residuals,
+    working.residuals = object$working.residuals,
+    cov.scaled = vcov_mlx,
+    cov.unscaled = vcov_mlx / object$dispersion,
+    bootstrap = bootstrap_info
+  )
+  class(sum_list) <- "summary.mlxs_glm"
+  sum_list
 }
 
 #' @rdname mlxs_glm_methods
 #' @export
-print.summary.mlxs_glm <- function(x, ...) {
-  NextMethod("print")
+print.summary.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+  cat("Call:\n")
+  print(x$call)
+  est <- .mlxs_as_numeric(x$coefficients)
+  se <- .mlxs_as_numeric(x$std.error)
+  stat <- .mlxs_as_numeric(x$statistic)
+  p <- .mlxs_as_numeric(x$p.value)
+  stat_col <- x$stat_label
+  p_col <- if (stat_col == "t value") "Pr(>|t|)" else "Pr(>|z|)"
+  stat_block <- cbind(stat, p)
+  colnames(stat_block) <- c(stat_col, p_col)
+  coef_table <- cbind(
+    Estimate = est,
+    `Std. Error` = se,
+    stat_block
+  )
+  rownames(coef_table) <- x$coef_names
+  cat("\nCoefficients:\n")
+  printCoefmat(coef_table, digits = digits, has.Pvalue = TRUE)
+  cat("\n(Dispersion parameter for", x$family$family, "family taken to be",
+      format(signif(x$dispersion, digits)), ")\n")
+  cat("Null deviance:", format(signif(x$null.deviance, digits)),
+      "on", x$df.null, "degrees of freedom\n")
+  cat("Residual deviance:", format(signif(x$deviance, digits)),
+      "on", x$df.residual, "degrees of freedom\n")
+  cat("AIC:", format(signif(x$aic, digits)), "\n")
+  if (!is.null(x$bootstrap)) {
+    cat("\nBootstrap standard errors (", x$bootstrap$B, " resamples) applied.\n", sep = "")
+  }
+  invisible(x)
 }
 
 #' @rdname mlxs_glm_methods
 #' @export
 anova.mlxs_glm <- function(object, ...) {
-  convert <- function(obj) {
-    if (inherits(obj, "mlxs_glm")) {
-      stats::glm(
-        formula = stats::formula(obj$terms),
-        family = obj$family,
-        data = obj$model
-      )
-    } else {
-      obj
-    }
+  if (nargs() > 1L) {
+    stop("anova.mlxs_glm() does not yet compare multiple MLX models.", call. = FALSE)
   }
-  glm_objects <- c(list(convert(object)), lapply(list(...), convert))
-  do.call(stats::anova, glm_objects)
+  stop("anova.mlxs_glm() is not implemented without converting to base glm.", call. = FALSE)
 }
 
 #' @rdname mlxs_glm_methods
@@ -275,21 +272,19 @@ terms.mlxs_glm <- function(x, ...) {
 #' @rdname mlxs_glm_methods
 #' @export
 nobs.mlxs_glm <- function(object, ...) {
-  length(object$y)
+  nrow(model.frame(object))
 }
 
 #' @rdname mlxs_glm_methods
 #' @export
 tidy.mlxs_glm <- function(x, ...) {
   sum_obj <- summary(x, ...)
-  coef_df <- sum_obj$coefficients
-  statistic_col <- if ("z value" %in% colnames(coef_df)) "z value" else "t value"
   data.frame(
-    term = rownames(coef_df),
-    estimate = coef_df[, "Estimate"],
-    std.error = coef_df[, "Std. Error"],
-    statistic = coef_df[, statistic_col],
-    p.value = coef_df[, ncol(coef_df)],
+    term = sum_obj$coef_names,
+    estimate = .mlxs_as_numeric(sum_obj$coefficients),
+    std.error = .mlxs_as_numeric(sum_obj$std.error),
+    statistic = .mlxs_as_numeric(sum_obj$statistic),
+    p.value = .mlxs_as_numeric(sum_obj$p.value),
     row.names = NULL
   )
 }
@@ -306,7 +301,7 @@ glance.mlxs_glm <- function(x, ...) {
     df.residual = x$df.residual,
     df.null = x$df.null,
     logLik = loglik,
-    nobs = length(x$y),
+    nobs = nobs(x),
     converged = x$converged,
     iterations = x$iter,
     row.names = NULL
@@ -318,20 +313,30 @@ glance.mlxs_glm <- function(x, ...) {
 augment.mlxs_glm <- function(x, data = x$model, newdata = NULL,
                              type.predict = c("response", "link"),
                              type.residuals = c("response", "deviance"),
-                             se_fit = FALSE, ...) {
+                             se_fit = FALSE,
+                             output = c("data.frame", "mlx"),
+                             ...) {
   type.predict <- match.arg(type.predict)
   type.residuals <- match.arg(type.residuals)
+  output <- match.arg(output)
   if (se_fit) {
     stop("Standard errors for predictions are not implemented.", call. = FALSE)
   }
 
+  fitted_vals <- predict(x, newdata = newdata, type = type.predict)
+  resid_vals <- if (is.null(newdata)) residuals(x, type = type.residuals) else NULL
+
+  if (output == "mlx") {
+    return(list(.fitted = fitted_vals, .resid = resid_vals))
+  }
+
+  out <- as.data.frame(if (is.null(newdata)) data else newdata)
+  out$.fitted <- .mlxs_as_numeric(fitted_vals)
+  if (!is.null(resid_vals)) {
+    out$.resid <- .mlxs_as_numeric(resid_vals)
+  }
   if (is.null(newdata)) {
-    out <- as.data.frame(data)
-    out$.fitted <- predict(x, type = type.predict)
-    out$.resid <- residuals(x, type = type.residuals)
-  } else {
-    out <- as.data.frame(newdata)
-    out$.fitted <- predict(x, newdata = newdata, type = type.predict)
+    rownames(out) <- rownames(data)
   }
   out
 }

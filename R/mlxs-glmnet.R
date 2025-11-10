@@ -100,7 +100,7 @@ mlxs_glmnet <- function(x,
   ones_mlx <- Rmlx::as_mlx(matrix(1, nrow = n_obs, ncol = 1))
   x_mlx <- Rmlx::as_mlx(x_std)
   y_mlx <- Rmlx::as_mlx(matrix(y, ncol = 1))
-  beta_values <- numeric(n_pred)
+  beta_mlx <- Rmlx::as_mlx(matrix(0, nrow = n_pred, ncol = 1))
 
   beta_store <- matrix(0, nrow = n_pred, ncol = n_lambda)
   intercept_store <- numeric(n_lambda)
@@ -113,8 +113,7 @@ mlxs_glmnet <- function(x,
     base_lipschitz <- 0.25 * base_lipschitz
   }
 
-  eta_mlx <- x_mlx %*% Rmlx::as_mlx(matrix(beta_values, ncol = 1)) +
-    ones_mlx * Rmlx::as_mlx(intercept_val)
+  eta_mlx <- x_mlx %*% beta_mlx + ones_mlx * Rmlx::as_mlx(intercept_val)
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
 
@@ -140,7 +139,7 @@ mlxs_glmnet <- function(x,
 
     for (iter in seq_len(maxit)) {
       x_active <- x_mlx[, active_idx, drop = FALSE]
-      beta_prev_subset <- Rmlx::as_mlx(matrix(beta_values[active_idx], ncol = 1))
+      beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
 
       grad_active <- crossprod(x_active, residual_mlx) / n_obs
       if (alpha < 1) {
@@ -152,7 +151,7 @@ mlxs_glmnet <- function(x,
       beta_new_subset <- .mlxs_soft_threshold(beta_temp, thresh)
       delta_beta <- beta_new_subset - beta_prev_subset
 
-      beta_values[active_idx] <- .mlxs_as_numeric(beta_new_subset)
+      beta_mlx[active_idx, ] <- beta_new_subset
 
       residual_sum <- Rmlx::mlx_sum(residual_mlx)
       intercept_grad <- residual_sum / n_obs
@@ -170,14 +169,13 @@ mlxs_glmnet <- function(x,
       mu_mlx <- family$linkinv(eta_mlx)
       residual_mlx <- mu_mlx - y_mlx
 
-      delta_vec <- .mlxs_as_numeric(delta_beta)
-      max_change <- max(abs(delta_vec))
+      max_change <- max(abs(.mlxs_as_numeric(delta_beta)))
       if (max_change < tol && abs(intercept_delta) < tol) {
         break
       }
     }
 
-    beta_store[, idx] <- beta_values
+    beta_store[, idx] <- .mlxs_as_numeric(beta_mlx)
     intercept_store[idx] <- intercept_val
 
     grad_prev <- .mlxs_as_numeric(crossprod(x_mlx, residual_mlx) / n_obs)

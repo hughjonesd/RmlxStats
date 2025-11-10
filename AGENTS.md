@@ -31,8 +31,18 @@ guidance are called out below.
 ## Testing Guidelines
 - Write tests with testthat in `tests/testthat`; keep scenarios focused and readable.
 - Use CPU-friendly fixtures (small matrices) so GPU and CPU paths run quickly.
-- Run `R -q -e 'devtools::test()'` locally; failures are acceptable when MLX is absent,
-  but prefer explicit skips with informative messages if GPU is required.
+- Run `R -q -e 'devtools::test()'` locally; on other machines failures are acceptable when MLX
+  is absent, but prefer explicit skips with informative messages if GPU is required.
+- Within this workspace you can assume MLX and Rmlx are installed and working; do not
+  add `skip_if_not_available` scaffolding around MLX usage unless directed otherwise.
+
+## Working Style Expectations
+- **KEEP IT SIMPLE.** Prefer the most direct expression of an idea over elaborate helper
+  stacks. If a single call (e.g., `as_mlx()`) communicates intent, use it instead of
+  wrapping the same logic in multiple conditionals.
+- **READ THE MLX AND LOCAL CODEBASE.** Before changing behaviour, scan the existing MLX
+  helpers and this repo to stay aligned with current conventions—assume the answer
+  probably already exists somewhere nearby.
 
 ## Commit & Pull Request Guidelines
 - Follow imperative, capitalized commit messages (e.g., `Add mlxs_lm interface`).
@@ -50,6 +60,21 @@ guidance are called out below.
   `.Rcheck/` directories created during manual workflows.
 
 ## Additional Guidance
+
+### MLX-first Data Handling
+- This package exists to validate an *mlx*-based statistics workflow. Move inputs into
+  MLX arrays immediately and keep them there as long as feasible; prefer MLX outputs
+  for anything that could feed other computations.
+- Base R representations are acceptable only for user-facing summaries (printing,
+  glance/tidy outputs, etc.) or when required by R generics.
+- When constructing MLX data from raw R vectors/scalars, favor explicit constructors
+  such as `Rmlx::mlx_scalar()` / `Rmlx::mlx_vector()` / `Rmlx::mlx_array()` rather
+  than `as_mlx()` so future readers can see intent at the call site.
+
+### Open Issues To File Upstream
+- Track pending GitHub issues in `docs/github-issues.md` (e.g., MLX-native `anova`
+  support, MLX quantile helper, prediction standard errors). Open real issues on the
+  Rmlx/RmlxStats repos when you have network credentials.
 
 ### Integration with Rmlx
 - Always import Rmlx helpers (`as_mlx`, `mlx_matmul`, `qr.mlx`, etc.) via the

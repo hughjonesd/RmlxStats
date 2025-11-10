@@ -19,55 +19,11 @@ NULL
 }
 
 # Helper to refit as base lm for operations that expect an lm object
-.mlxs_as_lm <- function(object) {
-  if (inherits(object, "lm")) {
-    return(object)
-  }
-  if (!inherits(object, "mlxs_lm")) {
-    stop("Expected an mlxs_lm or lm object.", call. = FALSE)
-  }
-  lm(terms(object), data = model.frame(object))
-}
-
-# Helper to compute variance-covariance matrix
-.mlxs_vcov <- function(object) {
-  qr_fit <- object$mlx$qr
-  if (is.null(qr_fit)) {
-    stop("QR decomposition not stored in mlxs_lm object.", call. = FALSE)
-  }
-  r_mlx <- qr_fit$R
-  dim_r <- r_mlx$dim
-  if (is.null(dim_r)) {
-    dim_r <- dim(.mlxs_as_matrix(r_mlx))
-  }
-  if (length(dim_r) != 2L || dim_r[1L] != dim_r[2L]) {
-    stop("QR decomposition returned a non-square R matrix.", call. = FALSE)
-  }
-
-  eye <- Rmlx::mlx_eye(dim_r[1L])
-  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, eye, upper = TRUE)
-  vcov_mlx <- r_inv %*% t(r_inv)
-
-  residual_mlx <- object$mlx$residual
-  if (is.null(residual_mlx)) {
-    residual_mlx <- object$residuals
-  }
-  resid_vec <- .mlxs_as_numeric(residual_mlx)
-  rss <- sum(resid_vec^2)
-  sigma2 <- rss / object$df.residual
-
-  vcov_mlx <- vcov_mlx * sigma2
-  vc <- as.matrix(vcov_mlx)
-  coef_names <- .mlxs_coef_names(object)
-  colnames(vc) <- rownames(vc) <- coef_names
-  vc
-}
-
 #' @export
 coef.mlxs_lm <- function(object, ...) {
-  coef_vec <- .mlxs_as_numeric(object$coefficients)
-  names(coef_vec) <- .mlxs_coef_names(object)
-  coef_vec
+  coef_mlx <- object$coefficients
+  attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
+  coef_mlx
 }
 
 #' @export
@@ -96,38 +52,48 @@ residuals.mlxs_lm <- function(object, ...) {
 
 #' @export
 vcov.mlxs_lm <- function(object, ...) {
-  .mlxs_vcov(object)
+  qr_fit <- object$qr
+  if (is.null(qr_fit)) {
+    stop("QR decomposition not stored in mlxs_lm object.", call. = FALSE)
+  }
+  r_mlx <- qr_fit$R
+  n_coef <- length(.mlxs_coef_names(object))
+  eye <- Rmlx::mlx_eye(n_coef)
+  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, eye, upper = TRUE)
+  sigma2 <- sum(.mlxs_as_numeric(object$residuals)^2) / object$df.residual
+  sigma2 * (r_inv %*% t(r_inv))
 }
 
 #' @export
 confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
   cf <- coef(object)
+  cf_num <- .mlxs_as_numeric(cf)
+  coef_names <- .mlxs_coef_names(object)
   if (missing(parm)) {
-    parm <- seq_along(cf)
+    parm <- seq_along(cf_num)
   } else if (is.character(parm)) {
-    parm <- match(parm, names(cf), nomatch = NA_integer_)
+    parm <- match(parm, coef_names, nomatch = NA_integer_)
     if (any(is.na(parm))) {
       stop("Some parameters not found in the model.", call. = FALSE)
     }
   }
   vc <- vcov(object)
-  se <- sqrt(diag(vc))[parm]
-  est <- cf[parm]
+  vc_mat <- as.matrix(vc)
+  se <- sqrt(diag(vc_mat))[parm]
+  est <- cf_num[parm]
   alpha <- (1 - level) / 2
   t_quant <- qt(c(alpha, 1 - alpha), df = object$df.residual)
   limits <- outer(se, t_quant, `*`)
   ci <- cbind(est + limits[, 1], est + limits[, 2])
   probs <- c(alpha, 1 - alpha) * 100
   colnames(ci) <- paste0(sprintf("%g", probs), " %")
-  rownames(ci) <- names(est)
+  rownames(ci) <- coef_names[parm]
   ci
 }
 
 #' @export
 anova.mlxs_lm <- function(object, ...) {
-  others <- list(...)
-  lm_models <- c(list(.mlxs_as_lm(object)), lapply(others, .mlxs_as_lm))
-  do.call(anova, lm_models)
+  stop("anova.mlxs_lm() is not implemented without converting to base lm.", call. = FALSE)
 }
 
 #' @export
@@ -148,7 +114,8 @@ summary.mlxs_lm <- function(object,
   user_args <- utils::modifyList(default_args, bootstrap_args)
   bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
   vc <- vcov(object)
-  se <- sqrt(diag(vc))
+  vc_mat <- as.matrix(vc)
+  se <- sqrt(diag(vc_mat))
   bootstrap_info <- NULL
   if (isTRUE(bootstrap)) {
     bootstrap_info <- .mlxs_bootstrap_coefs(
@@ -162,18 +129,19 @@ summary.mlxs_lm <- function(object,
     )
     se <- bootstrap_info$se
   }
-  est <- coef(object)
+  est <- .mlxs_as_numeric(object$coefficients)
   tvals <- est / se
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
-  coef_table <- cbind(Estimate = est, `Std. Error` = se, `t value` = tvals, `Pr(>|t|)` = pvals)
-  rownames(coef_table) <- names(est)
-
-  resid <- .mlxs_as_numeric(residuals(object))
+  resid_mlx <- residuals(object)
   rdf <- object$df.residual
-  rss <- sum(resid^2)
+  rss <- .mlxs_as_numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
   sigma <- sqrt(rss / rdf)
-  response <- model.response(model.frame(object))
-  tss <- sum((response - mean(response))^2)
+  fitted_mlx <- fitted(object)
+  y_mlx <- resid_mlx + fitted_mlx
+  n_obs <- nobs(object)
+  y_mean <- .mlxs_as_numeric(Rmlx::mlx_sum(y_mlx)) / n_obs
+  centered <- y_mlx - Rmlx::mlx_scalar(y_mean)
+  tss <- .mlxs_as_numeric(Rmlx::mlx_sum(centered * centered))
   r.squared <- if (tss < .Machine$double.eps) 1 else 1 - rss / tss
   df.int <- attr(object$terms, "intercept")
   if (is.null(df.int)) df.int <- 1L
@@ -191,15 +159,20 @@ summary.mlxs_lm <- function(object,
   result <- list(
     call = object$call,
     terms = object$terms,
-    residuals = resid,
-    coefficients = coef_table,
+    residuals = resid_mlx,
+    coef = object$coefficients,
+    coef_names = .mlxs_coef_names(object),
+    std.error = Rmlx::mlx_matrix(se, ncol = 1),
+    statistic = Rmlx::mlx_matrix(tvals, ncol = 1),
+    p.value = Rmlx::mlx_matrix(pvals, ncol = 1),
     sigma = sigma,
-    df = c(object$rank, rdf, length(response)),
+    df = c(object$rank, rdf, n_obs),
     r.squared = r.squared,
-    adj.r.squared = if (rdf > 0) 1 - (1 - r.squared) * (length(response) - 1) / rdf else NA_real_,
+    adj.r.squared = if (rdf > 0) 1 - (1 - r.squared) * (n_obs - 1) / rdf else NA_real_,
     fstatistic = c(value = fstat, numdf = df_model, dendf = rdf),
-    p.value = p_f,
-    vcov = vc,
+    p.value.model = p_f,
+    cov.scaled = vc,
+    cov.unscaled = vc / (sigma^2),
     bootstrap = bootstrap_info
   )
   class(result) <- c("summary.mlxs_lm", "mlxs_lm_summary")
@@ -218,17 +191,25 @@ print.summary.mlxs_lm <- function(x, ...) {
   cat("Call:\n")
   print(x$call)
   cat("\nResiduals:\n")
-  resid_quants <- quantile(x$residuals, probs = c(0, 0.25, 0.5, 0.75, 1))
+  resid_vals <- .mlxs_as_numeric(x$residuals)
+  resid_quants <- quantile(resid_vals, probs = c(0, 0.25, 0.5, 0.75, 1))
   names(resid_quants) <- c("Min", "1Q", "Median", "3Q", "Max")
   print(resid_quants)
   cat("\nCoefficients:\n")
-  printCoefmat(x$coefficients, has.Pvalue = TRUE)
+  coef_table <- cbind(
+    Estimate = .mlxs_as_numeric(x$coef),
+    `Std. Error` = .mlxs_as_numeric(x$std.error),
+    `t value` = .mlxs_as_numeric(x$statistic),
+    `Pr(>|t|)` = .mlxs_as_numeric(x$p.value)
+  )
+  rownames(coef_table) <- x$coef_names
+  printCoefmat(coef_table, has.Pvalue = TRUE)
   cat("\nResidual standard error:", format(signif(x$sigma, 4)), "on", x$df[2], "degrees of freedom\n")
   if (!is.na(x$fstatistic[1])) {
     cat("Multiple R-squared:", format(signif(x$r.squared, 4)), ",  Adjusted R-squared:",
         format(signif(x$adj.r.squared, 4)), "\n")
     cat("F-statistic:", format(signif(x$fstatistic[1], 4)), "on", x$fstatistic[2], "and", x$fstatistic[3],
-        "DF,  p-value:", format.pval(x$p.value), "\n")
+        "DF,  p-value:", format.pval(x$p.value.model), "\n")
   }
   invisible(x)
 }
@@ -266,13 +247,12 @@ nobs.mlxs_lm <- function(object, ...) {
 #' @export
 tidy.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
-  coef_df <- sum_obj$coefficients
   data.frame(
-    term = rownames(coef_df),
-    estimate = coef_df[, "Estimate"],
-    std.error = coef_df[, "Std. Error"],
-    statistic = coef_df[, "t value"],
-    p.value = coef_df[, "Pr(>|t|)"],
+    term = sum_obj$coef_names,
+    estimate = .mlxs_as_numeric(sum_obj$coef),
+    std.error = .mlxs_as_numeric(sum_obj$std.error),
+    statistic = .mlxs_as_numeric(sum_obj$statistic),
+    p.value = .mlxs_as_numeric(sum_obj$p.value),
     row.names = NULL
   )
 }
@@ -293,7 +273,7 @@ glance.mlxs_lm <- function(x, ...) {
     adj.r.squared = sum_obj$adj.r.squared,
     sigma = sigma,
     statistic = sum_obj$fstatistic[1],
-    p.value = sum_obj$p.value,
+    p.value = sum_obj$p.value.model,
     df = sum_obj$df[1],
     df.residual = sum_obj$df[2],
     logLik = loglik,
@@ -305,46 +285,57 @@ glance.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
-augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL, se_fit = FALSE, ...) {
+augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL,
+                            se_fit = FALSE,
+                            output = c("data.frame", "mlx"),
+                            ...) {
   terms_obj <- terms(x)
+  output <- match.arg(output)
   if (is.null(newdata)) {
     mm <- model.matrix(x)
-    fitted_vals <- .mlxs_as_numeric(x$fitted.values)
-    residuals_vals <- .mlxs_as_numeric(x$residuals)
+    fitted_vals <- x$fitted.values
+    residuals_vals <- x$residuals
     base_data <- data
   } else {
     mf <- model.frame(delete.response(terms_obj), data = newdata, na.action = na.pass)
     mm <- model.matrix(delete.response(terms_obj), mf)
     mm_mlx <- Rmlx::as_mlx(mm)
-    fitted_vals <- .mlxs_as_numeric(mm_mlx %*% x$coefficients)
+    fitted_vals <- mm_mlx %*% x$coefficients
     residuals_vals <- NULL
     base_data <- newdata
   }
 
+  if (output == "mlx") {
+    return(list(.fitted = fitted_vals, .resid = residuals_vals))
+  }
+
+  fitted_num <- .mlxs_as_numeric(fitted_vals)
+  residuals_num <- if (!is.null(residuals_vals)) .mlxs_as_numeric(residuals_vals) else NULL
+
   if (!is.null(rownames(mm))) {
-    names(fitted_vals) <- rownames(mm)
-    if (!is.null(residuals_vals)) {
-      names(residuals_vals) <- rownames(mm)
+    names(fitted_num) <- rownames(mm)
+    if (!is.null(residuals_num)) {
+      names(residuals_num) <- rownames(mm)
     }
   }
 
+  if (!is.null(rownames(mm))) {
+    rownames(base_data) <- rownames(mm)
+  }
+
   out <- as.data.frame(base_data)
-  out$.fitted <- fitted_vals
+  out$.fitted <- fitted_num
   if (is.null(newdata)) {
-    out$.resid <- residuals_vals
+    out$.resid <- residuals_num
   }
 
   if (se_fit) {
-    vc <- vcov(x)
+    vc <- as.matrix(vcov(x))
     se_vals <- sqrt(rowSums((mm %*% vc) * mm))
     if (!is.null(rownames(mm))) {
       names(se_vals) <- rownames(mm)
     }
     out$.se.fit <- se_vals
-  }
-
-  if (!is.null(rownames(mm))) {
-    rownames(out) <- rownames(mm)
   }
 
   out

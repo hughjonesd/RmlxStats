@@ -1,36 +1,28 @@
-as_vec <- function(x) {
-  if (inherits(x, "mlx")) {
-    drop(as.matrix(x))
-  } else {
-    x
-  }
-}
-
 test_that("mlxs_glm gaussian matches stats::glm", {
-
   formula <- mpg ~ cyl + disp
   base_fit <- glm(formula, data = mtcars, family = gaussian())
   mlx_fit <- mlxs_glm(formula, data = mtcars, family = mlxs_gaussian())
 
   expect_true(mlx_fit$converged)
-  expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-6)
+  expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(
-    as_vec(mlx_fit$fitted.values),
+    drop(as.matrix(mlx_fit$fitted.values)),
     fitted(base_fit),
     tolerance = 1e-6,
     ignore_attr = TRUE
   )
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-6)
-  expect_equal(unname(vcov(mlx_fit)), unname(vcov(base_fit)), tolerance = 1e-6)
+  expect_equal(unname(as.matrix(vcov(mlx_fit))), unname(vcov(base_fit)), tolerance = 1e-6)
 
   newdata <- head(mtcars)
   expect_equal(
-    predict(mlx_fit, newdata = newdata, type = "response"),
+    drop(as.matrix(predict(mlx_fit, newdata = newdata, type = "response"))),
     predict(base_fit, newdata = newdata, type = "response"),
-    tolerance = 1e-6
+    tolerance = 1e-6,
+    ignore_attr = TRUE
   )
 
-  pearson_resid <- residuals(mlx_fit, type = "pearson")
+  pearson_resid <- drop(as.matrix(residuals(mlx_fit, type = "pearson")))
   expect_equal(unname(pearson_resid), unname(residuals(base_fit, type = "pearson")), tolerance = 1e-5)
 
   tidy_df <- tidy(mlx_fit)
@@ -45,9 +37,35 @@ test_that("mlxs_glm gaussian matches stats::glm", {
 
   aug_new <- augment(mlx_fit, newdata = newdata)
   expect_equal(unname(aug_new$.fitted), unname(predict(base_fit, newdata = newdata, type = "response")), tolerance = 1e-6)
+  augment_mlx <- augment(mlx_fit, output = "mlx")
+  expect_s3_class(augment_mlx$.fitted, "mlx")
+  expect_s3_class(augment_mlx$.resid, "mlx")
 
   expect_s3_class(summary(mlx_fit), "summary.mlxs_glm")
-  expect_equal(anova(mlx_fit)$Deviance, anova(base_fit)$Deviance, tolerance = 1e-6)
+  expect_error(anova(mlx_fit), "not implemented", fixed = TRUE)
+})
+
+test_that("mlxs_glm respects observation weights", {
+  formula <- mpg ~ cyl + disp
+  w <- seq_len(nrow(mtcars)) / nrow(mtcars)
+
+  base_fit <- glm(formula, data = mtcars, family = gaussian(), weights = w)
+  mlx_fit <- mlxs_glm(formula, data = mtcars, family = mlxs_gaussian(), weights = w)
+
+  expect_true(mlx_fit$converged)
+  expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-5, ignore_attr = TRUE)
+  expect_equal(
+    drop(as.matrix(mlx_fit$fitted.values)),
+    fitted(base_fit),
+    tolerance = 1e-5,
+    ignore_attr = TRUE
+  )
+  expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
+  expect_equal(
+    drop(as.matrix(mlx_fit$weights)),
+    unname(base_fit$prior.weights),
+    tolerance = 1e-12
+  )
 })
 
 test_that("mlxs_glm bootstrap summary works", {
@@ -74,7 +92,6 @@ test_that("mlxs_glm residual bootstrap works for gaussian", {
 })
 
 test_that("mlxs_glm binomial matches stats::glm", {
-
   data <- mtcars
   data$vs <- ifelse(data$vs > 0, 1, 0)
   formula <- vs ~ mpg + wt
@@ -83,18 +100,19 @@ test_that("mlxs_glm binomial matches stats::glm", {
   mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_binomial())
 
   expect_true(mlx_fit$converged)
-  expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-5)
-  expect_equal(unname(as_vec(mlx_fit$fitted.values)), as.vector(fitted(base_fit)), tolerance = 1e-5)
+  expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-5, ignore_attr = TRUE)
+  expect_equal(unname(drop(as.matrix(mlx_fit$fitted.values))), as.vector(fitted(base_fit)), tolerance = 1e-5)
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
 
   newdata <- head(data)
   expect_equal(
-    predict(mlx_fit, newdata = newdata, type = "response"),
+    drop(as.matrix(predict(mlx_fit, newdata = newdata, type = "response"))),
     predict(base_fit, newdata = newdata, type = "response"),
-    tolerance = 1e-5
+    tolerance = 1e-5,
+    ignore_attr = TRUE
   )
 
-  dev_res <- residuals(mlx_fit, type = "deviance")
+  dev_res <- drop(as.matrix(residuals(mlx_fit, type = "deviance")))
   expect_equal(unname(dev_res), unname(residuals(base_fit, type = "deviance")), tolerance = 1e-5)
 
   tidy_df <- tidy(mlx_fit)
@@ -108,7 +126,6 @@ test_that("mlxs_glm binomial matches stats::glm", {
 })
 
 test_that("mlxs_glm poisson matches stats::glm", {
-
   data <- mtcars
   data$cyl_count <- round(abs(data$cyl + rnorm(nrow(data), sd = 0.25)))
   formula <- cyl_count ~ mpg + wt
@@ -117,14 +134,15 @@ test_that("mlxs_glm poisson matches stats::glm", {
   mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_poisson())
 
   expect_true(mlx_fit$converged)
-  expect_equal(coef(mlx_fit), coef(base_fit), tolerance = 1e-5)
-  expect_equal(unname(as_vec(mlx_fit$fitted.values)), as.vector(fitted(base_fit)), tolerance = 1e-5)
+  expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-5, ignore_attr = TRUE)
+  expect_equal(unname(drop(as.matrix(mlx_fit$fitted.values))), as.vector(fitted(base_fit)), tolerance = 1e-5)
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
 
   newdata <- head(data)
   expect_equal(
-    predict(mlx_fit, newdata = newdata, type = "response"),
+    drop(as.matrix(predict(mlx_fit, newdata = newdata, type = "response"))),
     predict(base_fit, newdata = newdata, type = "response"),
-    tolerance = 1e-5
+    tolerance = 1e-5,
+    ignore_attr = TRUE
   )
 })

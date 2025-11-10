@@ -7,6 +7,9 @@
 #' @param data Optional data frame, tibble, or environment containing the
 #'   variables in the model.
 #' @param subset Optional expression for subsetting observations.
+#' @param weights Optional non-negative observation weights. Treated like the
+#'   `weights` argument to [stats::lm()], i.e. they enter the fit via weighted
+#'   least squares.
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -18,11 +21,11 @@
 #' @examples
 #' fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
 #' coef(fit)
-mlxs_lm <- function(formula, data, subset) {
+mlxs_lm <- function(formula, data, subset, weights) {
   call <- match.call()
 
   mf <- match.call(expand.dots = FALSE)
-  arg_names <- c("formula", "data", "subset")
+  arg_names <- c("formula", "data", "subset", "weights")
   keep <- match(arg_names, names(mf), nomatch = 0L)
   mf <- mf[c(1L, keep)]
   mf[[1L]] <- quote(model.frame)
@@ -30,7 +33,11 @@ mlxs_lm <- function(formula, data, subset) {
 
   terms <- attr(mf, "terms")
   response <- model.response(mf)
+  if (is.matrix(response) && ncol(response) == 1L) {
+    response <- drop(response)
+  }
   design <- model.matrix(terms, mf)
+  weights_raw <- mf[["(weights)", exact = TRUE]]
 
   n_obs <- nrow(design)
   if (is.null(n_obs) || n_obs == 0L) {
@@ -42,7 +49,31 @@ mlxs_lm <- function(formula, data, subset) {
     stop("No coefficients to estimate; provide predictors in the formula.", call. = FALSE)
   }
 
-  fit_res <- mlxs_lm_fit(x = design, y = response)
+  weights_mlx <- NULL
+  if (!is.null(weights_raw)) {
+    weights_mlx <- if (inherits(weights_raw, "mlx")) {
+      weights_raw
+    } else {
+      Rmlx::mlx_matrix(weights_raw, ncol = 1)
+    }
+    weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
+    if (weight_len != n_obs) {
+      stop("Length of 'weights' must match number of observations.", call. = FALSE)
+    }
+    bad_finite <- Rmlx::mlx_any(!Rmlx::mlx_isfinite(weights_mlx))
+    if (as.logical(drop(as.matrix(bad_finite)))) {
+      stop("Weights must be non-negative and finite.", call. = FALSE)
+    }
+    bad_negative <- Rmlx::mlx_any(weights_mlx < 0)
+    if (as.logical(drop(as.matrix(bad_negative)))) {
+      stop("Weights must be non-negative and finite.", call. = FALSE)
+    }
+  }
+
+  design_mlx <- Rmlx::as_mlx(design)
+  response_mlx <- if (inherits(response, "mlx")) response else Rmlx::mlx_matrix(response, ncol = 1)
+
+  fit_res <- mlxs_lm_fit(x = design_mlx, y = response_mlx, weights = weights_mlx)
 
   result <- list(
     coefficients = fit_res$coefficients,
@@ -54,38 +85,42 @@ mlxs_lm <- function(formula, data, subset) {
     call = call,
     terms = terms,
     model = mf,
-    mlx = fit_res$mlx,
-    coef_names = colnames(design)
+    qr = fit_res$qr,
+    coef_names = colnames(design),
+    weights = weights_mlx
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")
   result
 }
 
-mlxs_lm_fit <- function (x, y) {
-  x_mlx <- Rmlx::as_mlx(x)
-  y_mlx <- Rmlx::as_mlx(y)
-  y_mlx <- Rmlx::mlx_reshape(y_mlx, c(length(y_mlx), 1L))
-  
-  qr_fit <- qr(x_mlx)
-  qty_mlx <- crossprod(qr_fit$Q, y_mlx)
+mlxs_lm_fit <- function(x, y, weights = NULL) {
+  x_orig <- Rmlx::as_mlx(x)
+  y_orig <- if (inherits(y, "mlx")) y else Rmlx::mlx_matrix(y, ncol = 1)
+
+  x_work <- x_orig
+  y_work <- y_orig
+  if (!is.null(weights)) {
+    w_col <- if (inherits(weights, "mlx")) weights else Rmlx::mlx_matrix(weights, ncol = 1)
+    w_sqrt <- sqrt(w_col)
+    dims <- Rmlx::mlx_dim(x_orig)
+    w_broadcast <- Rmlx::mlx_broadcast_to(w_sqrt, dims)
+    x_work <- x_orig * w_broadcast
+    y_work <- y_orig * w_sqrt
+  }
+
+  qr_fit <- qr(x_work)
+  qty_mlx <- crossprod(qr_fit$Q, y_work)
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE)
-  
-  fitted_mlx <- x_mlx %*% coef_mlx
-  residual_mlx <- y_mlx - fitted_mlx
-  
+
+  fitted_mlx <- x_orig %*% coef_mlx
+  residual_mlx <- y_orig - fitted_mlx
+
   list(
     coefficients = coef_mlx,
     fitted.values = fitted_mlx,
     residuals = residual_mlx,
     effects = qty_mlx,
-    mlx = list(
-      qr = qr_fit,
-      x = x_mlx,
-      y = y_mlx,
-      fitted = fitted_mlx,
-      residual = residual_mlx,
-      coef = coef_mlx
-    )
+    qr = qr_fit
   )
 }

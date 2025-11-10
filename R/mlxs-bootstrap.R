@@ -26,7 +26,7 @@
   if (is.null(data) || n == 0L) {
     stop("Bootstrap requires the original model frame to be stored.", call. = FALSE)
   }
-  coef_names <- names(coef(object))
+  coef_names <- object$coef_names
   if (is.null(coef_names)) {
     stop("Model must have named coefficients for bootstrap.", call. = FALSE)
   }
@@ -73,7 +73,12 @@
       end_row <- j * n
       boot_data <- stacked[start_row:end_row, , drop = FALSE]
       boot_fit <- fit_fun(boot_data)
-      batch_results[[j]] <- coef(boot_fit)[coef_names]
+      coef_boot <- drop(as.matrix(coef(boot_fit)))
+      if (length(coef_boot) != length(coef_names)) {
+        stop("Coefficient count mismatch in bootstrap refit.", call. = FALSE)
+      }
+      names(coef_boot) <- coef_names
+      batch_results[[j]] <- coef_boot
     }
     batch_mat <- do.call(rbind, batch_results)
     coef_mat[current_row:(current_row + reps - 1L), ] <- batch_mat
@@ -88,7 +93,7 @@
 }
 
 .mlxs_bootstrap_residual_lm <- function(object, B, seed, progress, batch_size) {
-  qr_fit <- object$mlx$qr
+  qr_fit <- object$qr
   if (is.null(qr_fit)) {
     stop("QR decomposition not stored in mlxs_lm object.", call. = FALSE)
   }
@@ -99,7 +104,7 @@
     stop("Mismatch between fitted values and residual lengths.", call. = FALSE)
   }
   centered_resid <- residuals - mean(residuals)
-  coef_names <- names(coef(object))
+  coef_names <- object$coef_names
   if (is.null(coef_names)) {
     stop("Model must have named coefficients for bootstrap.", call. = FALSE)
   }
@@ -142,7 +147,7 @@
 }
 
 .mlxs_bootstrap_residual_glm <- function(object, B, seed, progress, batch_size) {
-  qr_fit <- object$mlx$qr
+  qr_fit <- object$qr
   if (is.null(qr_fit)) {
     stop("QR decomposition not stored in mlxs_glm object.", call. = FALSE)
   }
@@ -153,7 +158,7 @@
   }
   n <- length(residuals)
   centered_resid <- residuals - mean(residuals)
-  coef_names <- names(coef(object))
+  coef_names <- object$coef_names
   if (is.null(coef_names)) {
     stop("Model must have named coefficients for bootstrap.", call. = FALSE)
   }
