@@ -86,34 +86,31 @@ We check that different fits give close results:
 ```{r agreement}
 lm_fit <- lm(lm_formula, data = bench_data)
 mlxs_fit <- mlxs_lm(lm_formula, data = bench_data)
-mlxs_coef <- drop(as.matrix(mlxs_fit$coefficients))
-mlxs_fitted <- as.vector(drop(as.matrix(mlxs_fit$fitted.values)))
 feols_fit <- feols(lm_formula, data = bench_data)
 fastlm_fit <- RcppEigen::fastLm(lm_formula, data = bench_data)
 speedlm_fit <- speedglm::speedlm(lm_formula, data = bench_data)
 
-coef_delta <- max(abs(coef(lm_fit) - mlxs_coef))
-fitted_delta <- max(abs(fitted(lm_fit) - mlxs_fitted))
+ref_coef <- coef(lm_fit)
+ref_fitted <- fitted(lm_fit)
 
-feols_coef_delta <- max(abs(coef(lm_fit) - coef(feols_fit)))
-feols_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(feols_fit))))
+extract_fit <- function(coef_vec, fitted_vec) {
+  c(
+    max_coef = max(abs(ref_coef - coef_vec)),
+    max_fitted = max(abs(ref_fitted - fitted_vec))
+  )
+}
 
-fastlm_coef_delta <- max(abs(coef(lm_fit) - fastlm_fit$coefficients))
-fastlm_fitted_delta <- max(abs(fitted(lm_fit) - fastlm_fit$fitted.values))
-
-speedlm_coef_delta <- max(abs(coef(lm_fit) - speedlm_fit$coefficients))
-speedlm_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit))))
-
-c(
-  max_coefficient_difference = coef_delta,
-  max_fitted_difference = fitted_delta,
-  feols_max_coefficient_difference = feols_coef_delta,
-  feols_max_fitted_difference = feols_fitted_delta,
-  fastlm_max_coefficient_difference = fastlm_coef_delta,
-  fastlm_max_fitted_difference = fastlm_fitted_delta,
-  speedlm_max_coefficient_difference = speedlm_coef_delta,
-  speedlm_max_fitted_difference = speedlm_fitted_delta
+fits <- list(
+  mlxs = list(
+    coef = as.numeric(as.matrix(mlxs_fit$coefficients)),
+    fitted = as.numeric(as.matrix(mlxs_fit$fitted.values))
+  ),
+  feols = list(coef = coef(feols_fit), fitted = as.numeric(predict(feols_fit))),
+  fastlm = list(coef = fastlm_fit$coefficients, fitted = fastlm_fit$fitted.values),
+  speedlm = list(coef = speedlm_fit$coefficients, fitted = as.numeric(predict(speedlm_fit)))
 )
+
+vapply(fits, function(f) extract_fit(f$coef, f$fitted), numeric(2))
 ```
 
 
@@ -164,9 +161,15 @@ lm_hd <- lm(hd_formula, data = hd_data)
 mlxs_hd <- mlxs_lm(hd_formula, data = hd_data)
 speedlm_hd <- speedglm::speedlm(hd_formula, data = hd_data)
 
-c(
-  max(abs(coef(lm_hd) - mlxs_hd$coefficients)),
-  max(abs(coef(lm_hd) - speedlm_hd$coefficients))
+ref_coef_hd <- coef(lm_hd)
+
+vapply(
+  list(
+    mlxs = as.numeric(as.matrix(mlxs_hd$coefficients)),
+    speedlm = speedlm_hd$coefficients
+  ),
+  function(coefs) max(abs(ref_coef_hd - coefs)),
+  numeric(1)
 )
 ```
 
@@ -207,20 +210,29 @@ ggplot2::autoplot(glm_mark, type = "boxplot")
 ```{r glm-agreement}
 glm_fit <- glm(glm_formula, family = binomial(), data = bench_data)
 mlxs_glm_fit <- mlxs_glm(glm_formula, family = mlxs_binomial(), data = bench_data)
-mlxs_glm_coef <- drop(as.matrix(mlxs_glm_fit$coefficients))
-mlxs_glm_fitted <- as.vector(drop(as.matrix(mlxs_glm_fit$fitted.values)))
 speedglm_fit <- speedglm::speedglm(glm_formula, family = binomial(), data = bench_data)
 
-glm_coef_delta <- max(abs(coef(glm_fit) - mlxs_glm_coef))
-glm_fitted_delta <- max(abs(fitted(glm_fit) - mlxs_glm_fitted))
-speedglm_coef_delta <- max(abs(coef(glm_fit) - speedglm_fit$coefficients))
-speedglm_fitted_delta <- max(abs(fitted(glm_fit) - as.vector(predict(speedglm_fit))))
+ref_coef_glm <- coef(glm_fit)
+ref_fitted_glm <- fitted(glm_fit)
 
-c(
-  mlxs_max_coefficient_difference = glm_coef_delta,
-  mlxs_max_fitted_difference = glm_fitted_delta,
-  speedglm_max_coefficient_difference = speedglm_coef_delta,
-  speedglm_max_fitted_difference = speedglm_fitted_delta
+glm_targets <- list(
+  mlxs = list(
+    coef = as.numeric(as.matrix(mlxs_glm_fit$coefficients)),
+    fitted = as.numeric(as.matrix(mlxs_glm_fit$fitted.values))
+  ),
+  speedglm = list(
+    coef = speedglm_fit$coefficients,
+    fitted = as.numeric(predict(speedglm_fit))
+  )
+)
+
+vapply(
+  glm_targets,
+  function(fit) c(
+    max_coef = max(abs(ref_coef_glm - fit$coef)),
+    max_fitted = max(abs(ref_fitted_glm - fit$fitted))
+  ),
+  numeric(2)
 )
 ```
 
@@ -273,16 +285,14 @@ glm_hd_fit <- glm(glm_hd_formula, family = binomial(), data = glm_hd_data,
                   control = list(maxit = 50))
 mlxs_hd_fit <- mlxs_glm(glm_hd_formula, family = mlxs_binomial(), data = glm_hd_data,
                         control = list(maxit = 50, epsilon = 1e-6))
-mlxs_hd_coef <- drop(as.matrix(mlxs_hd_fit$coefficients))
-mlxs_hd_fitted <- as.vector(drop(as.matrix(mlxs_hd_fit$fitted.values)))
 
-c(
+list(
   observations = nrow(glm_hd_data),
   predictors = ncol(glm_hd_data) - 1,
   mlxs_converged = mlxs_hd_fit$converged,
   mlxs_iterations = mlxs_hd_fit$iter,
-  max_coefficient_difference = max(abs(coef(glm_hd_fit) - mlxs_hd_coef)),
-  max_fitted_difference = max(abs(fitted(glm_hd_fit) - mlxs_hd_fitted))
+  max_coefficient_difference = max(abs(coef(glm_hd_fit) - as.numeric(as.matrix(mlxs_hd_fit$coefficients)))),
+  max_fitted_difference = max(abs(fitted(glm_hd_fit) - as.numeric(as.matrix(mlxs_hd_fit$fitted.values))))
 )
 ```
 
