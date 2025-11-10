@@ -118,11 +118,11 @@ repetition.</p>
 <span><span class="va">bench_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">bench_summary</span></span>
 <span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      lm 0.03481802  91103808   17.640491 1.327773</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm 0.06178077  78456800   11.385940 2.355989</span></span>
-<span><span class="co">#&gt; 3   feols 0.02622286  32390888   36.830217 1.000000</span></span>
-<span><span class="co">#&gt; 4  fastLm 0.11775852 116838424    7.058463 4.490681</span></span>
-<span><span class="co">#&gt; 5 speedlm 0.02707406  75406984   36.166271 1.032460</span></span>
+<span><span class="co">#&gt; 1      lm 0.05171494  91103808   12.294593 1.741915</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm 0.07542450  78456800    9.609389 2.540525</span></span>
+<span><span class="co">#&gt; 3   feols 0.02968855  32390888   32.569918 1.000000</span></span>
+<span><span class="co">#&gt; 4  fastLm 0.09225927 116838424    7.598314 3.107571</span></span>
+<span><span class="co">#&gt; 5 speedlm 0.03495594  75406984   29.456261 1.177422</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bench_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/timings-1.png" class="r-plt" width="700"></p>
 <p>The benchmark table reports the median execution time (seconds),
@@ -171,7 +171,7 @@ floating point tolerance.</p>
 <span>  speedlm_max_fitted_difference <span class="op">=</span> <span class="va">speedlm_fitted_delta</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000034820c0&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b11b0&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_coefficient_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -183,7 +183,7 @@ floating point tolerance.</p>
 <span><span class="co">#&gt; [1] "gpu"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000034825c0&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b1260&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_fitted_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -253,12 +253,12 @@ are large, we simulate a design matrix with many rows and columns.</p>
 <span><span class="op">)</span></span>
 <span><span class="va">hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">hd_summary</span></span>
-<span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec  relative</span></span>
-<span><span class="co">#&gt; 1      lm 0.59138589 198187456   1.5780286 10.346671</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm 0.05715712 165871952  17.4746592  1.000000</span></span>
-<span><span class="co">#&gt; 3   feols 1.49385201  81721048   0.6523371 26.135889</span></span>
-<span><span class="co">#&gt; 4  fastLm 0.71369782 278407080   1.4621103 12.486596</span></span>
-<span><span class="co">#&gt; 5 speedlm 0.10942392 188431080   8.8449220  1.914441</span></span>
+<span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
+<span><span class="co">#&gt; 1      lm 0.68067528 198187456   1.3427333 10.14027</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm 0.06712594 165871952  14.8262080  1.00000</span></span>
+<span><span class="co">#&gt; 3   feols 1.56086807  81721048   0.6417895 23.25283</span></span>
+<span><span class="co">#&gt; 4  fastLm 0.82553213 278407080   1.2935251 12.29826</span></span>
+<span><span class="co">#&gt; 5 speedlm 0.11388386 188431080   7.5999912  1.69657</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/highp-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
@@ -277,7 +277,7 @@ with the reference linear model.</p>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_hd</span><span class="op">)</span> <span class="op">-</span> <span class="va">speedlm_hd</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x600003484550&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b62d0&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -332,9 +332,9 @@ binomial family on the flights data.</p>
 <span><span class="va">glm_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_summary</span></span>
 <span><span class="co">#&gt;     method median_sec     mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm  0.5645901 1027386600    1.799858 2.208329</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm  0.3224818  308501216    2.932605 1.261350</span></span>
-<span><span class="co">#&gt; 3 speedglm  0.2556639  528434864    3.535278 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm  0.6102941 1027386600    1.581060 2.259978</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm  0.4021389  308501216    2.332484 1.489159</span></span>
+<span><span class="co">#&gt; 3 speedglm  0.2700443  528434864    3.147944 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-timings-1.png" class="r-plt" width="700"></p>
 </div>
@@ -366,7 +366,7 @@ implementation:</p>
 <span>  speedglm_max_fitted_difference <span class="op">=</span> <span class="va">speedglm_fitted_delta</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $mlxs_max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x60000348b320&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b9c40&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $mlxs_max_coefficient_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -378,7 +378,7 @@ implementation:</p>
 <span><span class="co">#&gt; [1] "gpu"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $mlxs_max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x60000348aec0&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b9630&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $mlxs_max_fitted_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -438,9 +438,9 @@ then compare execution speed across solvers.</p>
 <span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_hd_summary</span></span>
 <span><span class="co">#&gt;     method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm 0.38751162 167405736    2.580568 5.356389</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm 0.25420992  44611040    3.933757 3.513823</span></span>
-<span><span class="co">#&gt; 3 speedglm 0.07234569 120938016   13.822524 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm  0.5438174 167405736    1.838853 5.391074</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm  0.3637886  44611040    2.748849 3.606379</span></span>
+<span><span class="co">#&gt; 3 speedglm  0.1008737 120938016    9.913391 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-highd-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
@@ -476,7 +476,7 @@ convergence behaviour and solution agreement.</p>
 <span><span class="co">#&gt; [1] 6</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x600003485050&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b3010&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_coefficient_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -488,7 +488,7 @@ convergence behaviour and solution agreement.</p>
 <span><span class="co">#&gt; [1] "gpu"</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x600003485ac0&gt;</span></span>
+<span><span class="co">#&gt; &lt;pointer: 0x6000010b27a0&gt;</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $max_fitted_difference.dim</span></span>
 <span><span class="co">#&gt; integer(0)</span></span>
@@ -559,8 +559,8 @@ the new [mlxs_glmnet()] helper.</p>
 <span><span class="va">enet_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">enet_summary</span></span>
 <span><span class="co">#&gt;        method median_sec   mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glmnet 0.02744425 22547280  37.7979818  1.00000</span></span>
-<span><span class="co">#&gt; 2 mlxs_glmnet 1.66152795 46335264   0.5969282 60.54193</span></span>
+<span><span class="co">#&gt; 1      glmnet 0.03491363 22547280  27.5499370   1.0000</span></span>
+<span><span class="co">#&gt; 2 mlxs_glmnet 1.82719796 46335264   0.5522011  52.3348</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">enet_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glmnet-flights-benchmark-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">

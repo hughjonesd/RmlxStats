@@ -61,11 +61,11 @@ bench_summary <- data.frame(
 bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
 bench_summary
 #>    method median_sec    mem_mb itr_per_sec relative
-#> 1      lm 0.03481802  91103808   17.640491 1.327773
-#> 2 mlxs_lm 0.06178077  78456800   11.385940 2.355989
-#> 3   feols 0.02622286  32390888   36.830217 1.000000
-#> 4  fastLm 0.11775852 116838424    7.058463 4.490681
-#> 5 speedlm 0.02707406  75406984   36.166271 1.032460
+#> 1      lm 0.05171494  91103808   12.294593 1.741915
+#> 2 mlxs_lm 0.07542450  78456800    9.609389 2.540525
+#> 3   feols 0.02968855  32390888   32.569918 1.000000
+#> 4  fastLm 0.09225927 116838424    7.598314 3.107571
+#> 5 speedlm 0.03495594  75406984   29.456261 1.177422
 ggplot2::autoplot(bench_mark, type = "boxplot")
 ```
 
@@ -117,7 +117,7 @@ c(
   speedlm_max_fitted_difference = speedlm_fitted_delta
 )
 #> $max_coefficient_difference.ptr
-#> <pointer: 0x6000034820c0>
+#> <pointer: 0x6000010b11b0>
 #> 
 #> $max_coefficient_difference.dim
 #> integer(0)
@@ -129,7 +129,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $max_fitted_difference.ptr
-#> <pointer: 0x6000034825c0>
+#> <pointer: 0x6000010b1260>
 #> 
 #> $max_fitted_difference.dim
 #> integer(0)
@@ -204,12 +204,12 @@ hd_summary <- data.frame(
 )
 hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
 hd_summary
-#>    method median_sec    mem_mb itr_per_sec  relative
-#> 1      lm 0.59138589 198187456   1.5780286 10.346671
-#> 2 mlxs_lm 0.05715712 165871952  17.4746592  1.000000
-#> 3   feols 1.49385201  81721048   0.6523371 26.135889
-#> 4  fastLm 0.71369782 278407080   1.4621103 12.486596
-#> 5 speedlm 0.10942392 188431080   8.8449220  1.914441
+#>    method median_sec    mem_mb itr_per_sec relative
+#> 1      lm 0.68067528 198187456   1.3427333 10.14027
+#> 2 mlxs_lm 0.06712594 165871952  14.8262080  1.00000
+#> 3   feols 1.56086807  81721048   0.6417895 23.25283
+#> 4  fastLm 0.82553213 278407080   1.2935251 12.29826
+#> 5 speedlm 0.11388386 188431080   7.5999912  1.69657
 ggplot2::autoplot(hd_mark, type = "beeswarm")
 ```
 
@@ -230,7 +230,7 @@ c(
   max(abs(coef(lm_hd) - speedlm_hd$coefficients))
 )
 #> $ptr
-#> <pointer: 0x600003484550>
+#> <pointer: 0x6000010b62d0>
 #> 
 #> $dim
 #> integer(0)
@@ -291,9 +291,9 @@ glm_summary <- data.frame(
 glm_summary$relative <- glm_summary$median_sec / min(glm_summary$median_sec)
 glm_summary
 #>     method median_sec     mem_mb itr_per_sec relative
-#> 1      glm  0.5645901 1027386600    1.799858 2.208329
-#> 2 mlxs_glm  0.3224818  308501216    2.932605 1.261350
-#> 3 speedglm  0.2556639  528434864    3.535278 1.000000
+#> 1      glm  0.6102941 1027386600    1.581060 2.259978
+#> 2 mlxs_glm  0.4021389  308501216    2.332484 1.489159
+#> 3 speedglm  0.2700443  528434864    3.147944 1.000000
 ggplot2::autoplot(glm_mark, type = "boxplot")
 ```
 
@@ -326,7 +326,7 @@ c(
   speedglm_max_fitted_difference = speedglm_fitted_delta
 )
 #> $mlxs_max_coefficient_difference.ptr
-#> <pointer: 0x60000348b320>
+#> <pointer: 0x6000010b9c40>
 #> 
 #> $mlxs_max_coefficient_difference.dim
 #> integer(0)
@@ -338,7 +338,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $mlxs_max_fitted_difference.ptr
-#> <pointer: 0x60000348aec0>
+#> <pointer: 0x6000010b9630>
 #> 
 #> $mlxs_max_fitted_difference.dim
 #> integer(0)
@@ -402,9 +402,9 @@ glm_hd_summary <- data.frame(
 glm_hd_summary$relative <- glm_hd_summary$median_sec / min(glm_hd_summary$median_sec)
 glm_hd_summary
 #>     method median_sec    mem_mb itr_per_sec relative
-#> 1      glm 0.38751162 167405736    2.580568 5.356389
-#> 2 mlxs_glm 0.25420992  44611040    3.933757 3.513823
-#> 3 speedglm 0.07234569 120938016   13.822524 1.000000
+#> 1      glm  0.5438174 167405736    1.838853 5.391074
+#> 2 mlxs_glm  0.3637886  44611040    2.748849 3.606379
+#> 3 speedglm  0.1008737 120938016    9.913391 1.000000
 ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
 ```
 
@@ -442,7 +442,7 @@ c(
 #> [1] 6
 #> 
 #> $max_coefficient_difference.ptr
-#> <pointer: 0x600003485050>
+#> <pointer: 0x6000010b3010>
 #> 
 #> $max_coefficient_difference.dim
 #> integer(0)
@@ -454,7 +454,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $max_fitted_difference.ptr
-#> <pointer: 0x600003485ac0>
+#> <pointer: 0x6000010b27a0>
 #> 
 #> $max_fitted_difference.dim
 #> integer(0)
@@ -529,8 +529,8 @@ enet_summary <- data.frame(
 enet_summary$relative <- enet_summary$median_sec / min(enet_summary$median_sec)
 enet_summary
 #>        method median_sec   mem_mb itr_per_sec relative
-#> 1      glmnet 0.02744425 22547280  37.7979818  1.00000
-#> 2 mlxs_glmnet 1.66152795 46335264   0.5969282 60.54193
+#> 1      glmnet 0.03491363 22547280  27.5499370   1.0000
+#> 2 mlxs_glmnet 1.82719796 46335264   0.5522011  52.3348
 ggplot2::autoplot(enet_mark, type = "beeswarm")
 ```
 
