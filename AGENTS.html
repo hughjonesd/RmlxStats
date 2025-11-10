@@ -69,7 +69,15 @@
 <h2 id="testing-guidelines">Testing Guidelines<a class="anchor" aria-label="anchor" href="#testing-guidelines"></a></h2>
 <ul><li>Write tests with testthat in <code>tests/testthat</code>; keep scenarios focused and readable.</li>
 <li>Use CPU-friendly fixtures (small matrices) so GPU and CPU paths run quickly.</li>
-<li>Run <code>R -q -e 'devtools::test()'</code> locally; failures are acceptable when MLX is absent, but prefer explicit skips with informative messages if GPU is required.</li>
+<li>Run <code>R -q -e 'devtools::test()'</code> locally; on other machines failures are acceptable when MLX is absent, but prefer explicit skips with informative messages if GPU is required.</li>
+<li>Within this workspace you can assume MLX and Rmlx are installed and working; do not add <code>skip_if_not_available</code> scaffolding around MLX usage unless directed otherwise.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="working-style-expectations">Working Style Expectations<a class="anchor" aria-label="anchor" href="#working-style-expectations"></a></h2>
+<ul><li>
+<strong>KEEP IT SIMPLE.</strong> Prefer the most direct expression of an idea over elaborate helper stacks. If a single call (e.g., <code>as_mlx()</code>) communicates intent, use it instead of wrapping the same logic in multiple conditionals.</li>
+<li>
+<strong>READ THE MLX AND LOCAL CODEBASE.</strong> Before changing behaviour, scan the existing MLX helpers and this repo to stay aligned with current conventions—assume the answer probably already exists somewhere nearby.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="commit--pull-request-guidelines">Commit &amp; Pull Request Guidelines<a class="anchor" aria-label="anchor" href="#commit--pull-request-guidelines"></a></h2>
@@ -85,6 +93,16 @@
 </ul></div>
 <div class="section level2">
 <h2 id="additional-guidance">Additional Guidance<a class="anchor" aria-label="anchor" href="#additional-guidance"></a></h2>
+<div class="section level3">
+<h3 id="mlx-first-data-handling">MLX-first Data Handling<a class="anchor" aria-label="anchor" href="#mlx-first-data-handling"></a></h3>
+<ul><li>This package exists to validate an <em>mlx</em>-based statistics workflow. Move inputs into MLX arrays immediately and keep them there as long as feasible; prefer MLX outputs for anything that could feed other computations.</li>
+<li>Base R representations are acceptable only for user-facing summaries (printing, glance/tidy outputs, etc.) or when required by R generics.</li>
+<li>When constructing MLX data from raw R vectors/scalars, favor explicit constructors such as <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_scalar.html" class="external-link">Rmlx::mlx_scalar()</a></code> / <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_vector.html" class="external-link">Rmlx::mlx_vector()</a></code> / <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_array.html" class="external-link">Rmlx::mlx_array()</a></code> rather than <code>as_mlx()</code> so future readers can see intent at the call site.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="issue-tracking">Issue Tracking<a class="anchor" aria-label="anchor" href="#issue-tracking"></a></h3>
+<ul><li>Log backlog ideas directly as GitHub issues (use <code>gh issue create ...</code>) instead of keeping a local <code>docs/github-issues.md</code> scratchpad. Include the issue number in PR summaries for traceability.</li>
+</ul></div>
 <div class="section level3">
 <h3 id="integration-with-rmlx">Integration with Rmlx<a class="anchor" aria-label="anchor" href="#integration-with-rmlx"></a></h3>
 <ul><li>Always import Rmlx helpers (<code>as_mlx</code>, <code>mlx_matmul</code>, <code>qr.mlx</code>, etc.) via the qualified namespace (<code>Rmlx::</code>). Update <code>DESCRIPTION</code> Imports/Remotes as needed.</li>

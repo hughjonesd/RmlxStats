@@ -40,6 +40,14 @@ level.
 ``` r
 fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
 coef(fit)
-#> (Intercept)         cyl        disp 
-#> 34.66099167 -1.58727658 -0.02058364 
+#> mlx array [3 x 1]
+#>   dtype: float32
+#>   device: gpu
+#>   values:
+#>             [,1]
+#> [1,] 34.66099167
+#> [2,] -1.58727658
+#> [3,] -0.02058364
+#> attr(,"coef_names")
+#> [1] "(Intercept)" "cyl"         "disp"       
 ```

@@ -43,9 +43,23 @@ and RmlxStats-specific guidance are called out below.
   and readable.
 - Use CPU-friendly fixtures (small matrices) so GPU and CPU paths run
   quickly.
-- Run `R -q -e 'devtools::test()'` locally; failures are acceptable when
-  MLX is absent, but prefer explicit skips with informative messages if
-  GPU is required.
+- Run `R -q -e 'devtools::test()'` locally; on other machines failures
+  are acceptable when MLX is absent, but prefer explicit skips with
+  informative messages if GPU is required.
+- Within this workspace you can assume MLX and Rmlx are installed and
+  working; do not add `skip_if_not_available` scaffolding around MLX
+  usage unless directed otherwise.
+
+## Working Style Expectations
+
+- **KEEP IT SIMPLE.** Prefer the most direct expression of an idea over
+  elaborate helper stacks. If a single call (e.g., `as_mlx()`)
+  communicates intent, use it instead of wrapping the same logic in
+  multiple conditionals.
+- **READ THE MLX AND LOCAL CODEBASE.** Before changing behaviour, scan
+  the existing MLX helpers and this repo to stay aligned with current
+  conventions—assume the answer probably already exists somewhere
+  nearby.
 
 ## Commit & Pull Request Guidelines
 
@@ -68,6 +82,31 @@ and RmlxStats-specific guidance are called out below.
   artifacts or `.Rcheck/` directories created during manual workflows.
 
 ## Additional Guidance
+
+### MLX-first Data Handling
+
+- This package exists to validate an *mlx*-based statistics workflow.
+  Move inputs into MLX arrays immediately and keep them there as long as
+  feasible; prefer MLX outputs for anything that could feed other
+  computations.
+- Base R representations are acceptable only for user-facing summaries
+  (printing, glance/tidy outputs, etc.) or when required by R generics.
+- When constructing MLX data from raw R vectors/scalars, favor explicit
+  constructors such as
+  [`Rmlx::mlx_scalar()`](https://hughjonesd.github.io/Rmlx/reference/mlx_scalar.html)
+  /
+  [`Rmlx::mlx_vector()`](https://hughjonesd.github.io/Rmlx/reference/mlx_vector.html)
+  /
+  [`Rmlx::mlx_array()`](https://hughjonesd.github.io/Rmlx/reference/mlx_array.html)
+  rather than `as_mlx()` so future readers can see intent at the call
+  site.
+
+### Issue Tracking
+
+- Log backlog ideas directly as GitHub issues (use
+  `gh issue create ...`) instead of keeping a local
+  `docs/github-issues.md` scratchpad. Include the issue number in PR
+  summaries for traceability.
 
 ### Integration with Rmlx
 

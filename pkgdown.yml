@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   benchmark-lm-mlxs: benchmark-lm-mlxs.html
-last_built: 2025-11-09T11:06Z
+last_built: 2025-11-10T11:04Z
 urls:
   reference: https://hughjonesd.github.io/RmlxStats/reference
   article: https://hughjonesd.github.io/RmlxStats/articles

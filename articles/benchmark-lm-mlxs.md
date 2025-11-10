@@ -61,11 +61,11 @@ bench_summary <- data.frame(
 bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
 bench_summary
 #>    method median_sec    mem_mb itr_per_sec relative
-#> 1      lm 0.09174861  91103808    8.479591 2.222611
-#> 2 mlxs_lm 0.05283358  67377200   12.593409 1.279894
-#> 3   feols 0.04127966  32390888   22.688937 1.000000
-#> 4  fastLm 0.22772335 119984248    4.087392 5.516599
-#> 5 speedlm 0.04163283  75406984   10.481493 1.008556
+#> 1      lm 0.04810485  91103808   14.147915 1.586735
+#> 2 mlxs_lm 0.06377767  78456800   10.698912 2.103702
+#> 3   feols 0.03333050  32390888   30.807743 1.099404
+#> 4  fastLm 0.09624373 116838424    7.734411 3.174593
+#> 5 speedlm 0.03031688  75406984   22.100227 1.000000
 ggplot2::autoplot(bench_mark, type = "boxplot")
 ```
 
@@ -117,7 +117,7 @@ c(
   speedlm_max_fitted_difference = speedlm_fitted_delta
 )
 #> $max_coefficient_difference.ptr
-#> <pointer: 0x600002b08cb0>
+#> <pointer: 0x600003851550>
 #> 
 #> $max_coefficient_difference.dim
 #> integer(0)
@@ -129,7 +129,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $max_fitted_difference.ptr
-#> <pointer: 0x600002b08f60>
+#> <pointer: 0x6000038515c0>
 #> 
 #> $max_fitted_difference.dim
 #> integer(0)
@@ -205,11 +205,11 @@ hd_summary <- data.frame(
 hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
 hd_summary
 #>    method median_sec    mem_mb itr_per_sec  relative
-#> 1      lm  1.0515591 198187456   0.9752880  6.843389
-#> 2 mlxs_lm  0.1536606 165631808   4.2926579  1.000000
-#> 3   feols  1.9132746  81721048   0.5160914 12.451304
-#> 4  fastLm  1.2023910 278407080   0.8370399  7.824980
-#> 5 speedlm  0.3026046 188431080   3.3416597  1.969305
+#> 1      lm  0.8295865 198187456   1.1423611  7.124390
+#> 2 mlxs_lm  0.1164432 165871952   8.0841686  1.000000
+#> 3   feols  1.9643393  81721048   0.5162979 16.869512
+#> 4  fastLm  1.0916862 278407080   0.9330374  9.375271
+#> 5 speedlm  0.1568005 188431080   6.3439741  1.346584
 ggplot2::autoplot(hd_mark, type = "beeswarm")
 ```
 
@@ -230,7 +230,7 @@ c(
   max(abs(coef(lm_hd) - speedlm_hd$coefficients))
 )
 #> $ptr
-#> <pointer: 0x600002b08f20>
+#> <pointer: 0x600003851950>
 #> 
 #> $dim
 #> integer(0)
@@ -291,9 +291,9 @@ glm_summary <- data.frame(
 glm_summary$relative <- glm_summary$median_sec / min(glm_summary$median_sec)
 glm_summary
 #>     method median_sec     mem_mb itr_per_sec relative
-#> 1      glm  0.5718007 1027386600    1.623614 1.593433
-#> 2 mlxs_glm  0.5378026  275699296    1.702651 1.498691
-#> 3 speedglm  0.3588482  528434864    2.298443 1.000000
+#> 1      glm  0.8853180 1027386600    1.187906 2.139832
+#> 2 mlxs_glm  0.5423088  308494248    1.507390 1.310771
+#> 3 speedglm  0.4137325  528434864    2.429985 1.000000
 ggplot2::autoplot(glm_mark, type = "boxplot")
 ```
 
@@ -326,7 +326,7 @@ c(
   speedglm_max_fitted_difference = speedglm_fitted_delta
 )
 #> $mlxs_max_coefficient_difference.ptr
-#> <pointer: 0x600002b018a0>
+#> <pointer: 0x60000385ee20>
 #> 
 #> $mlxs_max_coefficient_difference.dim
 #> integer(0)
@@ -338,7 +338,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $mlxs_max_fitted_difference.ptr
-#> <pointer: 0x600002b02390>
+#> <pointer: 0x60000385eed0>
 #> 
 #> $mlxs_max_fitted_difference.dim
 #> integer(0)
@@ -402,9 +402,9 @@ glm_hd_summary <- data.frame(
 glm_hd_summary$relative <- glm_hd_summary$median_sec / min(glm_hd_summary$median_sec)
 glm_hd_summary
 #>     method median_sec    mem_mb itr_per_sec relative
-#> 1      glm 0.43116801 167405736    2.319282 5.419412
-#> 2 mlxs_glm 0.27273179  44221640    3.666606 3.428005
-#> 3 speedglm 0.07955993 120938016   12.569142 1.000000
+#> 1      glm  0.4503767 167405736    2.220364 3.851475
+#> 2 mlxs_glm  0.4439285  44611040    2.252615 3.796333
+#> 3 speedglm  0.1169361 120938016    8.551676 1.000000
 ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
 ```
 
@@ -442,7 +442,7 @@ c(
 #> [1] 6
 #> 
 #> $max_coefficient_difference.ptr
-#> <pointer: 0x600002b15860>
+#> <pointer: 0x6000038518b0>
 #> 
 #> $max_coefficient_difference.dim
 #> integer(0)
@@ -454,7 +454,7 @@ c(
 #> [1] "gpu"
 #> 
 #> $max_fitted_difference.ptr
-#> <pointer: 0x600002b14b50>
+#> <pointer: 0x600003852090>
 #> 
 #> $max_fitted_difference.dim
 #> integer(0)
@@ -517,6 +517,2934 @@ enet_mark <- mark(
   iterations = 3,
   check = FALSE
 )
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
 #> Warning: Some expressions had a GC in every iteration; so filtering is
 #> disabled.
 
@@ -529,8 +3457,8 @@ enet_summary <- data.frame(
 enet_summary$relative <- enet_summary$median_sec / min(enet_summary$median_sec)
 enet_summary
 #>        method median_sec   mem_mb itr_per_sec relative
-#> 1      glmnet 0.03409093 22547280  23.8013044  1.00000
-#> 2 mlxs_glmnet 1.34677665 45710824   0.7379547 39.50543
+#> 1      glmnet 0.05084422 22547280  20.6058434  1.00000
+#> 2 mlxs_glmnet 4.82522768 71440280   0.2272171 94.90218
 ggplot2::autoplot(enet_mark, type = "beeswarm")
 ```
 
@@ -543,6 +3471,738 @@ enet_ref <- glmnet::glmnet(x_enet, y_enet, family = "binomial", alpha = 1,
 enet_fit <- mlxs_glmnet(x_enet, y_enet, family = mlxs_binomial(), alpha = 1,
                         lambda = lambda_enet, standardize = TRUE,
                         maxit = 2000, tol = 1e-6)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
+#> Warning in as.vector.mlx(x, mode): Converting multi-dimensional mlx array to
+#> vector (flattening in column-major order)
 
 c(
   coefficients_max_difference = max(abs(as.numeric(enet_ref$beta) - enet_fit$beta[, 1])),
