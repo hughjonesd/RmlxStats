@@ -9,6 +9,7 @@ mlxs_glm(
   family = mlxs_gaussian(),
   data,
   subset,
+  weights,
   na.action,
   start = NULL,
   control = list(),
@@ -32,6 +33,9 @@ mlxs_glm(
 
 \item{subset}{an optional vector specifying a subset of observations
     to be used in the fitting process.}
+
+\item{weights}{an optional vector of \sQuote{prior weights} to be used
+    in the fitting process.  Should be \code{NULL} or a numeric vector.}
 
 \item{na.action}{a function which indicates what should happen
     when the data contain \code{NA}s.  The default is set by

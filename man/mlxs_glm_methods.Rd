@@ -38,9 +38,9 @@
 
 \method{print}{mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
-\method{summary}{mlxs_glm}(object, ...)
+\method{summary}{mlxs_glm}(object, bootstrap = FALSE, bootstrap_args = list(), ...)
 
-\method{print}{summary.mlxs_glm}(x, ...)
+\method{print}{summary.mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
 \method{anova}{mlxs_glm}(object, ...)
 
@@ -63,6 +63,7 @@
   type.predict = c("response", "link"),
   type.residuals = c("response", "deviance"),
   se_fit = FALSE,
+  output = c("data.frame", "mlx"),
   ...
 )
 }

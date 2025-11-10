@@ -4,7 +4,7 @@
 \alias{mlxs_lm}
 \title{MLX-backed linear regression}
 \usage{
-mlxs_lm(formula, data, subset)
+mlxs_lm(formula, data, subset, weights)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -13,6 +13,10 @@ mlxs_lm(formula, data, subset)
 variables in the model.}
 
 \item{subset}{Optional expression for subsetting observations.}
+
+\item{weights}{Optional non-negative observation weights. Treated like the
+\code{weights} argument to \code{\link[stats:lm]{stats::lm()}}, i.e. they enter the fit via weighted
+least squares.}
 }
 \value{
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing

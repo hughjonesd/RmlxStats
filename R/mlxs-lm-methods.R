@@ -92,8 +92,7 @@ summary.mlxs_lm <- function(object,
     B = 200L,
     seed = NULL,
     progress = FALSE,
-    bootstrap_type = "case",
-    batch_size = 32L
+    bootstrap_type = "case"
   )
   if (!is.list(bootstrap_args)) {
     stop("bootstrap_args must be a list.", call. = FALSE)
@@ -111,7 +110,6 @@ summary.mlxs_lm <- function(object,
       B = user_args$B,
       seed = user_args$seed,
       progress = user_args$progress,
-      batch_size = user_args$batch_size,
       method = bootstrap_type
     )
     se_mlx <- bootstrap_info$se
