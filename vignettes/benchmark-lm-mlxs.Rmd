@@ -5,7 +5,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{Benchmarking MLX-backed Linear and Generalized Linear Models}
+  %\VignetteIndexEntry{Benchmarks}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options:
