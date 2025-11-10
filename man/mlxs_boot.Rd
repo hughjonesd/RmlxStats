@@ -4,15 +4,7 @@
 \alias{mlxs_boot}
 \title{Bootstrap MLX arrays along the first dimension}
 \usage{
-mlxs_boot(
-  fun,
-  ...,
-  B = 200L,
-  seed = NULL,
-  progress = FALSE,
-  replace = TRUE,
-  compile = FALSE
-)
+mlxs_boot(fun, ..., B = 200L, seed = NULL, progress = FALSE, compile = FALSE)
 }
 \arguments{
 \item{fun}{Function called on each bootstrap draw. It must accept the same
@@ -26,9 +18,6 @@ first dimension before being passed to \code{fun}.}
 \item{seed}{Optional integer seed for reproducibility.}
 
 \item{progress}{Logical; if \code{TRUE}, show a text progress bar.}
-
-\item{replace}{Logical; whether to sample with replacement. Defaults to
-\code{TRUE} for standard bootstrap resampling.}
 
 \item{compile}{Logical; compile \code{fun} once via \code{\link[Rmlx:mlx_compile]{Rmlx::mlx_compile()}} before
 entering the resampling loop. Defaults to \code{FALSE}.}

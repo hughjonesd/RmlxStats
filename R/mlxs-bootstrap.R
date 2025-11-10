@@ -15,8 +15,6 @@
 #' @param B Number of bootstrap iterations.
 #' @param seed Optional integer seed for reproducibility.
 #' @param progress Logical; if `TRUE`, show a text progress bar.
-#' @param replace Logical; whether to sample with replacement. Defaults to
-#'   `TRUE` for standard bootstrap resampling.
 #' @param compile Logical; compile `fun` once via [Rmlx::mlx_compile()] before
 #'   entering the resampling loop. Defaults to `FALSE`.
 #'
@@ -25,7 +23,7 @@
 #' @export
 #' @importFrom utils txtProgressBar setTxtProgressBar
 mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
-                      replace = TRUE, compile = FALSE) {
+                      compile = FALSE) {
   if (!is.function(fun)) {
     stop("`fun` must be a function.", call. = FALSE)
   }
@@ -79,7 +77,7 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
   }
 
   for (rep_idx in seq_len(B)) {
-    idx <- sample.int(n_obs, n_obs, replace = replace)
+    idx <- sample.int(n_obs, n_obs, replace = TRUE)
     boot_args <- lapply(prepared, .mlxs_boot_take, idx = idx)
     names(boot_args) <- names(prepared)
     samples[[rep_idx]] <- do.call(fun_eval, boot_args)
