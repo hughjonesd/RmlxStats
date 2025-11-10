@@ -7,12 +7,8 @@
                                   method = c("case", "residual")) {
   fit_type <- match.arg(fit_type)
   method <- match.arg(method)
-  if (method == "residual" && fit_type == "glm") {
-    family_name <- object$family$family
-    if (!family_name %in% c("gaussian", "quasigaussian")) {
-      warning("Residual bootstrap for mlxs_glm currently supported only for gaussian family; falling back to case resampling.", call. = FALSE)
-      method <- "case"
-    }
+  if (method == "residual" && fit_type == "glm" && !object$family$family %in% c("gaussian", "quasigaussian")) {
+    stop("Residual bootstrap for mlxs_glm currently supports only gaussian/quasigaussian families.", call. = FALSE)
   }
 
   handler <- structure(
