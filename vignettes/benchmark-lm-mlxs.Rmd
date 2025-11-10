@@ -1,6 +1,9 @@
 ---
 title: "Benchmarking MLX-backed Linear and Generalized Linear Models"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{Benchmarking MLX-backed Linear and Generalized Linear Models}
   %\VignetteEncoding{UTF-8}
