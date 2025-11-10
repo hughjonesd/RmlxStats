@@ -11,7 +11,7 @@ mlxs_boot(
   seed = NULL,
   progress = FALSE,
   replace = TRUE,
-  compile = NULL
+  compile = FALSE
 )
 }
 \arguments{
@@ -31,8 +31,7 @@ first dimension before being passed to \code{fun}.}
 \code{TRUE} for standard bootstrap resampling.}
 
 \item{compile}{Logical; compile \code{fun} once via \code{\link[Rmlx:mlx_compile]{Rmlx::mlx_compile()}} before
-entering the resampling loop. Defaults to the \code{mlxs.boot.compile} option
-(TRUE when unset).}
+entering the resampling loop. Defaults to \code{FALSE}.}
 }
 \value{
 A list with elements \code{samples} (the raw results from \code{fun}), \code{B}, and

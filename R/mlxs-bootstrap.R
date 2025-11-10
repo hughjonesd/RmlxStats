@@ -18,15 +18,14 @@
 #' @param replace Logical; whether to sample with replacement. Defaults to
 #'   `TRUE` for standard bootstrap resampling.
 #' @param compile Logical; compile `fun` once via [Rmlx::mlx_compile()] before
-#'   entering the resampling loop. Defaults to the `mlxs.boot.compile` option
-#'   (TRUE when unset).
+#'   entering the resampling loop. Defaults to `FALSE`.
 #'
 #' @return A list with elements `samples` (the raw results from `fun`), `B`, and
 #'   `seed`.
 #' @export
 #' @importFrom utils txtProgressBar setTxtProgressBar
 mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
-                      replace = TRUE, compile = NULL) {
+                      replace = TRUE, compile = FALSE) {
   if (!is.function(fun)) {
     stop("`fun` must be a function.", call. = FALSE)
   }
@@ -67,10 +66,6 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
     stop("`B` must be a positive integer.", call. = FALSE)
   }
 
-  if (is.null(compile)) {
-    compile <- getOption("mlxs.boot.compile", TRUE)
-  }
-
   samples <- vector("list", B)
   pb <- NULL
   if (isTRUE(progress)) {
@@ -79,45 +74,15 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
   }
 
   fun_eval <- fun
-  compiled_active <- FALSE
   if (isTRUE(compile)) {
-    fun_compiled <- .mlxs_try_compile(fun)
-    if (!is.null(fun_compiled)) {
-      fun_eval <- fun_compiled
-      compiled_active <- TRUE
-    }
+    fun_eval <- Rmlx::mlx_compile(fun)
   }
 
-  compiled_failed <- FALSE
   for (rep_idx in seq_len(B)) {
     idx <- sample.int(n_obs, n_obs, replace = replace)
     boot_args <- lapply(prepared, .mlxs_boot_take, idx = idx)
     names(boot_args) <- names(prepared)
-    if (compiled_active && !compiled_failed) {
-      res <- tryCatch(
-        do.call(fun_eval, boot_args),
-        error = function(e) {
-          compiled_failed <<- TRUE
-          if (isTRUE(getOption("mlxs.boot.compile.warn", FALSE))) {
-            warning(
-              "Compiled bootstrap function failed; falling back to interpreted version: ",
-              conditionMessage(e),
-              call. = FALSE
-            )
-          }
-          attr(e, "compiled_failure") <- TRUE
-          e
-        }
-      )
-      if (inherits(res, "error") && isTRUE(attr(res, "compiled_failure"))) {
-        fun_eval <- fun
-        samples[[rep_idx]] <- do.call(fun_eval, boot_args)
-      } else {
-        samples[[rep_idx]] <- res
-      }
-    } else {
-      samples[[rep_idx]] <- do.call(fun_eval, boot_args)
-    }
+    samples[[rep_idx]] <- do.call(fun_eval, boot_args)
     if (!is.null(pb)) {
       utils::setTxtProgressBar(pb, rep_idx)
     }
@@ -271,16 +236,4 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
   }
   subs$drop <- FALSE
   do.call(`[`, c(list(x), subs))
-}
-
-.mlxs_try_compile <- function(fun) {
-  tryCatch(
-    Rmlx::mlx_compile(fun),
-    error = function(e) {
-      if (isTRUE(getOption("mlxs.boot.compile.warn", FALSE))) {
-        warning("Failed to compile bootstrap function: ", e$message, call. = FALSE)
-      }
-      NULL
-    }
-  )
 }
