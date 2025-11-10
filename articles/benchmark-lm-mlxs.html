@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Benchmarking MLX-backed Linear and Generalized Linear Models • RmlxStats</title>
+<title>Benchmarks • RmlxStats</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Benchmarking MLX-backed Linear and Generalized Linear Models">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Benchmarks">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,7 +33,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/benchmark-lm-mlxs.html">Benchmarking MLX-backed Linear and Generalized Linear Models</a></li>
+<li><a class="dropdown-item" href="../articles/benchmark-lm-mlxs.html">Benchmarks</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -55,7 +55,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>Benchmarking MLX-backed Linear and Generalized Linear Models</h1>
+      <h1>Benchmarks</h1>
             
       
 
@@ -64,19 +64,12 @@
 
     
     
-<p>The <code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code> and <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> functions
-mirror <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code> and <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code> but
-execute their linear algebra with the MLX backend. This vignette
-benchmarks these implementations against standard R functions and
-specialized fast fitting packages (fixest, RcppEigen, speedglm, fastglm)
-using the sizeable <code><a href="https://rdrr.io/pkg/nycflights13/man/flights.html" class="external-link">nycflights13::flights</a></code> dataset,
-demonstrating the performance gains available when Metal acceleration is
-active.</p>
+<p>This vignette benchmarks RmlxStats against standard R functions and
+specialized fast fitting packages (fixest, RcppEigen, speedglm,
+fastglm).</p>
 <div class="section level2">
 <h2 id="data-preparation">Data Preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h2>
-<p>We retain a handful of numeric predictors from the flights data and
-drop rows with missing values in the variables of interest.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">flights</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="fu">nycflights13</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/nycflights13/man/flights.html" class="external-link">flights</a></span><span class="op">)</span></span>
 <span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"arr_delay"</span>, <span class="st">"dep_delay"</span>, <span class="st">"air_time"</span>, <span class="st">"distance"</span><span class="op">)</span></span>
@@ -84,15 +77,11 @@ drop rows with missing values in the variables of interest.</p>
 <span><span class="va">bench_data</span> <span class="op">&lt;-</span> <span class="va">flights</span><span class="op">[</span><span class="va">complete_rows</span>, <span class="va">vars</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bench_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 327346</span></span></code></pre></div>
-<p>The resulting dataset contains hundreds of thousands of observations,
-large enough to expose performance differences in the solvers.</p>
 </div>
 <div class="section level2">
 <h2 id="benchmark-setup">Benchmark Setup<a class="anchor" aria-label="anchor" href="#benchmark-setup"></a>
 </h2>
-<p>We benchmark several linear model solvers that accept formula
-interfaces. The <code>bench</code> package automates warm-up and
-repetition.</p>
+<p>We benchmark several linear model solvers.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lm_formula</span> <span class="op">&lt;-</span> <span class="va">arr_delay</span> <span class="op">~</span> <span class="va">dep_delay</span> <span class="op">+</span> <span class="va">air_time</span> <span class="op">+</span> <span class="va">distance</span></span>
 <span></span>
@@ -118,24 +107,18 @@ repetition.</p>
 <span><span class="va">bench_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">bench_summary</span></span>
 <span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      lm 0.05171494  91103808   12.294593 1.741915</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm 0.07542450  78456800    9.609389 2.540525</span></span>
-<span><span class="co">#&gt; 3   feols 0.02968855  32390888   32.569918 1.000000</span></span>
-<span><span class="co">#&gt; 4  fastLm 0.09225927 116838424    7.598314 3.107571</span></span>
-<span><span class="co">#&gt; 5 speedlm 0.03495594  75406984   29.456261 1.177422</span></span>
+<span><span class="co">#&gt; 1      lm 0.05018466  91103808   12.134017 1.180623</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm 0.08978545  78456800    8.126718 2.112255</span></span>
+<span><span class="co">#&gt; 3   feols 0.04518749  32390888   24.396392 1.063062</span></span>
+<span><span class="co">#&gt; 4  fastLm 0.14301267 116838424    5.064029 3.364457</span></span>
+<span><span class="co">#&gt; 5 speedlm 0.04250691  75406984   23.278611 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bench_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/timings-1.png" class="r-plt" width="700"></p>
-<p>The benchmark table reports the median execution time (seconds),
-memory allocation (megabytes), iteration rate, and relative speed for
-each method across five iterations. The <code>relative</code> column
-expresses how many times slower each method is compared to the fastest
-option (values close to 1 indicate the winner).</p>
 </div>
 <div class="section level2">
 <h2 id="agreement-on-flights-benchmark">Agreement on Flights Benchmark<a class="anchor" aria-label="anchor" href="#agreement-on-flights-benchmark"></a>
 </h2>
-<p>Confirm that each solver matches the reference solution within
-floating point tolerance.</p>
+<p>We check that different fits give close results:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span><span class="va">mlxs_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_lm.html">mlxs_lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
@@ -143,83 +126,39 @@ floating point tolerance.</p>
 <span><span class="va">fastlm_fit</span> <span class="op">&lt;-</span> <span class="fu">RcppEigen</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RcppEigen/man/fastLm.html" class="external-link">fastLm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span><span class="va">speedlm_fit</span> <span class="op">&lt;-</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedlm.html" class="external-link">speedlm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ref_coef</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span></span>
+<span><span class="va">ref_fitted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">feols_coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">feols_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">feols_fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">feols_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">extract_fit</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">coef_vec</span>, <span class="va">fitted_vec</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    max_coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ref_coef</span> <span class="op">-</span> <span class="va">coef_vec</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    max_fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ref_fitted</span> <span class="op">-</span> <span class="va">fitted_vec</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">fastlm_coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">fastlm_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">fastlm_fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">fastlm_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">speedlm_coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">speedlm_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">speedlm_fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">lm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">speedlm_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">fits</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  mlxs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  feols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">feols_fit</span><span class="op">)</span>, fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">feols_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  fastlm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>coef <span class="op">=</span> <span class="va">fastlm_fit</span><span class="op">$</span><span class="va">coefficients</span>, fitted <span class="op">=</span> <span class="va">fastlm_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span>,</span>
+<span>  speedlm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>coef <span class="op">=</span> <span class="va">speedlm_fit</span><span class="op">$</span><span class="va">coefficients</span>, fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">speedlm_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in predict.speedlm(speedlm_fit): fitted values were not returned from the speedglm object: </span></span>
 <span><span class="co">#&gt;               use the original data by setting argument 'newdata' or refit </span></span>
 <span><span class="co">#&gt;               the model by specifying fitted=TRUE.</span></span>
-<span><span class="co">#&gt; Warning in max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit)))): no</span></span>
-<span><span class="co">#&gt; non-missing arguments to max; returning -Inf</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  max_coefficient_difference <span class="op">=</span> <span class="va">coef_delta</span>,</span>
-<span>  max_fitted_difference <span class="op">=</span> <span class="va">fitted_delta</span>,</span>
-<span>  feols_max_coefficient_difference <span class="op">=</span> <span class="va">feols_coef_delta</span>,</span>
-<span>  feols_max_fitted_difference <span class="op">=</span> <span class="va">feols_fitted_delta</span>,</span>
-<span>  fastlm_max_coefficient_difference <span class="op">=</span> <span class="va">fastlm_coef_delta</span>,</span>
-<span>  fastlm_max_fitted_difference <span class="op">=</span> <span class="va">fastlm_fitted_delta</span>,</span>
-<span>  speedlm_max_coefficient_difference <span class="op">=</span> <span class="va">speedlm_coef_delta</span>,</span>
-<span>  speedlm_max_fitted_difference <span class="op">=</span> <span class="va">speedlm_fitted_delta</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b11b0&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b1260&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feols_max_coefficient_difference</span></span>
-<span><span class="co">#&gt; [1] 8.677503e-12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $feols_max_fitted_difference</span></span>
-<span><span class="co">#&gt; [1] 5.844186e-09</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $fastlm_max_coefficient_difference</span></span>
-<span><span class="co">#&gt; [1] 8.236967e-12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $fastlm_max_fitted_difference</span></span>
-<span><span class="co">#&gt; [1] 5.830291e-09</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $speedlm_max_coefficient_difference</span></span>
-<span><span class="co">#&gt; [1] 8.380852e-12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $speedlm_max_fitted_difference</span></span>
-<span><span class="co">#&gt; [1] -Inf</span></span></code></pre></div>
-<p>Differences remain on the order of numerical precision, confirming
-that <code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code> and the other high-performance solvers
-reproduce the reference solution while offering faster runtimes.</p>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">fits</span>, <span class="kw">function</span><span class="op">(</span><span class="va">f</span><span class="op">)</span> <span class="fu">extract_fit</span><span class="op">(</span><span class="va">f</span><span class="op">$</span><span class="va">coef</span>, <span class="va">f</span><span class="op">$</span><span class="va">fitted</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in max(abs(ref_fitted - fitted_vec)): no non-missing arguments to max;</span></span>
+<span><span class="co">#&gt; returning -Inf</span></span>
+<span><span class="co">#&gt;                    mlxs        feols       fastlm      speedlm</span></span>
+<span><span class="co">#&gt; max_coef   0.0001951065 8.677503e-12 8.236967e-12 8.380852e-12</span></span>
+<span><span class="co">#&gt; max_fitted 0.0060091062 5.844186e-09 5.830291e-09         -Inf</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="high-dimensional-benchmark">High-Dimensional Benchmark<a class="anchor" aria-label="anchor" href="#high-dimensional-benchmark"></a>
 </h2>
-<p>To stress-test performance when both sample size and feature count
-are large, we simulate a design matrix with many rows and columns.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20251031</span><span class="op">)</span></span>
 <span><span class="va">n_hd</span> <span class="op">&lt;-</span> <span class="fl">10000</span></span>
@@ -253,55 +192,42 @@ are large, we simulate a design matrix with many rows and columns.</p>
 <span><span class="op">)</span></span>
 <span><span class="va">hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">hd_summary</span></span>
-<span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      lm 0.68067528 198187456   1.3427333 10.14027</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm 0.06712594 165871952  14.8262080  1.00000</span></span>
-<span><span class="co">#&gt; 3   feols 1.56086807  81721048   0.6417895 23.25283</span></span>
-<span><span class="co">#&gt; 4  fastLm 0.82553213 278407080   1.2935251 12.29826</span></span>
-<span><span class="co">#&gt; 5 speedlm 0.11388386 188431080   7.5999912  1.69657</span></span>
+<span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec  relative</span></span>
+<span><span class="co">#&gt; 1      lm  0.7631855 198187456   1.2701519  4.917738</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm  0.1697196 165871952   4.5385628  1.093622</span></span>
+<span><span class="co">#&gt; 3   feols  1.8818655  81721048   0.5424723 12.126174</span></span>
+<span><span class="co">#&gt; 4  fastLm  0.8951352 278407080   1.0747667  5.767982</span></span>
+<span><span class="co">#&gt; 5 speedlm  0.1551904 188431080   5.8578448  1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/highp-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="agreement-on-the-simulated-problem">Agreement on the Simulated Problem<a class="anchor" aria-label="anchor" href="#agreement-on-the-simulated-problem"></a>
 </h2>
-<p>Even in the high-dimensional setting, the MLX-backed fit lines up
-with the reference linear model.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lm_hd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">hd_formula</span>, data <span class="op">=</span> <span class="va">hd_data</span><span class="op">)</span></span>
 <span><span class="va">mlxs_hd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_lm.html">mlxs_lm</a></span><span class="op">(</span><span class="va">hd_formula</span>, data <span class="op">=</span> <span class="va">hd_data</span><span class="op">)</span></span>
 <span><span class="va">speedlm_hd</span> <span class="op">&lt;-</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedlm.html" class="external-link">speedlm</a></span><span class="op">(</span><span class="va">hd_formula</span>, data <span class="op">=</span> <span class="va">hd_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_hd</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_hd</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_hd</span><span class="op">)</span> <span class="op">-</span> <span class="va">speedlm_hd</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ref_coef_hd</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">lm_hd</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    mlxs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_hd</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    speedlm <span class="op">=</span> <span class="va">speedlm_hd</span><span class="op">$</span><span class="va">coefficients</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="kw">function</span><span class="op">(</span><span class="va">coefs</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ref_coef_hd</span> <span class="op">-</span> <span class="va">coefs</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; $ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b62d0&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; [[5]]</span></span>
-<span><span class="co">#&gt; [1] 3.663736e-15</span></span></code></pre></div>
-<p>The largest coefficient difference stays at floating-point noise
-levels, confirming that the accelerated solver preserves numerical
-accuracy while scaling gracefully with both observations and
-predictors.</p>
+<span><span class="co">#&gt;         mlxs      speedlm </span></span>
+<span><span class="co">#&gt; 8.870014e-07 3.663736e-15</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="glm-benchmark-logistic-regression">GLM Benchmark: Logistic Regression<a class="anchor" aria-label="anchor" href="#glm-benchmark-logistic-regression"></a>
 </h2>
-<p>The <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> function extends the MLX backend to
-generalized linear models. We benchmark it against
+<p>We benchmark <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> against
 <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code> and <code><a href="https://rdrr.io/pkg/speedglm/man/speedglm.html" class="external-link">speedglm::speedglm()</a></code> using a
-binomial family on the flights data.</p>
+binomial family.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create binary outcome: whether arrival delay exceeds 15 minutes</span></span>
 <span><span class="va">bench_data</span><span class="op">$</span><span class="va">late</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">bench_data</span><span class="op">$</span><span class="va">arr_delay</span> <span class="op">&gt;</span> <span class="fl">15</span><span class="op">)</span></span>
@@ -332,79 +258,55 @@ binomial family on the flights data.</p>
 <span><span class="va">glm_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_summary</span></span>
 <span><span class="co">#&gt;     method median_sec     mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm  0.6102941 1027386600    1.581060 2.259978</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm  0.4021389  308501216    2.332484 1.489159</span></span>
-<span><span class="co">#&gt; 3 speedglm  0.2700443  528434864    3.147944 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm  0.7755171 1027386600    1.378266 2.261593</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm  0.5539742  308571968    1.496715 1.615521</span></span>
+<span><span class="co">#&gt; 3 speedglm  0.3429074  528434864    2.853606 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-timings-1.png" class="r-plt" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="agreement-on-glm-benchmark">Agreement on GLM Benchmark<a class="anchor" aria-label="anchor" href="#agreement-on-glm-benchmark"></a>
 </h2>
-<p>Check that the MLX-backed GLM matches the reference
-implementation:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</span></span>
 <span><span class="va">mlxs_glm_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_glm.html">mlxs_glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/mlxs_binomial.html">mlxs_binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span><span class="va">speedglm_fit</span> <span class="op">&lt;-</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedglm.html" class="external-link">speedglm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">bench_data</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">glm_coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_glm_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">glm_fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_glm_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">speedglm_coef_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">speedglm_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">speedglm_fitted_delta</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">speedglm_fit</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">ref_coef_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span></span>
+<span><span class="va">ref_fitted_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">glm_fit</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">glm_targets</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  mlxs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_glm_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_glm_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  speedglm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>    coef <span class="op">=</span> <span class="va">speedglm_fit</span><span class="op">$</span><span class="va">coefficients</span>,</span>
+<span>    fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">speedglm_fit</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in predict.speedglm(speedglm_fit): fitted values were not returned from the speedglm object: </span></span>
 <span><span class="co">#&gt;             use the original data by setting argument 'newdata' or refit </span></span>
 <span><span class="co">#&gt;             the model by specifying fitted=TRUE.</span></span>
-<span><span class="co">#&gt; Warning in max(abs(fitted(glm_fit) - as.vector(predict(speedglm_fit)))): no</span></span>
-<span><span class="co">#&gt; non-missing arguments to max; returning -Inf</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  mlxs_max_coefficient_difference <span class="op">=</span> <span class="va">glm_coef_delta</span>,</span>
-<span>  mlxs_max_fitted_difference <span class="op">=</span> <span class="va">glm_fitted_delta</span>,</span>
-<span>  speedglm_max_coefficient_difference <span class="op">=</span> <span class="va">speedglm_coef_delta</span>,</span>
-<span>  speedglm_max_fitted_difference <span class="op">=</span> <span class="va">speedglm_fitted_delta</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span></span>
+<span>  <span class="va">glm_targets</span>,</span>
+<span>  <span class="kw">function</span><span class="op">(</span><span class="va">fit</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    max_coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ref_coef_glm</span> <span class="op">-</span> <span class="va">fit</span><span class="op">$</span><span class="va">coef</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    max_fitted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ref_fitted_glm</span> <span class="op">-</span> <span class="va">fit</span><span class="op">$</span><span class="va">fitted</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; $mlxs_max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b9c40&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_coefficient_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_coefficient_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_coefficient_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b9630&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_fitted_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_fitted_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $mlxs_max_fitted_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $speedglm_max_coefficient_difference</span></span>
-<span><span class="co">#&gt; [1] 2.381206e-12</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $speedglm_max_fitted_difference</span></span>
-<span><span class="co">#&gt; [1] -Inf</span></span></code></pre></div>
-<p>All implementations agree within numerical tolerance, confirming that
-<code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> produces accurate results for generalized linear
-models.</p>
+<span><span class="co">#&gt; Warning in max(abs(ref_fitted_glm - fit$fitted)): no non-missing arguments to</span></span>
+<span><span class="co">#&gt; max; returning -Inf</span></span>
+<span><span class="co">#&gt;                    mlxs     speedglm</span></span>
+<span><span class="co">#&gt; max_coef   2.301809e-05 2.381206e-12</span></span>
+<span><span class="co">#&gt; max_fitted 9.950734e-06         -Inf</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="high-dimensional-glm-benchmark">High-dimensional GLM Benchmark<a class="anchor" aria-label="anchor" href="#high-dimensional-glm-benchmark"></a>
 </h2>
-<p>Large logistic regressions in practice often include hundreds of
-engineered features. To stress both runtime and numerical stability we
-fabricate a dense dataset with 5,000 observations and 200 predictors,
-then compare execution speed across solvers.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20251103</span><span class="op">)</span></span>
 <span><span class="va">n_glm</span> <span class="op">&lt;-</span> <span class="fl">5000</span></span>
@@ -428,6 +330,8 @@ then compare execution speed across solvers.</p>
 <span>  iterations <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  check <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span><span class="co">#&gt; disabled.</span></span>
 <span></span>
 <span><span class="va">glm_hd_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">glm_hd_mark</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span>,</span>
@@ -438,30 +342,28 @@ then compare execution speed across solvers.</p>
 <span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_hd_summary</span></span>
 <span><span class="co">#&gt;     method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm  0.5438174 167405736    1.838853 5.391074</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm  0.3637886  44611040    2.748849 3.606379</span></span>
-<span><span class="co">#&gt; 3 speedglm  0.1008737 120938016    9.913391 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm  0.4765286 167405736    2.074625 3.851677</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm  0.4398378  44611040    2.293953 3.555114</span></span>
+<span><span class="co">#&gt; 3 speedglm  0.1237198 120938016    7.906560 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-highd-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
 <div class="section level2">
 <h2 id="convergence-on-the-high-dimensional-problem">Convergence on the High-dimensional Problem<a class="anchor" aria-label="anchor" href="#convergence-on-the-high-dimensional-problem"></a>
 </h2>
-<p>After benchmarking we run each solver once more to inspect
-convergence behaviour and solution agreement.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glm_hd_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">glm_hd_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">glm_hd_data</span>,</span>
 <span>                  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mlxs_hd_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_glm.html">mlxs_glm</a></span><span class="op">(</span><span class="va">glm_hd_formula</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/mlxs_binomial.html">mlxs_binomial</a></span><span class="op">(</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">glm_hd_data</span>,</span>
 <span>                        control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span>, epsilon <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  observations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">glm_hd_data</span><span class="op">)</span>,</span>
 <span>  predictors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol</a></span><span class="op">(</span><span class="va">glm_hd_data</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span>,</span>
 <span>  mlxs_converged <span class="op">=</span> <span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">converged</span>,</span>
 <span>  mlxs_iterations <span class="op">=</span> <span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">iter</span>,</span>
-<span>  max_coefficient_difference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">glm_hd_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  max_fitted_difference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">glm_hd_fit</span><span class="op">)</span> <span class="op">-</span> <span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span></span>
+<span>  max_coefficient_difference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="va">glm_hd_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  max_fitted_difference <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted</a></span><span class="op">(</span><span class="va">glm_hd_fit</span><span class="op">)</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">mlxs_hd_fit</span><span class="op">$</span><span class="va">fitted.values</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; $observations</span></span>
 <span><span class="co">#&gt; [1] 5000</span></span>
@@ -475,68 +377,178 @@ convergence behaviour and solution agreement.</p>
 <span><span class="co">#&gt; $mlxs_iterations</span></span>
 <span><span class="co">#&gt; [1] 6</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b3010&gt;</span></span>
+<span><span class="co">#&gt; $max_coefficient_difference</span></span>
+<span><span class="co">#&gt; [1] 2.398813e-07</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_coefficient_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.ptr</span></span>
-<span><span class="co">#&gt; &lt;pointer: 0x6000010b27a0&gt;</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.dim</span></span>
-<span><span class="co">#&gt; integer(0)</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.dtype</span></span>
-<span><span class="co">#&gt; [1] "float32"</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $max_fitted_difference.device</span></span>
-<span><span class="co">#&gt; [1] "gpu"</span></span></code></pre></div>
-<p>The MLX-backed fit converges in roughly the same number of iterations
-as the reference and matches both coefficients and fitted values to
-within floating point tolerance, while the timing table above highlights
-the runtime benefits at this scale.</p>
+<span><span class="co">#&gt; $max_fitted_difference</span></span>
+<span><span class="co">#&gt; [1] 9.602293e-07</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="other-fast-linear-modeling-options">Other Fast Linear Modeling Options<a class="anchor" aria-label="anchor" href="#other-fast-linear-modeling-options"></a>
+<h2 id="bootstrap-benchmarks-for-summary-mlxs_lm_glm">Bootstrap Benchmarks for <code>summary.mlxs_lm/_glm</code><a class="anchor" aria-label="anchor" href="#bootstrap-benchmarks-for-summary-mlxs_lm_glm"></a>
 </h2>
-<p>Beyond the methods benchmarked here, practitioners often turn to
-<code><a href="https://rdrr.io/pkg/biglm/man/biglm.html" class="external-link">biglm::biglm()</a></code> for streamed data that do not fit in memory
-or <code>glmnet</code> for elastic-net regularisation. Packages such as
-<code>MatrixModels</code> and <code>SparseM</code> also provide
-optimized pathways for sparse design matrices.</p>
-</div>
-<div class="section level2">
-<h2 id="elastic-net-on-flights-data">Elastic Net on Flights Data<a class="anchor" aria-label="anchor" href="#elastic-net-on-flights-data"></a>
-</h2>
-<p>Finally we try the MLX-backed elastic-net solver on flights,
-expanding the feature set with interaction terms to create a challenging
-regression. The benchmark compares <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet::glmnet()</a></code> with
-the new [mlxs_glmnet()] helper.</p>
+<p>For the base case bootstrap we also try <code><a href="https://rdrr.io/pkg/boot/man/boot.html" class="external-link">boot::boot()</a></code>
+with multi-core execution, since most Apple Silicon machines expose
+several cores.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20251103</span><span class="op">)</span></span>
-<span><span class="va">enet_rows</span> <span class="op">&lt;-</span> <span class="fl">50000</span></span>
-<span><span class="va">enet_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample.int</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bench_data</span><span class="op">)</span>, <span class="va">enet_rows</span><span class="op">)</span></span>
-<span><span class="va">enet_base</span> <span class="op">&lt;-</span> <span class="va">bench_data</span><span class="op">[</span><span class="va">enet_idx</span>, <span class="op">]</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20251110</span><span class="op">)</span></span>
+<span><span class="va">n_boot</span> <span class="op">&lt;-</span> <span class="fl">10000L</span></span>
+<span><span class="va">p_boot</span> <span class="op">&lt;-</span> <span class="fl">50L</span></span>
+<span><span class="va">x_boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n_boot</span> <span class="op">*</span> <span class="va">p_boot</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="va">n_boot</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">x_boot</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span><span class="st">"x%02d"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">p_boot</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">beta_boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">p_boot</span> <span class="op">+</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="va">y_boot</span> <span class="op">&lt;-</span> <span class="va">beta_boot</span><span class="op">[</span><span class="fl">1L</span><span class="op">]</span> <span class="op">+</span> <span class="va">x_boot</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">beta_boot</span><span class="op">[</span><span class="op">-</span><span class="fl">1L</span><span class="op">]</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n_boot</span>, sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="va">boot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/drop.html" class="external-link">drop</a></span><span class="op">(</span><span class="va">y_boot</span><span class="op">)</span>, <span class="va">x_boot</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">enet_design</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/model.matrix.html" class="external-link">model.matrix</a></span><span class="op">(</span></span>
-<span>  <span class="op">~</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">dep_delay</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">air_time</span>, <span class="fl">3</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">distance</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span>    <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">dep_delay</span>, <span class="fl">2</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">air_time</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span>    <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">dep_delay</span>, <span class="fl">2</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">distance</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span>    <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">air_time</span>, <span class="fl">2</span><span class="op">)</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/stats/poly.html" class="external-link">poly</a></span><span class="op">(</span><span class="va">distance</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">enet_base</span></span>
+<span><span class="va">fit_mlxs_boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_lm.html">mlxs_lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">boot_data</span><span class="op">)</span></span>
+<span><span class="va">fit_base_boot</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">boot_data</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">boot_stat</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dat</span>, <span class="va">idx</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="va">dat</span><span class="op">[</span><span class="va">idx</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">.</span>, data <span class="op">=</span> <span class="va">d</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">parallel_cores</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fl">1L</span>, <span class="fu">parallel</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/parallel/detectCores.html" class="external-link">detectCores</a></span><span class="op">(</span>logical <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1L</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">case_boot_mark</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
+<span>  mlxs_case <span class="op">=</span> <span class="op">{</span></span>
+<span>    <span class="va">sum_case</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
+<span>      <span class="va">fit_mlxs_boot</span>,</span>
+<span>      bootstrap <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      bootstrap_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        B <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>        seed <span class="op">=</span> <span class="fl">42</span>,</span>
+<span>        bootstrap_type <span class="op">=</span> <span class="st">"case"</span>,</span>
+<span>        progress <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sum_case</span><span class="op">$</span><span class="va">std.error</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  boot_case_serial <span class="op">=</span> <span class="fu">boot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/boot/man/boot.html" class="external-link">boot</a></span><span class="op">(</span></span>
+<span>    <span class="va">boot_data</span>,</span>
+<span>    statistic <span class="op">=</span> <span class="va">boot_stat</span>,</span>
+<span>    R <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>    parallel <span class="op">=</span> <span class="st">"no"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  boot_case_parallel <span class="op">=</span> <span class="fu">boot</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/boot/man/boot.html" class="external-link">boot</a></span><span class="op">(</span></span>
+<span>    <span class="va">boot_data</span>,</span>
+<span>    statistic <span class="op">=</span> <span class="va">boot_stat</span>,</span>
+<span>    R <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>    parallel <span class="op">=</span> <span class="st">"multicore"</span>,</span>
+<span>    ncpus <span class="op">=</span> <span class="va">parallel_cores</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  car_case <span class="op">=</span> <span class="fu">car</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/car/man/Boot.html" class="external-link">Boot</a></span><span class="op">(</span><span class="va">fit_base_boot</span>, f <span class="op">=</span> <span class="va">coef</span>, R <span class="op">=</span> <span class="fl">50L</span>, method <span class="op">=</span> <span class="st">"case"</span><span class="op">)</span>,</span>
+<span>  iterations <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  memory <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span><span class="co">#&gt; disabled.</span></span>
 <span></span>
-<span><span class="va">x_enet</span> <span class="op">&lt;-</span> <span class="va">enet_design</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
-<span><span class="va">y_enet</span> <span class="op">&lt;-</span> <span class="va">enet_base</span><span class="op">$</span><span class="va">arr_delay</span> <span class="op">&gt;</span> <span class="fl">15</span></span>
-<span><span class="va">lambda_enet</span> <span class="op">&lt;-</span> <span class="fl">0.01</span></span></code></pre></div>
+<span><span class="va">resid_boot_mark</span> <span class="op">&lt;-</span> <span class="fu">bench</span><span class="fu">::</span><span class="fu"><a href="https://bench.r-lib.org/reference/mark.html" class="external-link">mark</a></span><span class="op">(</span></span>
+<span>  mlxs_resid <span class="op">=</span> <span class="op">{</span></span>
+<span>    <span class="va">sum_resid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
+<span>      <span class="va">fit_mlxs_boot</span>,</span>
+<span>      bootstrap <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>      bootstrap_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>        B <span class="op">=</span> <span class="fl">50L</span>,</span>
+<span>        seed <span class="op">=</span> <span class="fl">99</span>,</span>
+<span>        bootstrap_type <span class="op">=</span> <span class="st">"residual"</span>,</span>
+<span>        progress <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sum_resid</span><span class="op">$</span><span class="va">std.error</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span>,</span>
+<span>  car_resid <span class="op">=</span> <span class="fu">car</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/car/man/Boot.html" class="external-link">Boot</a></span><span class="op">(</span><span class="va">fit_base_boot</span>, f <span class="op">=</span> <span class="va">coef</span>, R <span class="op">=</span> <span class="fl">50L</span>, method <span class="op">=</span> <span class="st">"residual"</span><span class="op">)</span>,</span>
+<span>  iterations <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  memory <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Some expressions had a GC in every iteration; so filtering is</span></span>
+<span><span class="co">#&gt; disabled.</span></span>
+<span></span>
+<span><span class="va">case_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">case_boot_mark</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span>,</span>
+<span>  median_sec <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">case_boot_mark</span><span class="op">$</span><span class="va">median</span>, units <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span>,</span>
+<span>  itr_per_sec <span class="op">=</span> <span class="va">case_boot_mark</span><span class="op">$</span><span class="va">`itr/sec`</span>,</span>
+<span>  gc_per_sec <span class="op">=</span> <span class="va">case_boot_mark</span><span class="op">$</span><span class="va">`gc/sec`</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">case_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">case_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">case_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
+<span><span class="va">case_summary</span> <span class="op">&lt;-</span> <span class="va">case_summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">case_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="va">resid_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">resid_boot_mark</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span>,</span>
+<span>  median_sec <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">resid_boot_mark</span><span class="op">$</span><span class="va">median</span>, units <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span>,</span>
+<span>  itr_per_sec <span class="op">=</span> <span class="va">resid_boot_mark</span><span class="op">$</span><span class="va">`itr/sec`</span>,</span>
+<span>  gc_per_sec <span class="op">=</span> <span class="va">resid_boot_mark</span><span class="op">$</span><span class="va">`gc/sec`</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">resid_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">resid_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">resid_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
+<span><span class="va">resid_summary</span> <span class="op">&lt;-</span> <span class="va">resid_summary</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">resid_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  parallel_cores <span class="op">=</span> <span class="va">parallel_cores</span>,</span>
+<span>  case <span class="op">=</span> <span class="va">case_summary</span>,</span>
+<span>  residual <span class="op">=</span> <span class="va">resid_summary</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; $parallel_cores</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $case</span></span>
+<span><span class="co">#&gt;               method median_sec itr_per_sec gc_per_sec relative</span></span>
+<span><span class="co">#&gt; 1          mlxs_case  0.7469669   0.8992975  0.2997658 1.000000</span></span>
+<span><span class="co">#&gt; 2   boot_case_serial  1.7351135   0.5401734  2.8809246 2.322879</span></span>
+<span><span class="co">#&gt; 3 boot_case_parallel  1.9117855   0.4857671  3.0765252 2.559398</span></span>
+<span><span class="co">#&gt; 4           car_case  2.0914922   0.4870797  2.7601185 2.799980</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $residual</span></span>
+<span><span class="co">#&gt;       method median_sec itr_per_sec gc_per_sec relative</span></span>
+<span><span class="co">#&gt; 1 mlxs_resid  0.1057222   7.4482343   0.000000  1.00000</span></span>
+<span><span class="co">#&gt; 2  car_resid  2.1900424   0.4670324   2.179485 20.71506</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">plot_boot_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">title</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">df</span><span class="op">$</span><span class="va">method</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">method</span>, levels <span class="op">=</span> <span class="va">df</span><span class="op">$</span><span class="va">method</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span>  <span class="fu">ggplot</span><span class="op">(</span><span class="va">df</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">median_sec</span>, fill <span class="op">=</span> <span class="va">method</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">geom_col</span><span class="op">(</span>show.legend <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">labs</span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="va">title</span>,</span>
+<span>      x <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Median seconds"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">coord_flip</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu">theme_minimal</span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">case_plot</span> <span class="op">&lt;-</span> <span class="fu">plot_boot_summary</span><span class="op">(</span><span class="va">case_summary</span>, <span class="st">"Case bootstrap timing (median seconds)"</span><span class="op">)</span></span>
+<span><span class="va">resid_plot</span> <span class="op">&lt;-</span> <span class="fu">plot_boot_summary</span><span class="op">(</span><span class="va">resid_summary</span>, <span class="st">"Residual bootstrap timing (median seconds)"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">case_plot</span></span></code></pre></div>
+<p><img src="benchmark-lm-mlxs_files/figure-html/bootstrap-plots-1.png" class="r-plt" width="672"></p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">resid_plot</span></span></code></pre></div>
+<p><img src="benchmark-lm-mlxs_files/figure-html/bootstrap-plots-2.png" class="r-plt" width="672"></p>
+<pre><code>
+
+## Elastic Net on Flights Data
+
+
+
+``` r
+set.seed(20251103)
+enet_rows &lt;- 50000
+enet_idx &lt;- sample.int(nrow(bench_data), enet_rows)
+enet_base &lt;- bench_data[enet_idx, ]
+
+enet_design &lt;- model.matrix(
+  ~ poly(dep_delay, 3) + poly(air_time, 3) + poly(distance, 3)
+    + poly(dep_delay, 2):poly(air_time, 2)
+    + poly(dep_delay, 2):poly(distance, 2)
+    + poly(air_time, 2):poly(distance, 2),
+  data = enet_base
+)
+
+x_enet &lt;- enet_design[, -1, drop = FALSE]
+y_enet &lt;- enet_base$arr_delay &gt; 15
+lambda_enet &lt;- 0.01</code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">enet_mark</span> <span class="op">&lt;-</span> <span class="fu">mark</span><span class="op">(</span></span>
 <span>  glmnet <span class="op">=</span> <span class="fu">glmnet</span><span class="fu">::</span><span class="fu"><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></span><span class="op">(</span><span class="va">x_enet</span>, <span class="va">y_enet</span>, family <span class="op">=</span> <span class="st">"binomial"</span>, alpha <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                          lambda <span class="op">=</span> <span class="va">lambda_enet</span>, standardize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -559,11 +571,11 @@ the new [mlxs_glmnet()] helper.</p>
 <span><span class="va">enet_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">enet_summary</span></span>
 <span><span class="co">#&gt;        method median_sec   mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glmnet 0.03491363 22547280  27.5499370   1.0000</span></span>
-<span><span class="co">#&gt; 2 mlxs_glmnet 1.82719796 46335264   0.5522011  52.3348</span></span>
+<span><span class="co">#&gt; 1      glmnet 0.04445081 22542592  24.3748796  1.00000</span></span>
+<span><span class="co">#&gt; 2 mlxs_glmnet 3.19281071 46222304   0.2958799 71.82796</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">enet_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glmnet-flights-benchmark-1.png" class="r-plt" width="700"></p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">enet_ref</span> <span class="op">&lt;-</span> <span class="fu">glmnet</span><span class="fu">::</span><span class="fu"><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet</a></span><span class="op">(</span><span class="va">x_enet</span>, <span class="va">y_enet</span>, family <span class="op">=</span> <span class="st">"binomial"</span>, alpha <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                           lambda <span class="op">=</span> <span class="va">lambda_enet</span>, standardize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                           thresh <span class="op">=</span> <span class="fl">1e-6</span>, maxit <span class="op">=</span> <span class="fl">100000</span><span class="op">)</span></span>
@@ -577,9 +589,6 @@ the new [mlxs_glmnet()] helper.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; coefficients_max_difference        intercept_difference </span></span>
 <span><span class="co">#&gt;                0.5963112556                0.0005400035</span></span></code></pre></div>
-<p>Even with a rich feature expansion, the MLX implementation matches
-<code>glmnet</code> within modest tolerances while keeping all updates
-on the GPU.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

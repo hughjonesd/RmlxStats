@@ -6,6 +6,8 @@
   : Re-export generics
 - [`mlxs_binomial()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_binomial.md)
   : MLX-friendly binomial family
+- [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md)
+  : Bootstrap MLX arrays along the first dimension
 - [`mlxs_gaussian()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_gaussian.md)
   : MLX-friendly Gaussian family
 - [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)

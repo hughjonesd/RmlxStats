@@ -31,10 +31,10 @@ vcov(object, ...)
 print(x, digits = max(3, getOption("digits") - 3), ...)
 
 # S3 method for class 'mlxs_glm'
-summary(object, ...)
+summary(object, bootstrap = FALSE, bootstrap_args = list(), ...)
 
 # S3 method for class 'summary.mlxs_glm'
-print(x, ...)
+print(x, digits = max(3, getOption("digits") - 3), ...)
 
 # S3 method for class 'mlxs_glm'
 anova(object, ...)
@@ -65,6 +65,7 @@ augment(
   type.predict = c("response", "link"),
   type.residuals = c("response", "deviance"),
   se_fit = FALSE,
+  output = c("data.frame", "mlx"),
   ...
 )
 ```

@@ -8,7 +8,7 @@ arguments.
 ## Usage
 
 ``` r
-mlxs_lm(formula, data, subset)
+mlxs_lm(formula, data, subset, weights)
 ```
 
 ## Arguments
@@ -25,6 +25,12 @@ mlxs_lm(formula, data, subset)
 - subset:
 
   Optional expression for subsetting observations.
+
+- weights:
+
+  Optional non-negative observation weights. Treated like the `weights`
+  argument to [`stats::lm()`](https://rdrr.io/r/stats/lm.html), i.e.
+  they enter the fit via weighted least squares.
 
 ## Value
 

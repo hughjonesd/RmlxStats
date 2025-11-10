@@ -49,6 +49,8 @@ Statistical modelling front-ends that run on Apple GPU hardware via the
   : Re-export generics
 - [`mlxs_binomial()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_binomial.md)
   : MLX-friendly binomial family
+- [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md)
+  : Bootstrap MLX arrays along the first dimension
 - [`mlxs_gaussian()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_gaussian.md)
   : MLX-friendly Gaussian family
 - [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
@@ -87,5 +89,4 @@ Statistical modelling front-ends that run on Apple GPU hardware via the
 
 ### All vignettes
 
-- [Benchmarking MLX-backed Linear and Generalized Linear
-  Models](https://hughjonesd.github.io/RmlxStats/articles/benchmark-lm-mlxs.md):
+- [Benchmarks](https://hughjonesd.github.io/RmlxStats/articles/benchmark-lm-mlxs.md):

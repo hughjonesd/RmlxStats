@@ -12,6 +12,7 @@ mlxs_glm(
   family = mlxs_gaussian(),
   data,
   subset,
+  weights,
   na.action,
   start = NULL,
   control = list(),
@@ -48,6 +49,11 @@ mlxs_glm(
 
   an optional vector specifying a subset of observations to be used in
   the fitting process.
+
+- weights:
+
+  an optional vector of ‘prior weights’ to be used in the fitting
+  process. Should be `NULL` or a numeric vector.
 
 - na.action:
 

@@ -1,23 +1,10 @@
-# Benchmarking MLX-backed Linear and Generalized Linear Models
+# Benchmarks
 
-The
-[`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md)
-and
-[`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
-functions mirror [`stats::lm()`](https://rdrr.io/r/stats/lm.html) and
-[`stats::glm()`](https://rdrr.io/r/stats/glm.html) but execute their
-linear algebra with the MLX backend. This vignette benchmarks these
-implementations against standard R functions and specialized fast
-fitting packages (fixest, RcppEigen, speedglm, fastglm) using the
-sizeable
-[`nycflights13::flights`](https://rdrr.io/pkg/nycflights13/man/flights.html)
-dataset, demonstrating the performance gains available when Metal
-acceleration is active.
+This vignette benchmarks RmlxStats against standard R functions and
+specialized fast fitting packages (fixest, RcppEigen, speedglm,
+fastglm).
 
 ## Data Preparation
-
-We retain a handful of numeric predictors from the flights data and drop
-rows with missing values in the variables of interest.
 
 ``` r
 flights <- as.data.frame(nycflights13::flights)
@@ -28,13 +15,9 @@ nrow(bench_data)
 #> [1] 327346
 ```
 
-The resulting dataset contains hundreds of thousands of observations,
-large enough to expose performance differences in the solvers.
-
 ## Benchmark Setup
 
-We benchmark several linear model solvers that accept formula
-interfaces. The `bench` package automates warm-up and repetition.
+We benchmark several linear model solvers.
 
 ``` r
 lm_formula <- arr_delay ~ dep_delay + air_time + distance
@@ -61,26 +44,19 @@ bench_summary <- data.frame(
 bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
 bench_summary
 #>    method median_sec    mem_mb itr_per_sec relative
-#> 1      lm 0.05171494  91103808   12.294593 1.741915
-#> 2 mlxs_lm 0.07542450  78456800    9.609389 2.540525
-#> 3   feols 0.02968855  32390888   32.569918 1.000000
-#> 4  fastLm 0.09225927 116838424    7.598314 3.107571
-#> 5 speedlm 0.03495594  75406984   29.456261 1.177422
+#> 1      lm 0.05018466  91103808   12.134017 1.180623
+#> 2 mlxs_lm 0.08978545  78456800    8.126718 2.112255
+#> 3   feols 0.04518749  32390888   24.396392 1.063062
+#> 4  fastLm 0.14301267 116838424    5.064029 3.364457
+#> 5 speedlm 0.04250691  75406984   23.278611 1.000000
 ggplot2::autoplot(bench_mark, type = "boxplot")
 ```
 
 ![](benchmark-lm-mlxs_files/figure-html/timings-1.png)
 
-The benchmark table reports the median execution time (seconds), memory
-allocation (megabytes), iteration rate, and relative speed for each
-method across five iterations. The `relative` column expresses how many
-times slower each method is compared to the fastest option (values close
-to 1 indicate the winner).
-
 ## Agreement on Flights Benchmark
 
-Confirm that each solver matches the reference solution within floating
-point tolerance.
+We check that different fits give close results:
 
 ``` r
 lm_fit <- lm(lm_formula, data = bench_data)
@@ -89,85 +65,38 @@ feols_fit <- feols(lm_formula, data = bench_data)
 fastlm_fit <- RcppEigen::fastLm(lm_formula, data = bench_data)
 speedlm_fit <- speedglm::speedlm(lm_formula, data = bench_data)
 
-coef_delta <- max(abs(coef(lm_fit) - mlxs_fit$coefficients))
-fitted_delta <- max(abs(fitted(lm_fit) - mlxs_fit$fitted.values))
+ref_coef <- coef(lm_fit)
+ref_fitted <- fitted(lm_fit)
 
-feols_coef_delta <- max(abs(coef(lm_fit) - coef(feols_fit)))
-feols_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(feols_fit))))
+extract_fit <- function(coef_vec, fitted_vec) {
+  c(
+    max_coef = max(abs(ref_coef - coef_vec)),
+    max_fitted = max(abs(ref_fitted - fitted_vec))
+  )
+}
 
-fastlm_coef_delta <- max(abs(coef(lm_fit) - fastlm_fit$coefficients))
-fastlm_fitted_delta <- max(abs(fitted(lm_fit) - fastlm_fit$fitted.values))
-
-speedlm_coef_delta <- max(abs(coef(lm_fit) - speedlm_fit$coefficients))
-speedlm_fitted_delta <- max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit))))
+fits <- list(
+  mlxs = list(
+    coef = as.numeric(as.matrix(mlxs_fit$coefficients)),
+    fitted = as.numeric(as.matrix(mlxs_fit$fitted.values))
+  ),
+  feols = list(coef = coef(feols_fit), fitted = as.numeric(predict(feols_fit))),
+  fastlm = list(coef = fastlm_fit$coefficients, fitted = fastlm_fit$fitted.values),
+  speedlm = list(coef = speedlm_fit$coefficients, fitted = as.numeric(predict(speedlm_fit)))
+)
 #> Warning in predict.speedlm(speedlm_fit): fitted values were not returned from the speedglm object: 
 #>               use the original data by setting argument 'newdata' or refit 
 #>               the model by specifying fitted=TRUE.
-#> Warning in max(abs(fitted(lm_fit) - as.vector(predict(speedlm_fit)))): no
-#> non-missing arguments to max; returning -Inf
 
-c(
-  max_coefficient_difference = coef_delta,
-  max_fitted_difference = fitted_delta,
-  feols_max_coefficient_difference = feols_coef_delta,
-  feols_max_fitted_difference = feols_fitted_delta,
-  fastlm_max_coefficient_difference = fastlm_coef_delta,
-  fastlm_max_fitted_difference = fastlm_fitted_delta,
-  speedlm_max_coefficient_difference = speedlm_coef_delta,
-  speedlm_max_fitted_difference = speedlm_fitted_delta
-)
-#> $max_coefficient_difference.ptr
-#> <pointer: 0x6000010b11b0>
-#> 
-#> $max_coefficient_difference.dim
-#> integer(0)
-#> 
-#> $max_coefficient_difference.dtype
-#> [1] "float32"
-#> 
-#> $max_coefficient_difference.device
-#> [1] "gpu"
-#> 
-#> $max_fitted_difference.ptr
-#> <pointer: 0x6000010b1260>
-#> 
-#> $max_fitted_difference.dim
-#> integer(0)
-#> 
-#> $max_fitted_difference.dtype
-#> [1] "float32"
-#> 
-#> $max_fitted_difference.device
-#> [1] "gpu"
-#> 
-#> $feols_max_coefficient_difference
-#> [1] 8.677503e-12
-#> 
-#> $feols_max_fitted_difference
-#> [1] 5.844186e-09
-#> 
-#> $fastlm_max_coefficient_difference
-#> [1] 8.236967e-12
-#> 
-#> $fastlm_max_fitted_difference
-#> [1] 5.830291e-09
-#> 
-#> $speedlm_max_coefficient_difference
-#> [1] 8.380852e-12
-#> 
-#> $speedlm_max_fitted_difference
-#> [1] -Inf
+vapply(fits, function(f) extract_fit(f$coef, f$fitted), numeric(2))
+#> Warning in max(abs(ref_fitted - fitted_vec)): no non-missing arguments to max;
+#> returning -Inf
+#>                    mlxs        feols       fastlm      speedlm
+#> max_coef   0.0001951065 8.677503e-12 8.236967e-12 8.380852e-12
+#> max_fitted 0.0060091062 5.844186e-09 5.830291e-09         -Inf
 ```
 
-Differences remain on the order of numerical precision, confirming that
-[`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md)
-and the other high-performance solvers reproduce the reference solution
-while offering faster runtimes.
-
 ## High-Dimensional Benchmark
-
-To stress-test performance when both sample size and feature count are
-large, we simulate a design matrix with many rows and columns.
 
 ``` r
 set.seed(20251031)
@@ -204,12 +133,12 @@ hd_summary <- data.frame(
 )
 hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
 hd_summary
-#>    method median_sec    mem_mb itr_per_sec relative
-#> 1      lm 0.68067528 198187456   1.3427333 10.14027
-#> 2 mlxs_lm 0.06712594 165871952  14.8262080  1.00000
-#> 3   feols 1.56086807  81721048   0.6417895 23.25283
-#> 4  fastLm 0.82553213 278407080   1.2935251 12.29826
-#> 5 speedlm 0.11388386 188431080   7.5999912  1.69657
+#>    method median_sec    mem_mb itr_per_sec  relative
+#> 1      lm  0.7631855 198187456   1.2701519  4.917738
+#> 2 mlxs_lm  0.1697196 165871952   4.5385628  1.093622
+#> 3   feols  1.8818655  81721048   0.5424723 12.126174
+#> 4  fastLm  0.8951352 278407080   1.0747667  5.767982
+#> 5 speedlm  0.1551904 188431080   5.8578448  1.000000
 ggplot2::autoplot(hd_mark, type = "beeswarm")
 ```
 
@@ -217,47 +146,32 @@ ggplot2::autoplot(hd_mark, type = "beeswarm")
 
 ## Agreement on the Simulated Problem
 
-Even in the high-dimensional setting, the MLX-backed fit lines up with
-the reference linear model.
-
 ``` r
 lm_hd <- lm(hd_formula, data = hd_data)
 mlxs_hd <- mlxs_lm(hd_formula, data = hd_data)
 speedlm_hd <- speedglm::speedlm(hd_formula, data = hd_data)
 
-c(
-  max(abs(coef(lm_hd) - mlxs_hd$coefficients)),
-  max(abs(coef(lm_hd) - speedlm_hd$coefficients))
-)
-#> $ptr
-#> <pointer: 0x6000010b62d0>
-#> 
-#> $dim
-#> integer(0)
-#> 
-#> $dtype
-#> [1] "float32"
-#> 
-#> $device
-#> [1] "gpu"
-#> 
-#> [[5]]
-#> [1] 3.663736e-15
-```
+ref_coef_hd <- coef(lm_hd)
 
-The largest coefficient difference stays at floating-point noise levels,
-confirming that the accelerated solver preserves numerical accuracy
-while scaling gracefully with both observations and predictors.
+vapply(
+  list(
+    mlxs = as.numeric(as.matrix(mlxs_hd$coefficients)),
+    speedlm = speedlm_hd$coefficients
+  ),
+  function(coefs) max(abs(ref_coef_hd - coefs)),
+  numeric(1)
+)
+#>         mlxs      speedlm 
+#> 8.870014e-07 3.663736e-15
+```
 
 ## GLM Benchmark: Logistic Regression
 
-The
+We benchmark
 [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
-function extends the MLX backend to generalized linear models. We
-benchmark it against [`stats::glm()`](https://rdrr.io/r/stats/glm.html)
-and
+against [`stats::glm()`](https://rdrr.io/r/stats/glm.html) and
 [`speedglm::speedglm()`](https://rdrr.io/pkg/speedglm/man/speedglm.html)
-using a binomial family on the flights data.
+using a binomial family.
 
 ``` r
 # Create binary outcome: whether arrival delay exceeds 15 minutes
@@ -291,9 +205,9 @@ glm_summary <- data.frame(
 glm_summary$relative <- glm_summary$median_sec / min(glm_summary$median_sec)
 glm_summary
 #>     method median_sec     mem_mb itr_per_sec relative
-#> 1      glm  0.6102941 1027386600    1.581060 2.259978
-#> 2 mlxs_glm  0.4021389  308501216    2.332484 1.489159
-#> 3 speedglm  0.2700443  528434864    3.147944 1.000000
+#> 1      glm  0.7755171 1027386600    1.378266 2.261593
+#> 2 mlxs_glm  0.5539742  308571968    1.496715 1.615521
+#> 3 speedglm  0.3429074  528434864    2.853606 1.000000
 ggplot2::autoplot(glm_mark, type = "boxplot")
 ```
 
@@ -301,71 +215,45 @@ ggplot2::autoplot(glm_mark, type = "boxplot")
 
 ## Agreement on GLM Benchmark
 
-Check that the MLX-backed GLM matches the reference implementation:
-
 ``` r
 glm_fit <- glm(glm_formula, family = binomial(), data = bench_data)
 #> Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 mlxs_glm_fit <- mlxs_glm(glm_formula, family = mlxs_binomial(), data = bench_data)
 speedglm_fit <- speedglm::speedglm(glm_formula, family = binomial(), data = bench_data)
 
-glm_coef_delta <- max(abs(coef(glm_fit) - mlxs_glm_fit$coefficients))
-glm_fitted_delta <- max(abs(fitted(glm_fit) - mlxs_glm_fit$fitted.values))
-speedglm_coef_delta <- max(abs(coef(glm_fit) - speedglm_fit$coefficients))
-speedglm_fitted_delta <- max(abs(fitted(glm_fit) - as.vector(predict(speedglm_fit))))
+ref_coef_glm <- coef(glm_fit)
+ref_fitted_glm <- fitted(glm_fit)
+
+glm_targets <- list(
+  mlxs = list(
+    coef = as.numeric(as.matrix(mlxs_glm_fit$coefficients)),
+    fitted = as.numeric(as.matrix(mlxs_glm_fit$fitted.values))
+  ),
+  speedglm = list(
+    coef = speedglm_fit$coefficients,
+    fitted = as.numeric(predict(speedglm_fit))
+  )
+)
 #> Warning in predict.speedglm(speedglm_fit): fitted values were not returned from the speedglm object: 
 #>             use the original data by setting argument 'newdata' or refit 
 #>             the model by specifying fitted=TRUE.
-#> Warning in max(abs(fitted(glm_fit) - as.vector(predict(speedglm_fit)))): no
-#> non-missing arguments to max; returning -Inf
 
-c(
-  mlxs_max_coefficient_difference = glm_coef_delta,
-  mlxs_max_fitted_difference = glm_fitted_delta,
-  speedglm_max_coefficient_difference = speedglm_coef_delta,
-  speedglm_max_fitted_difference = speedglm_fitted_delta
+vapply(
+  glm_targets,
+  function(fit) c(
+    max_coef = max(abs(ref_coef_glm - fit$coef)),
+    max_fitted = max(abs(ref_fitted_glm - fit$fitted))
+  ),
+  numeric(2)
 )
-#> $mlxs_max_coefficient_difference.ptr
-#> <pointer: 0x6000010b9c40>
-#> 
-#> $mlxs_max_coefficient_difference.dim
-#> integer(0)
-#> 
-#> $mlxs_max_coefficient_difference.dtype
-#> [1] "float32"
-#> 
-#> $mlxs_max_coefficient_difference.device
-#> [1] "gpu"
-#> 
-#> $mlxs_max_fitted_difference.ptr
-#> <pointer: 0x6000010b9630>
-#> 
-#> $mlxs_max_fitted_difference.dim
-#> integer(0)
-#> 
-#> $mlxs_max_fitted_difference.dtype
-#> [1] "float32"
-#> 
-#> $mlxs_max_fitted_difference.device
-#> [1] "gpu"
-#> 
-#> $speedglm_max_coefficient_difference
-#> [1] 2.381206e-12
-#> 
-#> $speedglm_max_fitted_difference
-#> [1] -Inf
+#> Warning in max(abs(ref_fitted_glm - fit$fitted)): no non-missing arguments to
+#> max; returning -Inf
+#>                    mlxs     speedglm
+#> max_coef   2.301809e-05 2.381206e-12
+#> max_fitted 9.950734e-06         -Inf
 ```
 
-All implementations agree within numerical tolerance, confirming that
-[`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
-produces accurate results for generalized linear models.
-
 ## High-dimensional GLM Benchmark
-
-Large logistic regressions in practice often include hundreds of
-engineered features. To stress both runtime and numerical stability we
-fabricate a dense dataset with 5,000 observations and 200 predictors,
-then compare execution speed across solvers.
 
 ``` r
 set.seed(20251103)
@@ -392,6 +280,8 @@ glm_hd_mark <- mark(
   iterations = 3,
   check = FALSE
 )
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 
 glm_hd_summary <- data.frame(
   method = as.character(glm_hd_mark$expression),
@@ -402,9 +292,9 @@ glm_hd_summary <- data.frame(
 glm_hd_summary$relative <- glm_hd_summary$median_sec / min(glm_hd_summary$median_sec)
 glm_hd_summary
 #>     method median_sec    mem_mb itr_per_sec relative
-#> 1      glm  0.5438174 167405736    1.838853 5.391074
-#> 2 mlxs_glm  0.3637886  44611040    2.748849 3.606379
-#> 3 speedglm  0.1008737 120938016    9.913391 1.000000
+#> 1      glm  0.4765286 167405736    2.074625 3.851677
+#> 2 mlxs_glm  0.4398378  44611040    2.293953 3.555114
+#> 3 speedglm  0.1237198 120938016    7.906560 1.000000
 ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
 ```
 
@@ -412,22 +302,19 @@ ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
 
 ## Convergence on the High-dimensional Problem
 
-After benchmarking we run each solver once more to inspect convergence
-behaviour and solution agreement.
-
 ``` r
 glm_hd_fit <- glm(glm_hd_formula, family = binomial(), data = glm_hd_data,
                   control = list(maxit = 50))
 mlxs_hd_fit <- mlxs_glm(glm_hd_formula, family = mlxs_binomial(), data = glm_hd_data,
                         control = list(maxit = 50, epsilon = 1e-6))
 
-c(
+list(
   observations = nrow(glm_hd_data),
   predictors = ncol(glm_hd_data) - 1,
   mlxs_converged = mlxs_hd_fit$converged,
   mlxs_iterations = mlxs_hd_fit$iter,
-  max_coefficient_difference = max(abs(coef(glm_hd_fit) - mlxs_hd_fit$coefficients)),
-  max_fitted_difference = max(abs(fitted(glm_hd_fit) - mlxs_hd_fit$fitted.values))
+  max_coefficient_difference = max(abs(coef(glm_hd_fit) - as.numeric(as.matrix(mlxs_hd_fit$coefficients)))),
+  max_fitted_difference = max(abs(fitted(glm_hd_fit) - as.numeric(as.matrix(mlxs_hd_fit$fitted.values))))
 )
 #> $observations
 #> [1] 5000
@@ -441,70 +328,185 @@ c(
 #> $mlxs_iterations
 #> [1] 6
 #> 
-#> $max_coefficient_difference.ptr
-#> <pointer: 0x6000010b3010>
+#> $max_coefficient_difference
+#> [1] 2.398813e-07
 #> 
-#> $max_coefficient_difference.dim
-#> integer(0)
-#> 
-#> $max_coefficient_difference.dtype
-#> [1] "float32"
-#> 
-#> $max_coefficient_difference.device
-#> [1] "gpu"
-#> 
-#> $max_fitted_difference.ptr
-#> <pointer: 0x6000010b27a0>
-#> 
-#> $max_fitted_difference.dim
-#> integer(0)
-#> 
-#> $max_fitted_difference.dtype
-#> [1] "float32"
-#> 
-#> $max_fitted_difference.device
-#> [1] "gpu"
+#> $max_fitted_difference
+#> [1] 9.602293e-07
 ```
 
-The MLX-backed fit converges in roughly the same number of iterations as
-the reference and matches both coefficients and fitted values to within
-floating point tolerance, while the timing table above highlights the
-runtime benefits at this scale.
+## Bootstrap Benchmarks for `summary.mlxs_lm/_glm`
 
-## Other Fast Linear Modeling Options
-
-Beyond the methods benchmarked here, practitioners often turn to
-[`biglm::biglm()`](https://rdrr.io/pkg/biglm/man/biglm.html) for
-streamed data that do not fit in memory or `glmnet` for elastic-net
-regularisation. Packages such as `MatrixModels` and `SparseM` also
-provide optimized pathways for sparse design matrices.
-
-## Elastic Net on Flights Data
-
-Finally we try the MLX-backed elastic-net solver on flights, expanding
-the feature set with interaction terms to create a challenging
-regression. The benchmark compares
-[`glmnet::glmnet()`](https://glmnet.stanford.edu/reference/glmnet.html)
-with the new \[mlxs_glmnet()\] helper.
+For the base case bootstrap we also try
+[`boot::boot()`](https://rdrr.io/pkg/boot/man/boot.html) with multi-core
+execution, since most Apple Silicon machines expose several cores.
 
 ``` r
-set.seed(20251103)
-enet_rows <- 50000
-enet_idx <- sample.int(nrow(bench_data), enet_rows)
-enet_base <- bench_data[enet_idx, ]
+set.seed(20251110)
+n_boot <- 10000L
+p_boot <- 50L
+x_boot <- matrix(rnorm(n_boot * p_boot), nrow = n_boot)
+colnames(x_boot) <- sprintf("x%02d", seq_len(p_boot))
+beta_boot <- rnorm(p_boot + 1L)
+y_boot <- beta_boot[1L] + x_boot %*% beta_boot[-1L] + rnorm(n_boot, sd = 0.5)
+boot_data <- data.frame(y = drop(y_boot), x_boot)
 
-enet_design <- model.matrix(
-  ~ poly(dep_delay, 3) + poly(air_time, 3) + poly(distance, 3)
-    + poly(dep_delay, 2):poly(air_time, 2)
-    + poly(dep_delay, 2):poly(distance, 2)
-    + poly(air_time, 2):poly(distance, 2),
-  data = enet_base
+fit_mlxs_boot <- mlxs_lm(y ~ ., data = boot_data)
+fit_base_boot <- lm(y ~ ., data = boot_data)
+
+boot_stat <- function(dat, idx) {
+  d <- dat[idx, , drop = FALSE]
+  coef(lm(y ~ ., data = d))
+}
+
+parallel_cores <- max(1L, parallel::detectCores(logical = FALSE) - 1L)
+
+case_boot_mark <- bench::mark(
+  mlxs_case = {
+    sum_case <- summary(
+      fit_mlxs_boot,
+      bootstrap = TRUE,
+      bootstrap_args = list(
+        B = 50L,
+        seed = 42,
+        bootstrap_type = "case",
+        progress = FALSE
+      )
+    )
+    as.numeric(as.matrix(sum_case$std.error))
+  },
+  boot_case_serial = boot::boot(
+    boot_data,
+    statistic = boot_stat,
+    R = 50L,
+    parallel = "no"
+  ),
+  boot_case_parallel = boot::boot(
+    boot_data,
+    statistic = boot_stat,
+    R = 50L,
+    parallel = "multicore",
+    ncpus = parallel_cores
+  ),
+  car_case = car::Boot(fit_base_boot, f = coef, R = 50L, method = "case"),
+  iterations = 3,
+  check = FALSE,
+  memory = FALSE
 )
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
 
-x_enet <- enet_design[, -1, drop = FALSE]
-y_enet <- enet_base$arr_delay > 15
-lambda_enet <- 0.01
+resid_boot_mark <- bench::mark(
+  mlxs_resid = {
+    sum_resid <- summary(
+      fit_mlxs_boot,
+      bootstrap = TRUE,
+      bootstrap_args = list(
+        B = 50L,
+        seed = 99,
+        bootstrap_type = "residual",
+        progress = FALSE
+      )
+    )
+    as.numeric(as.matrix(sum_resid$std.error))
+  },
+  car_resid = car::Boot(fit_base_boot, f = coef, R = 50L, method = "residual"),
+  iterations = 3,
+  check = FALSE,
+  memory = FALSE
+)
+#> Warning: Some expressions had a GC in every iteration; so filtering is
+#> disabled.
+
+case_summary <- data.frame(
+  method = as.character(case_boot_mark$expression),
+  median_sec = as.numeric(case_boot_mark$median, units = "s"),
+  itr_per_sec = case_boot_mark$`itr/sec`,
+  gc_per_sec = case_boot_mark$`gc/sec`
+)
+case_summary$relative <- case_summary$median_sec / min(case_summary$median_sec)
+case_summary <- case_summary[order(case_summary$median_sec), ]
+
+resid_summary <- data.frame(
+  method = as.character(resid_boot_mark$expression),
+  median_sec = as.numeric(resid_boot_mark$median, units = "s"),
+  itr_per_sec = resid_boot_mark$`itr/sec`,
+  gc_per_sec = resid_boot_mark$`gc/sec`
+)
+resid_summary$relative <- resid_summary$median_sec / min(resid_summary$median_sec)
+resid_summary <- resid_summary[order(resid_summary$median_sec), ]
+
+list(
+  parallel_cores = parallel_cores,
+  case = case_summary,
+  residual = resid_summary
+)
+#> $parallel_cores
+#> [1] 2
+#> 
+#> $case
+#>               method median_sec itr_per_sec gc_per_sec relative
+#> 1          mlxs_case  0.7469669   0.8992975  0.2997658 1.000000
+#> 2   boot_case_serial  1.7351135   0.5401734  2.8809246 2.322879
+#> 3 boot_case_parallel  1.9117855   0.4857671  3.0765252 2.559398
+#> 4           car_case  2.0914922   0.4870797  2.7601185 2.799980
+#> 
+#> $residual
+#>       method median_sec itr_per_sec gc_per_sec relative
+#> 1 mlxs_resid  0.1057222   7.4482343   0.000000  1.00000
+#> 2  car_resid  2.1900424   0.4670324   2.179485 20.71506
 ```
+
+``` r
+plot_boot_summary <- function(df, title) {
+  df$method <- factor(df$method, levels = df$method[order(df$median_sec)])
+  ggplot(df, aes(x = method, y = median_sec, fill = method)) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      title = title,
+      x = NULL,
+      y = "Median seconds"
+    ) +
+    coord_flip() +
+    theme_minimal(base_size = 12)
+}
+
+case_plot <- plot_boot_summary(case_summary, "Case bootstrap timing (median seconds)")
+resid_plot <- plot_boot_summary(resid_summary, "Residual bootstrap timing (median seconds)")
+
+case_plot
+```
+
+![](benchmark-lm-mlxs_files/figure-html/bootstrap-plots-1.png)
+
+``` r
+resid_plot
+```
+
+![](benchmark-lm-mlxs_files/figure-html/bootstrap-plots-2.png)
+
+
+    ## Elastic Net on Flights Data
+
+
+
+    ``` r
+    set.seed(20251103)
+    enet_rows <- 50000
+    enet_idx <- sample.int(nrow(bench_data), enet_rows)
+    enet_base <- bench_data[enet_idx, ]
+
+    enet_design <- model.matrix(
+      ~ poly(dep_delay, 3) + poly(air_time, 3) + poly(distance, 3)
+        + poly(dep_delay, 2):poly(air_time, 2)
+        + poly(dep_delay, 2):poly(distance, 2)
+        + poly(air_time, 2):poly(distance, 2),
+      data = enet_base
+    )
+
+    x_enet <- enet_design[, -1, drop = FALSE]
+    y_enet <- enet_base$arr_delay > 15
+    lambda_enet <- 0.01
 
 ``` r
 enet_mark <- mark(
@@ -529,8 +531,8 @@ enet_summary <- data.frame(
 enet_summary$relative <- enet_summary$median_sec / min(enet_summary$median_sec)
 enet_summary
 #>        method median_sec   mem_mb itr_per_sec relative
-#> 1      glmnet 0.03491363 22547280  27.5499370   1.0000
-#> 2 mlxs_glmnet 1.82719796 46335264   0.5522011  52.3348
+#> 1      glmnet 0.04445081 22542592  24.3748796  1.00000
+#> 2 mlxs_glmnet 3.19281071 46222304   0.2958799 71.82796
 ggplot2::autoplot(enet_mark, type = "beeswarm")
 ```
 
@@ -551,6 +553,3 @@ c(
 #> coefficients_max_difference        intercept_difference 
 #>                0.5963112556                0.0005400035
 ```
-
-Even with a rich feature expansion, the MLX implementation matches
-`glmnet` within modest tolerances while keeping all updates on the GPU.
