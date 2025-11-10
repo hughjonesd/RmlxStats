@@ -158,8 +158,7 @@ mlxs_glmnet <- function(x,
       intercept_delta <- step * .mlxs_as_numeric(intercept_grad)
       intercept_val <- intercept_val - intercept_delta
 
-      delta_exceeds <- Rmlx::mlx_any(abs(delta_beta) > tol)
-      if (isTRUE(.mlxs_as_numeric(delta_exceeds))) {
+      if (any(abs(delta_beta) > tol)) {
         eta_mlx <- eta_mlx + x_active %*% delta_beta
       }
       if (abs(intercept_delta) > tol) {

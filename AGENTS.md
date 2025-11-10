@@ -71,10 +71,10 @@ guidance are called out below.
   such as `Rmlx::mlx_scalar()` / `Rmlx::mlx_vector()` / `Rmlx::mlx_array()` rather
   than `as_mlx()` so future readers can see intent at the call site.
 
-### Open Issues To File Upstream
-- Track pending GitHub issues in `docs/github-issues.md` (e.g., MLX-native `anova`
-  support, MLX quantile helper, prediction standard errors). Open real issues on the
-  Rmlx/RmlxStats repos when you have network credentials.
+### Issue Tracking
+- Log backlog ideas directly as GitHub issues (use `gh issue create ...`) instead
+  of keeping a local `docs/github-issues.md` scratchpad. Include the issue number
+  in PR summaries for traceability.
 
 ### Integration with Rmlx
 - Always import Rmlx helpers (`as_mlx`, `mlx_matmul`, `qr.mlx`, etc.) via the

@@ -21,19 +21,11 @@
 #' @name mlxs_glm_methods
 NULL
 
-.mlxs_glm_coef_names <- function(object) {
-  if (!is.null(object$coef_names)) {
-    return(object$coef_names)
-  }
-  mm <- stats::model.matrix(object$terms, object$model)
-  colnames(mm)
-}
-
 #' @rdname mlxs_glm_methods
 #' @export
 coef.mlxs_glm <- function(object, ...) {
   coef_mlx <- object$coefficients
-  attr(coef_mlx, "coef_names") <- .mlxs_glm_coef_names(object)
+  attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
   coef_mlx
 }
 
@@ -64,10 +56,6 @@ predict.mlxs_glm <- function(object, newdata = NULL,
   )
   mm_mlx <- Rmlx::as_mlx(mm)
   eta <- mm_mlx %*% object$coefficients
-  offset_new <- stats::model.offset(mf)
-  if (!is.null(offset_new)) {
-    eta <- eta + Rmlx::mlx_matrix(offset_new, ncol = 1)
-  }
   if (type == "response") {
     return(object$family$linkinv(eta))
   }
@@ -108,14 +96,8 @@ residuals.mlxs_glm <- function(object,
 
 vcov.mlxs_glm <- function(object, ...) {
   qr_fit <- object$qr
-  if (is.null(qr_fit)) {
-    stop("QR decomposition not available; refit mlxs_glm to expose vcov.", call. = FALSE)
-  }
-  r_mlx <- qr_fit$R
-  n_coef <- length(.mlxs_glm_coef_names(object))
-  identity_mlx <- Rmlx::mlx_eye(n_coef)
-  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, identity_mlx, upper = TRUE)
-  object$dispersion * (r_inv %*% t(r_inv))
+  n_coef <- length(.mlxs_coef_names(object))
+  .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = object$dispersion)
 }
 
 #' @rdname mlxs_glm_methods
@@ -145,19 +127,12 @@ summary.mlxs_glm <- function(object,
   user_args <- utils::modifyList(default_args, bootstrap_args)
   bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
 
-  coef_names <- .mlxs_glm_coef_names(object)
+  coef_names <- .mlxs_coef_names(object)
   coef_mlx <- object$coefficients
-  est_num <- .mlxs_as_numeric(coef_mlx)
   vcov_mlx <- vcov(object)
-  vcov_mat <- as.matrix(vcov_mlx)
-  se_num <- sqrt(diag(vcov_mat))
-  stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
-  stat_num <- est_num / se_num
-  p_num <- if (stat_label == "t value") {
-    2 * stats::pt(-abs(stat_num), df = object$df.residual)
-  } else {
-    2 * stats::pnorm(-abs(stat_num))
-  }
+  diag_mlx <- Rmlx::diag(vcov_mlx)
+  n_coef <- length(coef_names)
+  se_col_mlx <- Rmlx::mlx_reshape(sqrt(diag_mlx), c(n_coef, 1L))
 
   bootstrap_info <- NULL
   if (isTRUE(bootstrap)) {
@@ -170,16 +145,18 @@ summary.mlxs_glm <- function(object,
       batch_size = user_args$batch_size,
       method = bootstrap_type
     )
-    se_num <- bootstrap_info$se
-    stat_num <- est_num / se_num
-    p_num <- if (stat_label == "t value") {
-      2 * stats::pt(-abs(stat_num), df = object$df.residual)
-    } else {
-      2 * stats::pnorm(-abs(stat_num))
-    }
-    vcov_mat <- diag(se_num^2)
-    dimnames(vcov_mat) <- list(coef_names, coef_names)
-    vcov_mlx <- Rmlx::as_mlx(vcov_mat)
+    se_col_mlx <- Rmlx::mlx_matrix(bootstrap_info$se, ncol = 1)
+    diag_mat <- diag(bootstrap_info$se^2)
+    dimnames(diag_mat) <- list(coef_names, coef_names)
+    vcov_mlx <- Rmlx::as_mlx(diag_mat)
+  }
+  stat_mlx <- coef_mlx / se_col_mlx
+  stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
+  stat_num <- .mlxs_as_numeric(stat_mlx)
+  p_num <- if (stat_label == "t value") {
+    2 * stats::pt(-abs(stat_num), df = object$df.residual)
+  } else {
+    2 * stats::pnorm(-abs(stat_num))
   }
 
   sum_list <- list(
@@ -187,8 +164,8 @@ summary.mlxs_glm <- function(object,
     family = object$family,
     coef_names = coef_names,
     coefficients = coef_mlx,
-    std.error = Rmlx::mlx_matrix(se_num, ncol = 1),
-    statistic = Rmlx::mlx_matrix(stat_num, ncol = 1),
+    std.error = se_col_mlx,
+    statistic = stat_mlx,
     p.value = Rmlx::mlx_matrix(p_num, ncol = 1),
     stat_label = stat_label,
     dispersion = object$dispersion,

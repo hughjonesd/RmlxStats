@@ -59,193 +59,27 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   coef_start <- if (is.null(start)) rep.int(0, n_coef) else start
 
   weights_raw <- mf[["(weights)", exact = TRUE]]
-  weights_supplied <- !is.null(weights_raw)
-  weights_mlx <- if (is.null(weights_raw)) {
-    Rmlx::mlx_full(c(n_obs, 1L), 1)
-  } else if (inherits(weights_raw, "mlx")) {
-    weights_raw
-  } else {
-    Rmlx::mlx_matrix(weights_raw, ncol = 1)
-  }
-  if (prod(Rmlx::mlx_dim(weights_mlx)) != n_obs) {
-    stop("Length of 'weights' must match number of observations.", call. = FALSE)
-  }
-  if (as.logical(drop(as.matrix(Rmlx::mlx_any(!Rmlx::mlx_isfinite(weights_mlx)))))) {
-    stop("Weights must be non-negative and finite.", call. = FALSE)
-  }
-  if (as.logical(drop(as.matrix(Rmlx::mlx_any(weights_mlx < 0))))) {
-    stop("Weights must be non-negative and finite.", call. = FALSE)
-  }
-  offset <- rep.int(0, n_obs)
-  offset_has_values <- any(offset != 0)
 
-  X_mlx <- Rmlx::as_mlx(X)
-  y_mlx <- if (inherits(y, "mlx")) y else Rmlx::mlx_matrix(y, ncol = 1)
-  weights_sqrt_mlx <- sqrt(weights_mlx)
-  offset_mlx <- if (offset_has_values) {
-    Rmlx::mlx_matrix(offset, ncol = 1)
-  } else {
-    NULL
-  }
-
-  beta_mlx <- if (inherits(coef_start, "mlx")) coef_start else Rmlx::mlx_matrix(coef_start, ncol = 1)
-  eta_mlx <- X_mlx %*% beta_mlx
-  if (offset_has_values) {
-    eta_mlx <- eta_mlx + offset_mlx
-  }
-  mu_mlx <- family$linkinv(eta_mlx)
-  mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
-  eta <- as.numeric(as.matrix(eta_mlx))
-  mu <- as.numeric(as.matrix(mu_mlx))
-
-  if (!is.null(family$initialize)) {
-    env <- new.env(parent = environment())
-    initialize_vars <- list(
-      y = y,
-      weights = .mlxs_as_numeric(weights_mlx),
-      start = NULL,
-      etastart = NULL,
-      mustart = mu,
-      offset = offset,
-      nobs = n_obs,
-      n = .mlxs_as_numeric(weights_mlx)
-    )
-    for (nm in names(initialize_vars)) {
-      assign(nm, initialize_vars[[nm]], envir = env)
-    }
-    eval(family$initialize, envir = env)
-    if (exists("mustart", envir = env, inherits = FALSE)) {
-      mu <- get("mustart", envir = env, inherits = FALSE)
-      mu_mlx <- Rmlx::mlx_matrix(mu, ncol = 1)
-    }
-    if (exists("etastart", envir = env, inherits = FALSE)) {
-      eta_candidate <- get("etastart", envir = env, inherits = FALSE)
-      if (!is.null(eta_candidate)) {
-        eta <- eta_candidate
-        eta_mlx <- Rmlx::mlx_matrix(eta, ncol = 1)
-      } else {
-        eta_mlx <- family$linkfun(mu_mlx)
-      }
-    } else {
-      eta_mlx <- family$linkfun(mu_mlx)
-    }
-  } else {
-    mu_mlx <- family$linkinv(eta_mlx)
-    mu <- .mlxs_as_numeric(mu_mlx)
-  }
-
-  eps_mlx <- Rmlx::mlx_scalar(.Machine$double.eps)
-  epsilon_target <- max(control$epsilon, 1e-6)
-  compile_step <- isTRUE(getOption("mlxs.glm.compile", TRUE))
-
-  irls_state <- .mlxs_glm_run_irls(
-    X_mlx = X_mlx,
-    y_mlx = y_mlx,
+  core_fit <- .mlxs_glm_fit_core(
+    design = X,
+    response = y,
+    weights_raw = weights_raw,
     family = family,
-    weights_mlx = weights_mlx,
-    weights_sqrt_mlx = weights_sqrt_mlx,
-    offset_mlx = offset_mlx,
-    beta_init = beta_mlx,
-    eta_init = eta_mlx,
-    mu_init = mu_mlx,
     control = control,
-    eps_mlx = eps_mlx,
-    epsilon_target = epsilon_target,
-    trace = control$trace,
-    compile_step = compile_step
+    coef_start = coef_start
   )
 
-  beta_mlx <- irls_state$beta
-  eta_mlx <- irls_state$eta
-  mu_mlx <- irls_state$mu
-  w_mlx <- irls_state$w
-  mu_eta_mlx <- irls_state$mu_eta
-  dev_res_mlx <- irls_state$dev_resids
-  resid_mlx <- irls_state$residual
-  iter_count <- irls_state$iter
-  converged <- irls_state$converged
-  deviance <- irls_state$deviance
+  core_fit$call <- call
+  core_fit$terms <- terms
+  core_fit$model <- mf
+  core_fit$contrasts <- attr(X, "contrasts")
+  core_fit$xlevels <- attr(mf, "xlevels")
+  core_fit$na.action <- attr(mf, "na.action")
 
-  if (!converged) {
-    warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
-  }
-
-  beta <- .mlxs_as_numeric(beta_mlx)
-  eta <- .mlxs_as_numeric(eta_mlx)
-  mu <- .mlxs_as_numeric(mu_mlx)
-  dev_res_vec <- .mlxs_as_numeric(dev_res_mlx)
-  deviance <- sum(dev_res_vec)
-
-  fitted_values <- mu
-  residuals <- .mlxs_as_numeric(resid_mlx)
-  deviance_resid_mlx <- sign(resid_mlx) * sqrt(dev_res_mlx)
-  working_weights_mlx <- Rmlx::mlx_clip(w_mlx, min = .Machine$double.eps)^2
-  working_residuals_mlx <- resid_mlx / mu_eta_mlx
-  offset_result <- if (offset_has_values) offset_mlx else NULL
-  names(beta) <- colnames(X)
-  intercept_present <- attr(terms, "intercept") > 0
-  df_residual <- n_obs - n_coef
-  df_null <- n_obs - as.integer(intercept_present)
-
-  dispersion <- if (family$family %in% c("binomial", "poisson")) {
-    1
-  } else if (df_residual > 0) {
-    deviance / df_residual
-  } else {
-    NA_real_
-  }
-
-  if (family$family %in% c("binomial", "quasibinomial")) {
-    y_mean <- mean(y)
-    y_mean <- min(max(y_mean, .Machine$double.eps), 1 - .Machine$double.eps)
-    null_mu <- rep(y_mean, n_obs)
-  } else {
-    null_mu <- rep(mean(y), n_obs)
-  }
-  null_mu_mlx <- Rmlx::mlx_matrix(null_mu, ncol = 1)
-  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx))))
-
-  weights_for_aic <- .mlxs_as_numeric(weights_mlx)
-  aic <- family$aic(y, weights_for_aic, fitted_values, weights_for_aic, deviance) + 2 * n_coef
-
-  result <- list(
-    coefficients = beta_mlx,
-    residuals = resid_mlx,
-    fitted.values = mu_mlx,
-    effects = NULL,
-    rank = n_coef,
-    family = family,
-    linear.predictors = eta_mlx,
-    deviance = deviance,
-    aic = aic,
-    null.deviance = null_dev,
-    iter = iter_count,
-    df.residual = df_residual,
-    df.null = df_null,
-    dispersion = dispersion,
-    y = y_mlx,
-    call = call,
-    terms = terms,
-    model = mf,
-    deviance.resid = deviance_resid_mlx,
-    converged = converged,
-    weights = if (weights_supplied) weights_mlx else NULL,
-    prior.weights = weights_mlx,
-    working.weights = working_weights_mlx,
-    working.residuals = working_residuals_mlx,
-    mu_eta = mu_eta_mlx,
-    offset = offset_result,
-    coef_names = colnames(X),
-    contrasts = attr(X, "contrasts"),
-    xlevels = attr(mf, "xlevels"),
-    na.action = attr(mf, "na.action"),
-    control = control,
-    qr = irls_state$qr
-  )
-
-  class(result) <- c("mlxs_glm", "mlxs_model")
-  result
+  class(core_fit) <- c("mlxs_glm", "mlxs_model")
+  core_fit
 }
+
 .mlxs_glm_clamp_mu <- function(mu, family) {
   fam <- family$family
   if (fam %in% c("binomial", "quasibinomial")) {
@@ -312,7 +146,6 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
                                family,
                                weights_mlx,
                                weights_sqrt_mlx,
-                               offset_mlx,
                                beta_init,
                                eta_init,
                                mu_init,
@@ -362,9 +195,6 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     delta_val <- max(abs(.mlxs_as_numeric(delta_vec)))
 
     eta_mlx <- X_mlx %*% beta_new_mlx
-    if (!is.null(offset_mlx)) {
-      eta_mlx <- eta_mlx + offset_mlx
-    }
     mu_mlx <- family$linkinv(eta_mlx)
     mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
@@ -416,5 +246,177 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     iter = iter_count,
     converged = converged,
     qr = qr_state
+  )
+}
+
+.mlxs_glm_fit_core <- function(design,
+                               response,
+                               weights_raw = NULL,
+                               family,
+                               control,
+                               coef_start = NULL) {
+  n_obs <- nrow(design)
+  n_coef <- ncol(design)
+  if (is.null(n_obs) || n_obs == 0L) {
+    stop("No observations available for mlxs_glm.", call. = FALSE)
+  }
+  if (is.null(n_coef) || n_coef == 0L) {
+    stop("Design matrix must have at least one column.", call. = FALSE)
+  }
+
+  coef_start <- if (is.null(coef_start)) rep.int(0, n_coef) else coef_start
+  weights_supplied <- !is.null(weights_raw)
+  weights_mlx <- if (!weights_supplied) {
+    Rmlx::mlx_full(c(n_obs, 1L), 1)
+  } else if (inherits(weights_raw, "mlx")) {
+    weights_raw
+  } else {
+    Rmlx::mlx_matrix(weights_raw, ncol = 1)
+  }
+  weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
+  if (weight_len != n_obs) {
+    stop("Length of 'weights' must match number of observations.", call. = FALSE)
+  }
+  if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
+    stop("Weights must be non-negative and finite.", call. = FALSE)
+  }
+  if (any(weights_mlx < 0)) {
+    stop("Weights must be non-negative and finite.", call. = FALSE)
+  }
+
+  X_mlx <- Rmlx::as_mlx(design)
+  y_mlx <- if (inherits(response, "mlx")) response else Rmlx::mlx_matrix(response, ncol = 1)
+  weights_sqrt_mlx <- sqrt(weights_mlx)
+
+  beta_mlx <- if (inherits(coef_start, "mlx")) coef_start else Rmlx::mlx_matrix(coef_start, ncol = 1)
+  eta_mlx <- X_mlx %*% beta_mlx
+  mu_mlx <- family$linkinv(eta_mlx)
+  mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
+  eta <- as.numeric(as.matrix(eta_mlx))
+  mu <- as.numeric(as.matrix(mu_mlx))
+
+  response_vec <- if (inherits(response, "mlx")) {
+    .mlxs_as_numeric(response)
+  } else if (is.matrix(response) && ncol(response) == 1L) {
+    drop(response)
+  } else {
+    response
+  }
+
+  offset <- rep.int(0, n_obs)
+  if (!is.null(family$initialize)) {
+    env <- new.env(parent = environment())
+    initialize_vars <- list(
+      y = response_vec,
+      weights = .mlxs_as_numeric(weights_mlx),
+      start = NULL,
+      etastart = NULL,
+      mustart = mu,
+      offset = offset,
+      nobs = n_obs,
+      n = .mlxs_as_numeric(weights_mlx)
+    )
+    for (nm in names(initialize_vars)) {
+      assign(nm, initialize_vars[[nm]], envir = env)
+    }
+    eval(family$initialize, envir = env)
+    if (exists("mustart", envir = env, inherits = FALSE)) {
+      mu <- get("mustart", envir = env, inherits = FALSE)
+      mu_mlx <- Rmlx::mlx_matrix(mu, ncol = 1)
+    }
+    if (exists("etastart", envir = env, inherits = FALSE)) {
+      eta_candidate <- get("etastart", envir = env, inherits = FALSE)
+      if (!is.null(eta_candidate)) {
+        eta <- eta_candidate
+        eta_mlx <- Rmlx::mlx_matrix(eta, ncol = 1)
+      } else {
+        eta_mlx <- family$linkfun(mu_mlx)
+      }
+    } else {
+      eta_mlx <- family$linkfun(mu_mlx)
+    }
+  } else {
+    mu_mlx <- family$linkinv(eta_mlx)
+    mu <- .mlxs_as_numeric(mu_mlx)
+  }
+
+  eps_mlx <- Rmlx::mlx_scalar(.Machine$double.eps)
+  epsilon_target <- max(control$epsilon, 1e-6)
+  compile_step <- isTRUE(getOption("mlxs.glm.compile", TRUE))
+
+  irls_state <- .mlxs_glm_run_irls(
+    X_mlx = X_mlx,
+    y_mlx = y_mlx,
+    family = family,
+    weights_mlx = weights_mlx,
+    weights_sqrt_mlx = weights_sqrt_mlx,
+    beta_init = beta_mlx,
+    eta_init = eta_mlx,
+    mu_init = mu_mlx,
+    control = control,
+    eps_mlx = eps_mlx,
+    epsilon_target = epsilon_target,
+    trace = control$trace,
+    compile_step = compile_step
+  )
+
+  if (!irls_state$converged) {
+    warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
+  }
+
+  dev_res_vec <- .mlxs_as_numeric(irls_state$dev_resids)
+  deviance <- sum(dev_res_vec)
+
+  fitted_values <- .mlxs_as_numeric(irls_state$mu)
+  deviance_resid_mlx <- sign(irls_state$residual) * sqrt(irls_state$dev_resids)
+  working_weights_mlx <- Rmlx::mlx_clip(irls_state$w, min = .Machine$double.eps)^2
+  working_residuals_mlx <- irls_state$residual / irls_state$mu_eta
+  coef_names <- colnames(design)
+  has_intercept <- !is.null(coef_names) && any(coef_names == "(Intercept)")
+  df_residual <- n_obs - n_coef
+  df_null <- n_obs - as.integer(has_intercept)
+
+  dispersion <- if (family$family %in% c("binomial", "poisson")) {
+    1
+  } else if (df_residual > 0) {
+    deviance / df_residual
+  } else {
+    NA_real_
+  }
+
+  null_mean <- mean(response_vec)
+  null_mu_mlx <- Rmlx::mlx_full(c(n_obs, 1L), null_mean)
+  null_mu_mlx <- .mlxs_glm_clamp_mu(null_mu_mlx, family)
+  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx))))
+
+  weights_for_aic <- .mlxs_as_numeric(weights_mlx)
+  aic <- family$aic(response_vec, weights_for_aic, fitted_values, weights_for_aic, deviance) + 2 * n_coef
+
+  list(
+    coefficients = irls_state$beta,
+    residuals = irls_state$residual,
+    fitted.values = irls_state$mu,
+    effects = NULL,
+    rank = n_coef,
+    family = family,
+    linear.predictors = irls_state$eta,
+    deviance = deviance,
+    aic = aic,
+    null.deviance = null_dev,
+    iter = irls_state$iter,
+    df.residual = df_residual,
+    df.null = df_null,
+    dispersion = dispersion,
+    y = y_mlx,
+    deviance.resid = deviance_resid_mlx,
+    converged = irls_state$converged,
+    weights = if (weights_supplied) weights_mlx else NULL,
+    prior.weights = weights_mlx,
+    working.weights = working_weights_mlx,
+    working.residuals = working_residuals_mlx,
+    mu_eta = irls_state$mu_eta,
+    coef_names = coef_names,
+    control = control,
+    qr = irls_state$qr
   )
 }

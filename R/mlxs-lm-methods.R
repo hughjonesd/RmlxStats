@@ -10,14 +10,6 @@
 #' @importFrom generics tidy glance augment
 NULL
 
-.mlxs_coef_names <- function(object) {
-  if (!is.null(object$coef_names)) {
-    return(object$coef_names)
-  }
-  mm <- model.matrix(object$terms, model.frame(object))
-  colnames(mm)
-}
-
 # Helper to refit as base lm for operations that expect an lm object
 #' @export
 coef.mlxs_lm <- function(object, ...) {
@@ -53,15 +45,10 @@ residuals.mlxs_lm <- function(object, ...) {
 #' @export
 vcov.mlxs_lm <- function(object, ...) {
   qr_fit <- object$qr
-  if (is.null(qr_fit)) {
-    stop("QR decomposition not stored in mlxs_lm object.", call. = FALSE)
-  }
-  r_mlx <- qr_fit$R
   n_coef <- length(.mlxs_coef_names(object))
-  eye <- Rmlx::mlx_eye(n_coef)
-  r_inv <- Rmlx::mlx_solve_triangular(r_mlx, eye, upper = TRUE)
-  sigma2 <- sum(.mlxs_as_numeric(object$residuals)^2) / object$df.residual
-  sigma2 * (r_inv %*% t(r_inv))
+  rss <- .mlxs_as_numeric(Rmlx::mlx_sum(object$residuals * object$residuals))
+  sigma2 <- rss / object$df.residual
+  .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = sigma2)
 }
 
 #' @export
@@ -70,7 +57,7 @@ confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
   cf_num <- .mlxs_as_numeric(cf)
   coef_names <- .mlxs_coef_names(object)
   if (missing(parm)) {
-    parm <- seq_along(cf_num)
+    parm <- seq_len(length(cf_num))
   } else if (is.character(parm)) {
     parm <- match(parm, coef_names, nomatch = NA_integer_)
     if (any(is.na(parm))) {

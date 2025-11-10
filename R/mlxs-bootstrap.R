@@ -21,21 +21,30 @@
       }
     }
   }
-  data <- model.frame(object)
-  n <- nrow(data)
-  if (is.null(data) || n == 0L) {
+  if (is.null(object$model)) {
     stop("Bootstrap requires the original model frame to be stored.", call. = FALSE)
+  }
+  design_mat <- stats::model.matrix(object$terms, object$model)
+  n <- nrow(design_mat)
+  if (is.null(n) || n == 0L) {
+    stop("Design matrix not available for bootstrap.", call. = FALSE)
   }
   coef_names <- object$coef_names
   if (is.null(coef_names)) {
     stop("Model must have named coefficients for bootstrap.", call. = FALSE)
   }
-  formula_obj <- stats::formula(object$terms)
-  fit_fun <- switch(
-    fit_type,
-    lm = function(df) mlxs_lm(formula_obj, data = df),
-    glm = function(df) mlxs_glm(formula_obj, data = df, family = object$family, control = object$control)
-  )
+  response_num <- if (fit_type == "glm") {
+    .mlxs_as_numeric(object$y)
+  } else {
+    .mlxs_as_numeric(object$residuals + object$fitted.values)
+  }
+  if (length(response_num) != n) {
+    stop("Response length mismatch during bootstrap.", call. = FALSE)
+  }
+  weights_num <- if (!is.null(object$prior.weights)) .mlxs_as_numeric(object$prior.weights) else NULL
+  if (!is.null(weights_num) && length(weights_num) != n) {
+    stop("Weight length mismatch during bootstrap.", call. = FALSE)
+  }
 
   B <- as.integer(B)
   if (is.na(B) || B <= 1L) {
@@ -64,16 +73,24 @@
   current_row <- 1L
   for (batch_idx in seq_len(total_batches)) {
     reps <- min(batch_size, B - current_row + 1L)
-    idx_mat <- replicate(reps, sample.int(n, n, replace = TRUE))
-    # Build a single data.frame containing stacked resamples with factor preserving
-    stacked <- data[idx_mat, , drop = FALSE]
     batch_results <- vector("list", reps)
     for (j in seq_len(reps)) {
-      start_row <- (j - 1) * n + 1
-      end_row <- j * n
-      boot_data <- stacked[start_row:end_row, , drop = FALSE]
-      boot_fit <- fit_fun(boot_data)
-      coef_boot <- drop(as.matrix(coef(boot_fit)))
+      idx <- sample.int(n, n, replace = TRUE)
+      x_boot <- design_mat[idx, , drop = FALSE]
+      y_boot <- response_num[idx]
+      w_boot <- if (is.null(weights_num)) NULL else weights_num[idx]
+      coef_boot <- if (fit_type == "lm") {
+        .mlxs_bootstrap_case_lm_fit(x_boot, y_boot, w_boot)
+      } else {
+        .mlxs_bootstrap_case_glm_fit(
+          x_boot,
+          y_boot,
+          w_boot,
+          family = object$family,
+          control = object$control,
+          coef_start = object$coefficients
+        )
+      }
       if (length(coef_boot) != length(coef_names)) {
         stop("Coefficient count mismatch in bootstrap refit.", call. = FALSE)
       }
@@ -90,6 +107,31 @@
 
   se <- apply(coef_mat, 2, stats::sd)
   list(se = se, samples = coef_mat, B = B, seed = seed)
+}
+
+.mlxs_bootstrap_case_lm_fit <- function(x_boot, y_boot, weights_boot) {
+  x_mlx <- Rmlx::as_mlx(x_boot)
+  y_mlx <- Rmlx::mlx_matrix(y_boot, ncol = 1)
+  w_mlx <- if (is.null(weights_boot)) NULL else Rmlx::mlx_matrix(weights_boot, ncol = 1)
+  fit <- mlxs_lm_fit(x_mlx, y_mlx, weights = w_mlx)
+  .mlxs_as_numeric(fit$coefficients)
+}
+
+.mlxs_bootstrap_case_glm_fit <- function(x_boot,
+                                         y_boot,
+                                         weights_boot,
+                                         family,
+                                         control,
+                                         coef_start) {
+  fit <- .mlxs_glm_fit_core(
+    design = x_boot,
+    response = y_boot,
+    weights_raw = weights_boot,
+    family = family,
+    control = control,
+    coef_start = coef_start
+  )
+  .mlxs_as_numeric(fit$coefficients)
 }
 
 .mlxs_bootstrap_residual_lm <- function(object, B, seed, progress, batch_size) {

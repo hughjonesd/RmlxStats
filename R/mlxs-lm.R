@@ -60,12 +60,10 @@ mlxs_lm <- function(formula, data, subset, weights) {
     if (weight_len != n_obs) {
       stop("Length of 'weights' must match number of observations.", call. = FALSE)
     }
-    bad_finite <- Rmlx::mlx_any(!Rmlx::mlx_isfinite(weights_mlx))
-    if (as.logical(drop(as.matrix(bad_finite)))) {
+    if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
       stop("Weights must be non-negative and finite.", call. = FALSE)
     }
-    bad_negative <- Rmlx::mlx_any(weights_mlx < 0)
-    if (as.logical(drop(as.matrix(bad_negative)))) {
+    if (any(weights_mlx < 0)) {
       stop("Weights must be non-negative and finite.", call. = FALSE)
     }
   }
