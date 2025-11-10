@@ -151,7 +151,7 @@ mlxs_glmnet <- function(x,
       beta_new_subset <- .mlxs_soft_threshold(beta_temp, thresh)
       delta_beta <- beta_new_subset - beta_prev_subset
 
-      beta_mlx[active_idx, ] <- beta_new_subset
+      beta_mlx[active_idx, ] <- matrix(.mlxs_as_numeric(beta_new_subset), ncol = 1)
 
       residual_sum <- Rmlx::mlx_sum(residual_mlx)
       intercept_grad <- residual_sum / n_obs
