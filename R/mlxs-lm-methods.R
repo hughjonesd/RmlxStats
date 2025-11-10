@@ -102,7 +102,7 @@ summary.mlxs_lm <- function(object,
   bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
   vc <- vcov(object)
   vc_mat <- as.matrix(vc)
-  se <- sqrt(diag(vc_mat))
+  se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
   bootstrap_info <- NULL
   if (isTRUE(bootstrap)) {
     bootstrap_info <- .mlxs_bootstrap_coefs(
@@ -114,10 +114,11 @@ summary.mlxs_lm <- function(object,
       batch_size = user_args$batch_size,
       method = bootstrap_type
     )
-    se <- bootstrap_info$se
+    se_mlx <- bootstrap_info$se
   }
+  se_num <- .mlxs_as_numeric(se_mlx)
   est <- .mlxs_as_numeric(object$coefficients)
-  tvals <- est / se
+  tvals <- est / se_num
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
   resid_mlx <- residuals(object)
   rdf <- object$df.residual
@@ -149,7 +150,7 @@ summary.mlxs_lm <- function(object,
     residuals = resid_mlx,
     coef = object$coefficients,
     coef_names = .mlxs_coef_names(object),
-    std.error = Rmlx::mlx_matrix(se, ncol = 1),
+    std.error = se_mlx,
     statistic = Rmlx::mlx_matrix(tvals, ncol = 1),
     p.value = Rmlx::mlx_matrix(pvals, ncol = 1),
     sigma = sigma,

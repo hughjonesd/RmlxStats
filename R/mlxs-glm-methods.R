@@ -145,10 +145,10 @@ summary.mlxs_glm <- function(object,
       batch_size = user_args$batch_size,
       method = bootstrap_type
     )
-    se_col_mlx <- Rmlx::mlx_matrix(bootstrap_info$se, ncol = 1)
-    diag_mat <- diag(bootstrap_info$se^2)
-    dimnames(diag_mat) <- list(coef_names, coef_names)
-    vcov_mlx <- Rmlx::as_mlx(diag_mat)
+    se_col_mlx <- bootstrap_info$se
+    se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, length(coef_names)))
+    diag_eye <- Rmlx::mlx_eye(length(coef_names))
+    vcov_mlx <- diag_eye * Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_dim(diag_eye))
   }
   stat_mlx <- coef_mlx / se_col_mlx
   stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"

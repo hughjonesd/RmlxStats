@@ -254,16 +254,30 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
                                weights_raw = NULL,
                                family,
                                control,
-                               coef_start = NULL) {
-  n_obs <- nrow(design)
-  n_coef <- ncol(design)
-  if (is.null(n_obs) || n_obs == 0L) {
-    stop("No observations available for mlxs_glm.", call. = FALSE)
+                               coef_start = NULL,
+                               coef_names = NULL,
+                               has_intercept = NULL) {
+  design_is_mlx <- inherits(design, "mlx")
+  if (design_is_mlx) {
+    X_mlx <- design
+    dims <- Rmlx::mlx_dim(X_mlx)
+    n_obs <- dims[1L]
+    n_coef <- dims[2L]
+    if (is.null(coef_names)) {
+      stop("coef_names must be supplied when design is an mlx array.", call. = FALSE)
+    }
+  } else {
+    n_obs <- nrow(design)
+    n_coef <- ncol(design)
+    if (is.null(n_obs) || n_obs == 0L) {
+      stop("No observations available for mlxs_glm.", call. = FALSE)
+    }
+    if (is.null(n_coef) || n_coef == 0L) {
+      stop("Design matrix must have at least one column.", call. = FALSE)
+    }
+    coef_names <- colnames(design)
+    X_mlx <- Rmlx::as_mlx(design)
   }
-  if (is.null(n_coef) || n_coef == 0L) {
-    stop("Design matrix must have at least one column.", call. = FALSE)
-  }
-
   coef_start <- if (is.null(coef_start)) rep.int(0, n_coef) else coef_start
   weights_supplied <- !is.null(weights_raw)
   weights_mlx <- if (!weights_supplied) {
@@ -284,7 +298,6 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     stop("Weights must be non-negative and finite.", call. = FALSE)
   }
 
-  X_mlx <- Rmlx::as_mlx(design)
   y_mlx <- if (inherits(response, "mlx")) response else Rmlx::mlx_matrix(response, ncol = 1)
   weights_sqrt_mlx <- sqrt(weights_mlx)
 
@@ -371,8 +384,9 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   deviance_resid_mlx <- sign(irls_state$residual) * sqrt(irls_state$dev_resids)
   working_weights_mlx <- Rmlx::mlx_clip(irls_state$w, min = .Machine$double.eps)^2
   working_residuals_mlx <- irls_state$residual / irls_state$mu_eta
-  coef_names <- colnames(design)
-  has_intercept <- !is.null(coef_names) && any(coef_names == "(Intercept)")
+  if (is.null(has_intercept)) {
+    has_intercept <- !is.null(coef_names) && any(coef_names == "(Intercept)")
+  }
   df_residual <- n_obs - n_coef
   df_null <- n_obs - as.integer(has_intercept)
 
