@@ -46,97 +46,31 @@
   seed <- state$seed
   progress <- state$progress
 
-  design_mat <- stats::model.matrix(object$terms, object$model)
-  coef_names <- object$coef_names
+  state$design_mlx <- Rmlx::as_mlx(stats::model.matrix(object$terms, object$model))
+  state$coef_names <- object$coef_names
+  state$has_intercept <- any(state$coef_names == "(Intercept)")
+  state$y_mlx <- if (fit_type == "glm") object$y else object$residuals + object$fitted.values
+  state$weights_mlx <- switch(fit_type, lm = object$weights, glm = object$prior.weights)
+  state$coef_init <- object$coefficients
+  state$method <- "case"
 
-  design_mlx <- Rmlx::as_mlx(design_mat)
-  dims <- Rmlx::mlx_dim(design_mlx)
-  n <- dims[1L]
-  has_intercept <- any(coef_names == "(Intercept)")
-
-  y_mlx <- if (fit_type == "glm") {
-    object$y
-  } else {
-    object$residuals + object$fitted.values
-  }
-
-  weights_mlx <- switch(
-    fit_type,
-    lm = object$weights,
-    glm = object$prior.weights
-  )
-
-  coef_init <- object$coefficients
-
-  if (!is.null(seed)) {
-    old_seed <- .Random.seed
-    on.exit(assign(".Random.seed", old_seed, envir = .GlobalEnv), add = TRUE)
-    set.seed(seed)
-  }
-
-  pb <- NULL
-  if (isTRUE(progress)) {
-    pb <- utils::txtProgressBar(min = 0, max = B, style = 3)
-    on.exit(close(pb), add = TRUE)
-  }
-
-  coef_stack <- .mlxs_bootstrap_collect(
-    B = B,
-    n = n,
-    seed = seed,
-    progress = progress,
-    build_boot = function(idx) {
-      x_boot <- design_mlx[idx, , drop = FALSE]
-      y_boot <- y_mlx[idx, , drop = FALSE]
-      w_boot <- if (is.null(weights_mlx)) NULL else weights_mlx[idx, , drop = FALSE]
-      if (fit_type == "lm") {
-        mlxs_lm_fit(x_boot, y_boot, weights = w_boot)$coefficients
-      } else {
-        .mlxs_glm_fit_core(
-          design = x_boot,
-          response = y_boot,
-          weights_raw = w_boot,
-          family = object$family,
-          control = object$control,
-          coef_start = coef_init,
-          coef_names = coef_names,
-          has_intercept = has_intercept
-        )$coefficients
-      }
-    }
-  )
-  .mlxs_bootstrap_finalize(coef_stack, coef_names, method = "case", B = B, seed = seed)
+  dims <- Rmlx::mlx_dim(state$design_mlx)
+  coef_stack <- .mlxs_bootstrap_collect(state, n = dims[1L])
+  .mlxs_bootstrap_finalize(coef_stack, state$coef_names, state)
 }
 
 .mlxs_bootstrap_run.mlxs_bootstrap_residual <- function(state, ...) {
   object <- state$object
-  fit_type <- state$fit_type
-  B <- as.integer(state$B)
-  seed <- state$seed
-  progress <- state$progress
-
-  qr_fit <- object$qr
-  coef_names <- object$coef_names
+  state$qr <- object$qr
+  state$coef_names <- object$coef_names
   residuals_mlx <- object$residuals
   fitted_mlx <- object$fitted.values
+  state$centered_resid <- residuals_mlx - Rmlx::mlx_mean(residuals_mlx)
+  state$fitted_mlx <- fitted_mlx
+  state$method <- "residual"
   dims <- Rmlx::mlx_dim(residuals_mlx)
-  n <- dims[1L]
-  mean_resid <- Rmlx::mlx_mean(residuals_mlx)
-  centered_resid <- residuals_mlx - mean_resid
-
-  coef_stack <- .mlxs_bootstrap_collect(
-    B = B,
-    n = n,
-    seed = seed,
-    progress = progress,
-    build_boot = function(idx) {
-      resid_draw <- centered_resid[idx, , drop = FALSE]
-      y_boot <- fitted_mlx + resid_draw
-      qty <- crossprod(qr_fit$Q, y_boot)
-      Rmlx::mlx_solve_triangular(qr_fit$R, qty, upper = TRUE)
-    }
-  )
-  .mlxs_bootstrap_finalize(coef_stack, coef_names, method = "residual", B = B, seed = seed)
+  coef_stack <- .mlxs_bootstrap_collect(state, n = dims[1L])
+  .mlxs_bootstrap_finalize(coef_stack, state$coef_names, state)
 }
 
 #' @importFrom utils txtProgressBar setTxtProgressBar
