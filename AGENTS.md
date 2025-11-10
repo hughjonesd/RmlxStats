@@ -75,6 +75,15 @@ guidance are called out below.
 - Log backlog ideas directly as GitHub issues (use `gh issue create ...`) instead
   of keeping a local `docs/github-issues.md` scratchpad. Include the issue number
   in PR summaries for traceability.
+- Residual bootstraps for `mlxs_glm` are only supported for (quasi)gaussian
+  families—fail fast if anything else is requested rather than silently
+  downgrading to case resampling.
+- Keep bootstrap implementations MLX-native end-to-end: gather samples via MLX
+  subsetting, refit with `mlxs_lm_fit` / `.mlxs_glm_fit_core`, and return MLX
+  standard-error columns (no intermediate `as.matrix()`/`stats::sd` hops).
+- When mutating MLX arrays via `[<-`, convert the update to a base matrix first
+  if needed to avoid `as.vector.mlx` warnings (e.g., large active-set updates
+  in `mlxs_glmnet`).
 
 ### Integration with Rmlx
 - Always import Rmlx helpers (`as_mlx`, `mlx_matmul`, `qr.mlx`, etc.) via the
