@@ -57,15 +57,7 @@ passed through <code>...</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mlxs_boot</span><span class="op">(</span></span>
-<span>  <span class="va">fun</span>,</span>
-<span>  <span class="va">...</span>,</span>
-<span>  B <span class="op">=</span> <span class="fl">200L</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  progress <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  replace <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  compile <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mlxs_boot</span><span class="op">(</span><span class="va">fun</span>, <span class="va">...</span>, B <span class="op">=</span> <span class="fl">200L</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, progress <span class="op">=</span> <span class="cn">FALSE</span>, compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -92,11 +84,6 @@ first dimension before being passed to <code>fun</code>.</p></dd>
 
 <dt id="arg-progress">progress<a class="anchor" aria-label="anchor" href="#arg-progress"></a></dt>
 <dd><p>Logical; if <code>TRUE</code>, show a text progress bar.</p></dd>
-
-
-<dt id="arg-replace">replace<a class="anchor" aria-label="anchor" href="#arg-replace"></a></dt>
-<dd><p>Logical; whether to sample with replacement. Defaults to
-<code>TRUE</code> for standard bootstrap resampling.</p></dd>
 
 
 <dt id="arg-compile">compile<a class="anchor" aria-label="anchor" href="#arg-compile"></a></dt>

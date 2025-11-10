@@ -10,15 +10,7 @@ instead of being passed through `...`.
 ## Usage
 
 ``` r
-mlxs_boot(
-  fun,
-  ...,
-  B = 200L,
-  seed = NULL,
-  progress = FALSE,
-  replace = TRUE,
-  compile = FALSE
-)
+mlxs_boot(fun, ..., B = 200L, seed = NULL, progress = FALSE, compile = FALSE)
 ```
 
 ## Arguments
@@ -44,11 +36,6 @@ mlxs_boot(
 - progress:
 
   Logical; if `TRUE`, show a text progress bar.
-
-- replace:
-
-  Logical; whether to sample with replacement. Defaults to `TRUE` for
-  standard bootstrap resampling.
 
 - compile:
 

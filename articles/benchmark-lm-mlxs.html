@@ -107,11 +107,11 @@ fastglm).</p>
 <span><span class="va">bench_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">bench_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">bench_summary</span></span>
 <span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      lm 0.05018466  91103808   12.134017 1.180623</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm 0.08978545  78456800    8.126718 2.112255</span></span>
-<span><span class="co">#&gt; 3   feols 0.04518749  32390888   24.396392 1.063062</span></span>
-<span><span class="co">#&gt; 4  fastLm 0.14301267 116838424    5.064029 3.364457</span></span>
-<span><span class="co">#&gt; 5 speedlm 0.04250691  75406984   23.278611 1.000000</span></span>
+<span><span class="co">#&gt; 1      lm 0.05020499  91103808    14.58327 1.832139</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm 0.05256954  78456800    11.41325 1.918429</span></span>
+<span><span class="co">#&gt; 3   feols 0.02988875  32390888    36.09732 1.090735</span></span>
+<span><span class="co">#&gt; 4  fastLm 0.09130565 116838424     8.18389 3.332032</span></span>
+<span><span class="co">#&gt; 5 speedlm 0.02740239  75406984    35.96088 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bench_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/timings-1.png" class="r-plt" width="700"></p>
 </div>
@@ -193,11 +193,11 @@ fastglm).</p>
 <span><span class="va">hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">hd_summary</span></span>
 <span><span class="co">#&gt;    method median_sec    mem_mb itr_per_sec  relative</span></span>
-<span><span class="co">#&gt; 1      lm  0.7631855 198187456   1.2701519  4.917738</span></span>
-<span><span class="co">#&gt; 2 mlxs_lm  0.1697196 165871952   4.5385628  1.093622</span></span>
-<span><span class="co">#&gt; 3   feols  1.8818655  81721048   0.5424723 12.126174</span></span>
-<span><span class="co">#&gt; 4  fastLm  0.8951352 278407080   1.0747667  5.767982</span></span>
-<span><span class="co">#&gt; 5 speedlm  0.1551904 188431080   5.8578448  1.000000</span></span>
+<span><span class="co">#&gt; 1      lm 0.54584674 198187456   1.8464720  6.866728</span></span>
+<span><span class="co">#&gt; 2 mlxs_lm 0.07949154 165871952   8.2501308  1.000000</span></span>
+<span><span class="co">#&gt; 3   feols 1.52320605  81721048   0.6535911 19.161864</span></span>
+<span><span class="co">#&gt; 4  fastLm 0.61064027 278407080   1.4413564  7.681827</span></span>
+<span><span class="co">#&gt; 5 speedlm 0.11559048 188431080   8.1119403  1.454123</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/highp-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
@@ -258,9 +258,9 @@ binomial family.</p>
 <span><span class="va">glm_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_summary</span></span>
 <span><span class="co">#&gt;     method median_sec     mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm  0.7755171 1027386600    1.378266 2.261593</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm  0.5539742  308571968    1.496715 1.615521</span></span>
-<span><span class="co">#&gt; 3 speedglm  0.3429074  528434864    2.853606 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm  0.5067170 1027386600    1.946516 2.014372</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm  0.3252274  308571968    2.735974 1.292889</span></span>
+<span><span class="co">#&gt; 3 speedglm  0.2515509  528434864    3.958890 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_mark</span>, type <span class="op">=</span> <span class="st">"boxplot"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-timings-1.png" class="r-plt" width="700"></p>
 </div>
@@ -342,9 +342,9 @@ binomial family.</p>
 <span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">glm_hd_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">glm_hd_summary</span></span>
 <span><span class="co">#&gt;     method median_sec    mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glm  0.4765286 167405736    2.074625 3.851677</span></span>
-<span><span class="co">#&gt; 2 mlxs_glm  0.4398378  44611040    2.293953 3.555114</span></span>
-<span><span class="co">#&gt; 3 speedglm  0.1237198 120938016    7.906560 1.000000</span></span>
+<span><span class="co">#&gt; 1      glm 0.36783121 167405736    2.750241 4.083771</span></span>
+<span><span class="co">#&gt; 2 mlxs_glm 0.33269712  44611040    3.049682 3.693702</span></span>
+<span><span class="co">#&gt; 3 speedglm 0.09007147 120938016   10.643240 1.000000</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">glm_hd_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glm-highd-benchmark-1.png" class="r-plt" width="700"></p>
 </div>
@@ -494,15 +494,15 @@ several cores.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $case</span></span>
 <span><span class="co">#&gt;               method median_sec itr_per_sec gc_per_sec relative</span></span>
-<span><span class="co">#&gt; 1          mlxs_case  0.7469669   0.8992975  0.2997658 1.000000</span></span>
-<span><span class="co">#&gt; 2   boot_case_serial  1.7351135   0.5401734  2.8809246 2.322879</span></span>
-<span><span class="co">#&gt; 3 boot_case_parallel  1.9117855   0.4857671  3.0765252 2.559398</span></span>
-<span><span class="co">#&gt; 4           car_case  2.0914922   0.4870797  2.7601185 2.799980</span></span>
+<span><span class="co">#&gt; 1          mlxs_case  0.8987211   0.9713166  0.3237722 1.000000</span></span>
+<span><span class="co">#&gt; 3 boot_case_parallel  1.0693318   0.6579954  2.8513134 1.189837</span></span>
+<span><span class="co">#&gt; 4           car_case  1.3727733   0.7639564  4.0744343 1.527474</span></span>
+<span><span class="co">#&gt; 2   boot_case_serial  1.4817470   0.6359832  3.8158995 1.648728</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $residual</span></span>
 <span><span class="co">#&gt;       method median_sec itr_per_sec gc_per_sec relative</span></span>
-<span><span class="co">#&gt; 1 mlxs_resid  0.1057222   7.4482343   0.000000  1.00000</span></span>
-<span><span class="co">#&gt; 2  car_resid  2.1900424   0.4670324   2.179485 20.71506</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 mlxs_resid  0.1728665   5.7909591   0.000000  1.00000</span></span>
+<span><span class="co">#&gt; 2  car_resid  1.8297924   0.5412284   2.706142 10.58501</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_boot_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">df</span>, <span class="va">title</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">df</span><span class="op">$</span><span class="va">method</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">method</span>, levels <span class="op">=</span> <span class="va">df</span><span class="op">$</span><span class="va">method</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">df</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
@@ -571,8 +571,8 @@ lambda_enet &lt;- 0.01</code></pre>
 <span><span class="va">enet_summary</span><span class="op">$</span><span class="va">relative</span> <span class="op">&lt;-</span> <span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">enet_summary</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
 <span><span class="va">enet_summary</span></span>
 <span><span class="co">#&gt;        method median_sec   mem_mb itr_per_sec relative</span></span>
-<span><span class="co">#&gt; 1      glmnet 0.04445081 22542592  24.3748796  1.00000</span></span>
-<span><span class="co">#&gt; 2 mlxs_glmnet 3.19281071 46222304   0.2958799 71.82796</span></span>
+<span><span class="co">#&gt; 1      glmnet 0.06188979 22542592  15.3144670  1.00000</span></span>
+<span><span class="co">#&gt; 2 mlxs_glmnet 1.93367054 46222304   0.5219021 31.24377</span></span>
 <span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">enet_mark</span>, type <span class="op">=</span> <span class="st">"beeswarm"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmark-lm-mlxs_files/figure-html/glmnet-flights-benchmark-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
