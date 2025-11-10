@@ -1,5 +1,5 @@
 ---
-title: "Benchmarking MLX-backed Linear and Generalized Linear Models"
+title: "Benchmarks"
 output:
   rmarkdown::html_vignette:
     toc: true
