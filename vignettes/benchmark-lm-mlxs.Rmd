@@ -386,6 +386,27 @@ list(
   case = case_summary,
   residual = resid_summary
 )
+
+```{r bootstrap-plots, fig.width=7, fig.height=4.5}
+plot_boot_summary <- function(df, title) {
+  df$method <- factor(df$method, levels = df$method[order(df$median_sec)])
+  ggplot(df, aes(x = method, y = median_sec, fill = method)) +
+    geom_col(show.legend = FALSE) +
+    labs(
+      title = title,
+      x = NULL,
+      y = "Median seconds"
+    ) +
+    coord_flip() +
+    theme_minimal(base_size = 12)
+}
+
+case_plot <- plot_boot_summary(case_summary, "Case bootstrap timing (median seconds)")
+resid_plot <- plot_boot_summary(resid_summary, "Residual bootstrap timing (median seconds)")
+
+case_plot
+resid_plot
+```
 ```
 
 
