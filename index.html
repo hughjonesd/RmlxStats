@@ -55,35 +55,22 @@
 <div class="page-header"><h1 id="rmlxstats">RmlxStats<a class="anchor" aria-label="anchor" href="#rmlxstats"></a>
 </h1></div>
 <p>Statistical modelling front-ends that run on Apple GPU hardware via the <a href="https://github.com/hughjonesd/Rmlx" class="external-link">Rmlx</a> array library.</p>
+<p>GPUs are designed to handle matrices, which is a good fit for statistics. But up till now R Mac users have not had access to the power of their GPUs. RmlxStats is an experiment in implementing common statistical methods on the GPU. RmlxStats is early <em>work in progress</em>!</p>
+<p>Functions implemented so far include Rmlx versions of <code>lm</code>, <code>glm</code>, <code>glmnet</code> and a bootstrapping function <code><a href="reference/mlxs_boot.html">mlxs_boot()</a></code>.</p>
 <div class="section level2">
-<h2 id="when-to-use-mlxs_glm">When to use mlxs_(g)lm<a class="anchor" aria-label="anchor" href="#when-to-use-mlxs_glm"></a>
+<h2 id="when-to-use">When to use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h2>
-<ul>
-<li>GPU acceleration shines once the design matrix is large (tens of thousands of rows/columns) or you need to refit many times (e.g., bootstraps or cross-validation). In these cases the MLX QR/solve path can be several times faster than repeated <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm()</a></code>/<code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm()</a></code> fits.</li>
-<li>For small problems (think classic textbook data) the overhead of launching GPU kernels and shuttling data usually outweighs any benefit; base R’s CPU solvers will be faster.</li>
-<li>Residual bootstraps for Gaussian models are particularly effective: we reuse the original MLX QR factorisation and only resample residuals, so each replicate avoids a fresh factorisation.</li>
-</ul>
+<p>Very roughly, RmlxStats becomes competitive once you have ~10,000 rows and ~50 columns. Below that, startup costs dominate. See the benchmarks vignette for more details.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<ol style="list-style-type: decimal">
-<li>
 <p>Install Apple’s MLX runtime (provides the Metal-backed tensor engine):</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">brew</span> install mlx</span></code></pre></div>
-</li>
-<li>
-<p>Install the development dependencies in R (requires R 4.5+ on Apple Silicon):</p>
+<p>Then:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"devtools"</span>, <span class="st">"nycflights13"</span>, <span class="st">"bench"</span>, <span class="st">"fixest"</span>, <span class="st">"RcppEigen"</span>, <span class="st">"speedglm"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</li>
-<li>
-<p>Install Rmlx and RmlxStats from GitHub:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hughjonesd/Rmlx"</span><span class="op">)</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hughjonesd/RmlxStats"</span><span class="op">)</span></span></code></pre></div>
-</li>
-</ol>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"hughjonesd/RmlxStats"</span><span class="op">)</span></span></code></pre></div>
+<p>which will also install Rmlx.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">

@@ -3,40 +3,33 @@
 Statistical modelling front-ends that run on Apple GPU hardware via the
 [Rmlx](https://github.com/hughjonesd/Rmlx) array library.
 
-## When to use mlxs\_(g)lm
+GPUs are designed to handle matrices, which is a good fit for
+statistics. But up till now R Mac users have not had access to the power
+of their GPUs. RmlxStats is an experiment in implementing common
+statistical methods on the GPU. RmlxStats is early *work in progress*!
 
-- GPU acceleration shines once the design matrix is large (tens of
-  thousands of rows/columns) or you need to refit many times (e.g.,
-  bootstraps or cross-validation). In these cases the MLX QR/solve path
-  can be several times faster than repeated
-  [`lm()`](https://rdrr.io/r/stats/lm.html)/[`glm()`](https://rdrr.io/r/stats/glm.html)
-  fits.
-- For small problems (think classic textbook data) the overhead of
-  launching GPU kernels and shuttling data usually outweighs any
-  benefit; base R’s CPU solvers will be faster.
-- Residual bootstraps for Gaussian models are particularly effective: we
-  reuse the original MLX QR factorisation and only resample residuals,
-  so each replicate avoids a fresh factorisation.
+Functions implemented so far include Rmlx versions of `lm`, `glm`,
+`glmnet` and a bootstrapping function
+[`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+
+## When to use
+
+Very roughly, RmlxStats becomes competitive once you have ~10,000 rows
+and ~50 columns. Below that, startup costs dominate. See the benchmarks
+vignette for more details.
 
 ## Installation
 
-1.  Install Apple’s MLX runtime (provides the Metal-backed tensor
-    engine):
+Install Apple’s MLX runtime (provides the Metal-backed tensor engine):
 
-    ``` bash
-    brew install mlx
-    ```
+``` bash
+brew install mlx
+```
 
-2.  Install the development dependencies in R (requires R 4.5+ on Apple
-    Silicon):
+Then:
 
-    ``` r
-    install.packages(c("devtools", "nycflights13", "bench", "fixest", "RcppEigen", "speedglm"))
-    ```
+``` r
+remotes::install_github("hughjonesd/RmlxStats")
+```
 
-3.  Install Rmlx and RmlxStats from GitHub:
-
-    ``` r
-    remotes::install_github("hughjonesd/Rmlx")
-    remotes::install_github("hughjonesd/RmlxStats")
-    ```
+which will also install Rmlx.
