@@ -107,7 +107,7 @@ for (i in seq_len(nrow(bench_grid))) {
   lm_results[[i]] <- bm
 }
 
-lm_df <- bind_rows(lm_results)
+lm_df <- do.call(rbind, lm_results)
 ```
 
 ## GLM Benchmarks
@@ -146,7 +146,7 @@ for (i in seq_len(nrow(bench_grid))) {
   glm_results[[i]] <- bm
 }
 
-glm_df <- bind_rows(glm_results)
+glm_df <- do.call(rbind, glm_results)
 ```
 
 ## Bootstrap Benchmarks
@@ -212,33 +212,31 @@ for (i in seq_len(nrow(boot_grid))) {
   boot_results[[i]] <- bm
 }
 
-boot_df <- bind_rows(boot_results)
+boot_df <- do.call(rbind, boot_results)
 ```
 
 ## Visualization
 
 ```{r prepare-viz-data}
-all_results <- bind_rows(lm_df, glm_df, boot_df)
+all_results <- rbind(lm_df, glm_df, boot_df)
 
 all_results$method <- as.character(all_results$expression)
 all_results$median_sec <- as.numeric(all_results$median, units = "s")
 all_results$is_mlxs <- grepl("^mlxs", all_results$method)
 
 # Summary statistics
-summary_results <- all_results |>
-  filter(!is.na(median_sec)) |>
-  group_by(model_type, n, p, method, is_mlxs) |>
-  summarise(
-    median_sec = median(median_sec),
-    .groups = "drop"
-  )
+all_results_clean <- all_results[!is.na(all_results$median_sec), ]
+summary_results <- aggregate(
+  median_sec ~ model_type + n + p + method + is_mlxs,
+  data = all_results_clean,
+  FUN = median
+)
 ```
 
 ### Linear Models
 
 ```{r plot-lm}
-lm_data <- summary_results |>
-  filter(model_type == "LM")
+lm_data <- subset(summary_results, model_type == "LM")
 
 ggplot(lm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
   geom_col() +
@@ -266,8 +264,7 @@ ggplot(lm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
 ### GLM Models
 
 ```{r plot-glm}
-glm_data <- summary_results |>
-  filter(model_type == "GLM")
+glm_data <- subset(summary_results, model_type == "GLM")
 
 ggplot(glm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
   geom_col() +
@@ -295,8 +292,7 @@ ggplot(glm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
 ### Bootstrap
 
 ```{r plot-bootstrap}
-boot_data <- summary_results |>
-  filter(model_type == "Bootstrap")
+boot_data <- subset(summary_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
                            levels = c("mlxs_case", "lmboot_case", "boot_case",

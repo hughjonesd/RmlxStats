@@ -29,6 +29,7 @@ Suggests:
     ggplot2,
     nycflights13,
     bench,
+    boot,
     car,
     fixest,
     RcppEigen,
