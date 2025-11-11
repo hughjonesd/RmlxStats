@@ -44,11 +44,11 @@ bench_summary <- data.frame(
 bench_summary$relative <- bench_summary$median_sec / min(bench_summary$median_sec)
 bench_summary
 #>    method median_sec    mem_mb itr_per_sec relative
-#> 1      lm 0.05066329  91103808    12.96876 1.653037
-#> 2 mlxs_lm 0.05757671  78458008    10.72252 1.878608
-#> 3   feols 0.03176709  32390888    31.99512 1.036494
-#> 4  fastLm 0.11977847 116838424     6.86160 3.908121
-#> 5 speedlm 0.03064861  75406984    29.61978 1.000000
+#> 1      lm 0.04996457  91103808   11.686858 1.327531
+#> 2 mlxs_lm 0.10242103  78458008    7.628178 2.721270
+#> 3   feols 0.05472893  32390888   19.116199 1.454117
+#> 4  fastLm 0.15408481 116838424    5.554088 4.093947
+#> 5 speedlm 0.03763722  75406984   26.539393 1.000000
 ggplot2::autoplot(bench_mark, type = "boxplot")
 ```
 
@@ -134,11 +134,11 @@ hd_summary <- data.frame(
 hd_summary$relative <- hd_summary$median_sec / min(hd_summary$median_sec)
 hd_summary
 #>    method median_sec    mem_mb itr_per_sec  relative
-#> 1      lm  0.9741107 198187456   1.0682756  7.595536
-#> 2 mlxs_lm  0.1282478 165871952   4.7550450  1.000000
-#> 3   feols  1.7573847  81721048   0.5626251 13.703040
-#> 4  fastLm  0.9315037 278407080   1.0033895  7.263311
-#> 5 speedlm  0.1694951 188431080   5.9190020  1.321622
+#> 1      lm  0.8988677 198187456   1.1447725  8.438175
+#> 2 mlxs_lm  0.1065239 165871952   5.8594641  1.000000
+#> 3   feols  2.0763628  81721048   0.4909064 19.491982
+#> 4  fastLm  0.9980297 278407080   0.9674643  9.369064
+#> 5 speedlm  0.1677424 188431080   6.2183525  1.574692
 ggplot2::autoplot(hd_mark, type = "beeswarm")
 ```
 
@@ -205,9 +205,9 @@ glm_summary <- data.frame(
 glm_summary$relative <- glm_summary$median_sec / min(glm_summary$median_sec)
 glm_summary
 #>     method median_sec     mem_mb itr_per_sec relative
-#> 1      glm  0.5026100 1027386600    2.005386 1.575775
-#> 2 mlxs_glm  0.3405339  240475456    2.742049 1.067636
-#> 3 speedglm  0.3189606  528434864    2.842280 1.000000
+#> 1      glm  0.7925195 1027386600    1.343009 1.874735
+#> 2 mlxs_glm  0.5070745  240475456    1.732012 1.199504
+#> 3 speedglm  0.4227369  528434864    2.117096 1.000000
 ggplot2::autoplot(glm_mark, type = "boxplot")
 ```
 
@@ -292,9 +292,9 @@ glm_hd_summary <- data.frame(
 glm_hd_summary$relative <- glm_hd_summary$median_sec / min(glm_hd_summary$median_sec)
 glm_hd_summary
 #>     method median_sec    mem_mb itr_per_sec relative
-#> 1      glm  0.6120463 167405736    1.357995 1.971279
-#> 2 mlxs_glm  0.6679055  43680000    1.514236 2.151190
-#> 3 speedglm  0.3104818 120938016    3.284395 1.000000
+#> 1      glm  0.5952616 167405736    1.540228 4.321650
+#> 2 mlxs_glm  0.5764766  43680000    1.783572 4.185269
+#> 3 speedglm  0.1377394 120938016    5.783171 1.000000
 ggplot2::autoplot(glm_hd_mark, type = "beeswarm")
 ```
 
@@ -446,15 +446,15 @@ list(
 #> 
 #> $case
 #>               method median_sec itr_per_sec gc_per_sec relative
-#> 1          mlxs_case   1.491448   0.5663863  0.1887954 1.000000
-#> 3 boot_case_parallel   2.042576   0.3961499  3.4332994 1.369525
-#> 4           car_case   2.358296   0.4106442  3.5589168 1.581212
-#> 2   boot_case_serial   3.415972   0.3140629  2.6171911 2.290372
+#> 3 boot_case_parallel   1.087019   0.5385032  4.6670277 1.000000
+#> 1          mlxs_case   1.129818   0.8287030  0.2762343 1.039372
+#> 2   boot_case_serial   1.666159   0.6006238  5.0051983 1.532778
+#> 4           car_case   1.800368   0.5723249  4.9601493 1.656243
 #> 
 #> $residual
 #>       method median_sec itr_per_sec gc_per_sec relative
-#> 1 mlxs_resid  0.2006822   4.7654014   0.000000  1.00000
-#> 2  car_resid  2.6541855   0.3687904   2.827393 13.22581
+#> 1 mlxs_resid  0.1007171   7.4766770   0.000000  1.00000
+#> 2  car_resid  1.6111485   0.5688911   4.361499 15.99677
 ```
 
 ``` r
@@ -531,8 +531,8 @@ enet_summary <- data.frame(
 enet_summary$relative <- enet_summary$median_sec / min(enet_summary$median_sec)
 enet_summary
 #>        method median_sec   mem_mb itr_per_sec relative
-#> 1      glmnet 0.05295031 22542592  16.3480607  1.00000
-#> 2 mlxs_glmnet 2.24878518 46062720   0.4322188 42.46973
+#> 1      glmnet 0.03104167 22542592  27.7983388  1.00000
+#> 2 mlxs_glmnet 1.89687550 46062720   0.5159996 61.10738
 ggplot2::autoplot(enet_mark, type = "beeswarm")
 ```
 
