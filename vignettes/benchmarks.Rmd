@@ -231,91 +231,197 @@ summary_results <- aggregate(
 )
 ```
 
-### Linear Models
+## Summary Tables
+
+We compare RmlxStats functions both against base R, and against the fastest
+alternative tested.
+
+```{r summary-tables}
+# Helper function to calculate speedup percentage
+calc_speedup <- function(baseline, mlxs) {
+  ((baseline - mlxs) / baseline) * 100
+}
+
+# Create comparison data frame
+comparison_data <- data.frame(
+  model = character(),
+  n = numeric(),
+  p = numeric(),
+  mlxs_time = numeric(),
+  base_time = numeric(),
+  fastest_time = numeric(),
+  fastest_method = character(),
+  stringsAsFactors = FALSE
+)
+
+# Map methods to model types
+lm_mlxs <- "mlxs_lm"
+lm_base <- "lm"
+glm_mlxs <- "mlxs_glm"
+glm_base <- "glm"
+boot_case_mlxs <- "mlxs_case"
+boot_case_base <- "boot_case"
+boot_resid_mlxs <- "mlxs_resid"
+boot_resid_base <- "lmboot_resid"
+
+# Process each model type
+models <- list(
+  list(name = "lm", mlxs = lm_mlxs, base = lm_base, type = "LM"),
+  list(name = "glm", mlxs = glm_mlxs, base = glm_base, type = "GLM"),
+  list(name = "boot_case", mlxs = boot_case_mlxs, base = boot_case_base, type = "Bootstrap"),
+  list(name = "boot_resid", mlxs = boot_resid_mlxs, base = boot_resid_base, type = "Bootstrap")
+)
+
+for (model_info in models) {
+  model_data <- subset(summary_results, model_type == model_info$type)
+  if (model_info$type == "Bootstrap") {
+    pattern <- if(model_info$name == "boot_case") "case" else "resid"
+    model_data <- subset(model_data, grepl(pattern, method))
+  }
+  # Get unique n/p combinations
+  configs <- unique(model_data[, c("n", "p")])
+
+  for (i in seq_len(nrow(configs))) {
+    n_val <- configs$n[i]
+    p_val <- configs$p[i]
+
+    config_data <- subset(model_data, n == n_val & p == p_val)
+
+    mlxs_time <- config_data$median_sec[config_data$method == model_info$mlxs]
+    base_time <- config_data$median_sec[config_data$method == model_info$base]
+
+    if (length(mlxs_time) > 0 && length(base_time) > 0) {
+      # Find fastest non-mlxs method
+      non_mlxs <- subset(config_data, !is_mlxs)
+      if (nrow(non_mlxs) > 0) {
+        fastest_idx <- which.min(non_mlxs$median_sec)
+        fastest_time <- non_mlxs$median_sec[fastest_idx]
+        fastest_method <- non_mlxs$method[fastest_idx]
+      } else {
+        fastest_time <- base_time
+        fastest_method <- model_info$base
+      }
+
+      comparison_data <- rbind(comparison_data, data.frame(
+        model = model_info$name,
+        n = n_val,
+        p = p_val,
+        mlxs_time = mlxs_time,
+        base_time = base_time,
+        fastest_time = fastest_time,
+        fastest_method = fastest_method,
+        stringsAsFactors = FALSE
+      ))
+    }
+  }
+}
+
+# Table 1: mlxs vs base R
+base_comparison <- comparison_data
+base_comparison$speedup <- calc_speedup(base_comparison$base_time, base_comparison$mlxs_time)
+base_comparison$config <- paste0("n=", base_comparison$n, ", p=", base_comparison$p)
+
+base_table <- reshape(base_comparison[, c("model", "config", "speedup")],
+                      idvar = "model", timevar = "config", direction = "wide")
+rownames(base_table) <- base_table$model
+base_table$model <- NULL
+colnames(base_table) <- gsub("speedup\\.", "", colnames(base_table))
+
+# Table 2: mlxs vs fastest alternative
+fastest_comparison <- comparison_data
+fastest_comparison$speedup <- calc_speedup(fastest_comparison$fastest_time, fastest_comparison$mlxs_time)
+fastest_comparison$config <- paste0("n=", fastest_comparison$n, ", p=", fastest_comparison$p)
+
+fastest_table <- reshape(fastest_comparison[, c("model", "config", "speedup")],
+                         idvar = "model", timevar = "config", direction = "wide")
+rownames(fastest_table) <- fastest_table$model
+fastest_table$model <- NULL
+colnames(fastest_table) <- gsub("speedup\\.", "", colnames(fastest_table))
+
+# Format and display tables with human-readable row names
+rownames(base_table) <- c(
+  "lm" = "Linear Model",
+  "glm" = "Logistic Regression",
+  "boot_case" = "Bootstrap (Case)",
+  "boot_resid" = "Bootstrap (Residual)"
+)[rownames(base_table)]
+
+rownames(fastest_table) <- c(
+  "lm" = "Linear Model",
+  "glm" = "Logistic Regression",
+  "boot_case" = "Bootstrap (Case)",
+  "boot_resid" = "Bootstrap (Residual)"
+)[rownames(fastest_table)]
+
+# Display NA as blank cells
+options(knitr.kable.NA = '')
+
+knitr::kable(base_table, digits = 1,
+             caption = "RmlxStats vs Base R: Speedup (%)",
+             format = "pipe")
+
+knitr::kable(fastest_table, digits = 1,
+             caption = "RmlxStats vs Fastest Alternative: Speedup (%)",
+             format = "pipe")
+```
+
+Positive values indicate RmlxStats is faster; negative values indicate it is slower.
+
+```{r plot-function}
+
+plot_benchmark <- function(data, title, subtitle = "Lower is better") {
+  ggplot(data, aes(x = method, y = median_sec, fill = is_mlxs)) +
+    geom_col() +
+    facet_grid(n ~ p, scales = "free", labeller = "label_both") +
+    scale_fill_manual(
+      values = c("TRUE" = "orange3", "FALSE" = "#95A5A6"),
+      labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
+      name = "Package"
+    ) +
+    labs(
+      title = title,
+      x = "Method",
+      y = "Median Time (seconds)",
+      subtitle = subtitle
+    ) +
+    theme_minimal(base_size = 11) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      strip.text = element_text(face = "bold"),
+      legend.position = "top"
+    ) +
+    coord_flip()
+}
+```
+
+## Linear Models
 
 ```{r plot-lm}
 lm_data <- subset(summary_results, model_type == "LM")
-
-ggplot(lm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
-  geom_col() +
-  facet_grid(n ~ p, scales = "free", labeller = "label_both") +
-  scale_fill_manual(
-    values = c("TRUE" = "#E74C3C", "FALSE" = "#95A5A6"),
-    labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
-    name = "Package"
-  ) +
-  labs(
-    title = "Linear Model Benchmark: Time by Dataset Size",
-    x = "Method",
-    y = "Median Time (seconds)",
-    caption = "Lower is better"
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(face = "bold"),
-    legend.position = "top"
-  ) +
-  coord_flip()
+plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
-### GLM Models
+## GLM Models
 
 ```{r plot-glm}
 glm_data <- subset(summary_results, model_type == "GLM")
-
-ggplot(glm_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
-  geom_col() +
-  facet_grid(n ~ p, scales = "free", labeller = "label_both") +
-  scale_fill_manual(
-    values = c("TRUE" = "#E74C3C", "FALSE" = "#95A5A6"),
-    labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
-    name = "Package"
-  ) +
-  labs(
-    title = "GLM Benchmark: Time by Dataset Size",
-    x = "Method",
-    y = "Median Time (seconds)",
-    caption = "Lower is better"
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(face = "bold"),
-    legend.position = "top"
-  ) +
-  coord_flip()
+plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
-### Bootstrap
+## Bootstrap
 
 ```{r plot-bootstrap}
 boot_data <- subset(summary_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
-                           levels = c("mlxs_case", "lmboot_case", "boot_case",
-                                      "mlxs_resid", "lmboot_resid"))
-ggplot(boot_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
-  geom_col() +
-  facet_grid(n ~ p, scales = "free", labeller = "label_both") +
-  scale_fill_manual(
-    values = c("TRUE" = "#E74C3C", "FALSE" = "#95A5A6"),
-    labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
-    name = "Package"
-  ) +
-  labs(
-    title = "Bootstrap Benchmark: Time by Dataset Size",
-    x = "Method",
-    y = "Median Time (seconds)",
-    caption = "Lower is better. Bootstrap with 50 iterations."
-  ) +
-  theme_minimal(base_size = 11) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    strip.text = element_text(face = "bold"),
-    legend.position = "top"
-  ) +
-  coord_flip()
+                           levels = c("lmboot_resid", "mlxs_resid",
+                                      "lmboot_case", "boot_case", "mlxs_case"))
+
+plot_benchmark(
+  boot_data,
+  "Bootstrap Benchmark: Time by Dataset Size",
+  subtitle = "Lower is better. Bootstrap with 50 iterations."
+)
 ```
 
 
