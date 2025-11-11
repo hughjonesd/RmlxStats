@@ -264,6 +264,8 @@ due to computational cost.</p>
 <div class="section level2">
 <h2 id="summary-tables">Summary Tables<a class="anchor" aria-label="anchor" href="#summary-tables"></a>
 </h2>
+<p>We compare RmlxStats functions both against base R, and against the
+fastest alternative tested.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Helper function to calculate speedup percentage</span></span>
 <span><span class="va">calc_speedup</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">baseline</span>, <span class="va">mlxs</span><span class="op">)</span> <span class="op">{</span></span>
@@ -302,7 +304,10 @@ due to computational cost.</p>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">model_info</span> <span class="kw">in</span> <span class="va">models</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">model_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="va">model_info</span><span class="op">$</span><span class="va">type</span><span class="op">)</span></span>
-<span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">model_info</span><span class="op">$</span><span class="va">type</span> <span class="op">==</span> <span class="st">"Bootstrap"</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">pattern</span> <span class="op">&lt;-</span> <span class="kw">if</span><span class="op">(</span><span class="va">model_info</span><span class="op">$</span><span class="va">name</span> <span class="op">==</span> <span class="st">"boot_case"</span><span class="op">)</span> <span class="st">"case"</span> <span class="kw">else</span> <span class="st">"resid"</span></span>
+<span>    <span class="va">model_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">model_data</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">pattern</span>, <span class="va">method</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
 <span>  <span class="co"># Get unique n/p combinations</span></span>
 <span>  <span class="va">configs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">model_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"p"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
@@ -363,21 +368,38 @@ due to computational cost.</p>
 <span><span class="va">fastest_table</span><span class="op">$</span><span class="va">model</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"speedup\\."</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Format and display tables</span></span>
+<span><span class="co"># Format and display tables with human-readable row names</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"lm"</span> <span class="op">=</span> <span class="st">"Linear Model"</span>,</span>
+<span>  <span class="st">"glm"</span> <span class="op">=</span> <span class="st">"Logistic Regression"</span>,</span>
+<span>  <span class="st">"boot_case"</span> <span class="op">=</span> <span class="st">"Bootstrap (Case)"</span>,</span>
+<span>  <span class="st">"boot_resid"</span> <span class="op">=</span> <span class="st">"Bootstrap (Residual)"</span></span>
+<span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"lm"</span> <span class="op">=</span> <span class="st">"Linear Model"</span>,</span>
+<span>  <span class="st">"glm"</span> <span class="op">=</span> <span class="st">"Logistic Regression"</span>,</span>
+<span>  <span class="st">"boot_case"</span> <span class="op">=</span> <span class="st">"Bootstrap (Case)"</span>,</span>
+<span>  <span class="st">"boot_resid"</span> <span class="op">=</span> <span class="st">"Bootstrap (Residual)"</span></span>
+<span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Display NA as blank cells</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>knitr.kable.NA <span class="op">=</span> <span class="st">''</span><span class="op">)</span></span>
+<span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">base_table</span>, digits <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>             caption <span class="op">=</span> <span class="st">"RmlxStats vs Base R: Speedup (%)"</span>,</span>
 <span>             format <span class="op">=</span> <span class="st">"pipe"</span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
+<table class="table">
 <caption>RmlxStats vs Base R: Speedup (%)</caption>
 <colgroup>
-<col width="7%">
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
 <col width="9%">
 <col width="10%">
 <col width="10%">
-<col width="10%">
-<col width="10%">
-<col width="10%">
-<col width="10%">
+<col width="9%">
 <col width="10%">
 <col width="10%">
 </colgroup>
@@ -395,52 +417,52 @@ due to computational cost.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">lm</td>
-<td align="right">37.4</td>
-<td align="right">55.1</td>
-<td align="right">62.7</td>
-<td align="right">59.2</td>
-<td align="right">72.3</td>
-<td align="right">76.8</td>
-<td align="right">73.7</td>
-<td align="right">84.6</td>
-<td align="right">87.4</td>
+<td align="left">Linear Model</td>
+<td align="right">36.0</td>
+<td align="right">56.3</td>
+<td align="right">60.5</td>
+<td align="right">59.0</td>
+<td align="right">72.5</td>
+<td align="right">76.4</td>
+<td align="right">74.1</td>
+<td align="right">84.5</td>
+<td align="right">86.5</td>
 </tr>
 <tr class="even">
-<td align="left">glm</td>
-<td align="right">11.6</td>
-<td align="right">64.4</td>
-<td align="right">77.4</td>
-<td align="right">59.8</td>
-<td align="right">80.4</td>
+<td align="left">Logistic Regression</td>
+<td align="right">10.2</td>
+<td align="right">64.5</td>
+<td align="right">77.3</td>
+<td align="right">59.9</td>
+<td align="right">80.3</td>
 <td align="right">86.3</td>
-<td align="right">82.3</td>
-<td align="right">88.6</td>
-<td align="right">90.4</td>
+<td align="right">81.8</td>
+<td align="right">88.4</td>
+<td align="right">90.7</td>
 </tr>
 <tr class="odd">
-<td align="left">boot_case</td>
-<td align="right">75.1</td>
-<td align="right">76.5</td>
-<td align="right">NA</td>
-<td align="right">81.2</td>
-<td align="right">84.0</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
+<td align="left">Bootstrap (Case)</td>
+<td align="right">74.1</td>
+<td align="right">77.2</td>
+<td align="right"></td>
+<td align="right">81.4</td>
+<td align="right">84.2</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 <tr class="even">
-<td align="left">boot_resid</td>
-<td align="right">25.7</td>
-<td align="right">56.8</td>
-<td align="right">NA</td>
-<td align="right">73.1</td>
-<td align="right">83.5</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
+<td align="left">Bootstrap (Residual)</td>
+<td align="right">24.1</td>
+<td align="right">56.3</td>
+<td align="right"></td>
+<td align="right">72.1</td>
+<td align="right">84.1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 </tbody>
 </table>
@@ -449,17 +471,17 @@ due to computational cost.</p>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">fastest_table</span>, digits <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>             caption <span class="op">=</span> <span class="st">"RmlxStats vs Fastest Alternative: Speedup (%)"</span>,</span>
 <span>             format <span class="op">=</span> <span class="st">"pipe"</span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
+<table class="table">
 <caption>RmlxStats vs Fastest Alternative: Speedup (%)</caption>
 <colgroup>
-<col width="7%">
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
 <col width="9%">
 <col width="10%">
 <col width="10%">
-<col width="10%">
-<col width="10%">
-<col width="10%">
-<col width="10%">
+<col width="9%">
 <col width="10%">
 <col width="10%">
 </colgroup>
@@ -477,52 +499,52 @@ due to computational cost.</p>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">lm</td>
-<td align="right">6.1</td>
-<td align="right">20.6</td>
+<td align="left">Linear Model</td>
+<td align="right">2.0</td>
+<td align="right">26.8</td>
+<td align="right">37.1</td>
+<td align="right">13.8</td>
+<td align="right">42.8</td>
+<td align="right">53.0</td>
 <td align="right">38.9</td>
-<td align="right">11.1</td>
-<td align="right">41.1</td>
-<td align="right">53.7</td>
-<td align="right">36.9</td>
-<td align="right">63.9</td>
-<td align="right">71.5</td>
+<td align="right">62.7</td>
+<td align="right">69.2</td>
 </tr>
 <tr class="even">
-<td align="left">glm</td>
-<td align="right">-7.7</td>
-<td align="right">53.8</td>
-<td align="right">70.2</td>
-<td align="right">53.7</td>
-<td align="right">75.7</td>
+<td align="left">Logistic Regression</td>
+<td align="right">-7.6</td>
+<td align="right">54.2</td>
+<td align="right">70.1</td>
+<td align="right">54.1</td>
+<td align="right">75.3</td>
 <td align="right">82.9</td>
-<td align="right">80.1</td>
-<td align="right">86.0</td>
-<td align="right">88.2</td>
+<td align="right">79.8</td>
+<td align="right">85.6</td>
+<td align="right">88.7</td>
 </tr>
 <tr class="odd">
-<td align="left">boot_case</td>
-<td align="right">-328.8</td>
-<td align="right">-258.3</td>
-<td align="right">NA</td>
-<td align="right">-219.7</td>
-<td align="right">-165.2</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
+<td align="left">Bootstrap (Case)</td>
+<td align="right">74.1</td>
+<td align="right">77.2</td>
+<td align="right"></td>
+<td align="right">81.4</td>
+<td align="right">84.2</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 <tr class="even">
-<td align="left">boot_resid</td>
-<td align="right">25.7</td>
-<td align="right">56.8</td>
-<td align="right">NA</td>
-<td align="right">73.1</td>
-<td align="right">83.5</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
-<td align="right">NA</td>
+<td align="left">Bootstrap (Residual)</td>
+<td align="right">24.1</td>
+<td align="right">56.3</td>
+<td align="right"></td>
+<td align="right">72.1</td>
+<td align="right">84.1</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 </tbody>
 </table>
@@ -553,25 +575,26 @@ indicate it is slower.</p>
 <span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu">coord_flip</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="linear-models">Linear Models<a class="anchor" aria-label="anchor" href="#linear-models"></a>
-</h3>
+</div>
+<div class="section level2">
+<h2 id="linear-models">Linear Models<a class="anchor" aria-label="anchor" href="#linear-models"></a>
+</h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lm_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"LM"</span><span class="op">)</span></span>
 <span><span class="fu">plot_benchmark</span><span class="op">(</span><span class="va">lm_data</span>, <span class="st">"Linear Model Benchmark: Time by Dataset Size"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmarks_files/figure-html/plot-lm-1.png" width="768"></p>
 </div>
-<div class="section level3">
-<h3 id="glm-models">GLM Models<a class="anchor" aria-label="anchor" href="#glm-models"></a>
-</h3>
+<div class="section level2">
+<h2 id="glm-models">GLM Models<a class="anchor" aria-label="anchor" href="#glm-models"></a>
+</h2>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glm_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"GLM"</span><span class="op">)</span></span>
 <span><span class="fu">plot_benchmark</span><span class="op">(</span><span class="va">glm_data</span>, <span class="st">"GLM Benchmark: Time by Dataset Size"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmarks_files/figure-html/plot-glm-1.png" width="768"></p>
 </div>
-<div class="section level3">
-<h3 id="bootstrap">Bootstrap<a class="anchor" aria-label="anchor" href="#bootstrap"></a>
-</h3>
+<div class="section level2">
+<h2 id="bootstrap">Bootstrap<a class="anchor" aria-label="anchor" href="#bootstrap"></a>
+</h2>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">boot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"Bootstrap"</span><span class="op">)</span></span>
 <span></span>
@@ -585,7 +608,6 @@ indicate it is slower.</p>
 <span>  subtitle <span class="op">=</span> <span class="st">"Lower is better. Bootstrap with 50 iterations."</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><img src="benchmarks_files/figure-html/plot-bootstrap-1.png" width="768"></p>
-</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
