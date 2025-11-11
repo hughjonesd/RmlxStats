@@ -152,11 +152,13 @@ summary.mlxs_glm <- function(object,
   }
   stat_mlx <- coef_mlx / se_col_mlx
   stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
-  stat_num <- .mlxs_as_numeric(stat_mlx)
-  p_num <- if (stat_label == "t value") {
-    2 * stats::pt(-abs(stat_num), df = object$df.residual)
+  
+  p_mlx <- if (stat_label == "t value") {
+    stat_num <- .mlxs_as_numeric(stat_mlx)
+    p_num <- 2 * stats::pt(-abs(stat_num), df = object$df.residual)
+    Rmlx::mlx_vector(p_num)
   } else {
-    2 * stats::pnorm(-abs(stat_num))
+    2 * Rmlx::mlx_pnorm(-abs(stat_mlx))
   }
 
   sum_list <- list(
@@ -166,7 +168,7 @@ summary.mlxs_glm <- function(object,
     coefficients = coef_mlx,
     std.error = se_col_mlx,
     statistic = stat_mlx,
-    p.value = Rmlx::mlx_matrix(p_num, ncol = 1),
+    p.value = p_mlx,
     stat_label = stat_label,
     dispersion = object$dispersion,
     df.residual = object$df.residual,
