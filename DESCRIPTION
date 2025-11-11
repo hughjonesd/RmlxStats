@@ -17,6 +17,8 @@ Description: GPU-backed linear algebra helpers that wrap the Rmlx package,
     providing familiar formula interfaces and diagnostics for statistical
     models on Apple Silicon.
 License: GPL (>= 2)
+URL: https://hughjonesd.github.io/RmlxStats, https://github.com/hughjonesd/RmlxStats
+BugReports: https://github.com/hughjonesd/RmlxStats/issues
 Imports: 
     Rmlx,
     generics
