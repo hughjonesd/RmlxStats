@@ -15,7 +15,7 @@ editor_options:
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 10,
+  fig.width = 5,
   fig.height = 6
 )
 
@@ -25,6 +25,7 @@ library(bench)
 library(fixest)
 library(RcppEigen)
 library(speedglm)
+library(boot)
 library(lmboot)
 library(ggplot2)
 library(dplyr)
