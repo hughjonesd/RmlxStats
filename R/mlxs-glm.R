@@ -10,9 +10,8 @@
 #'   [stats::glm.control()].
 #'
 #' @return An object of class `c("mlxs_glm", "mlxs_model")` containing elements
-#'   similar to the result of [stats::glm()]. MLX intermediates are stored in the
-#'   `mlx` field for downstream reuse. Computations use single-precision MLX
-#'   tensors, so results typically agree with [stats::glm()] to around 1e-6
+#'   similar to the result of [stats::glm()]. Computations use single-precision 
+#'   MLX arrays, so results typically agree with [stats::glm()] to around 1e-6
 #'   unless a tighter tolerance is supplied via `control`.
 #' @export
 #'
