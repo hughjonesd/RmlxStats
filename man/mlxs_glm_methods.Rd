@@ -84,6 +84,10 @@ supported?}
 
 \item{digits}{Number of significant digits to print for summaries.}
 
+\item{bootstrap}{Logical; should bootstrap standard errors be computed?}
+
+\item{bootstrap_args}{List of bootstrap configuration options.}
+
 \item{formula, data}{Optional formula and data overrides used by
 \code{augment.mlxs_glm()}.}
 
@@ -91,6 +95,8 @@ supported?}
 fitted values and residuals returned by \code{augment.mlxs_glm()}.}
 
 \item{se_fit}{Logical; standard-error analogue for \code{augment}.}
+
+\item{output}{Character string; return format ("data.frame" or "mlx").}
 }
 \description{
 Support functions that provide a familiar S3 surface for \code{mlxs_glm}

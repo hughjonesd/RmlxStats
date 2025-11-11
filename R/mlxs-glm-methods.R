@@ -17,6 +17,9 @@
 #' @param type.predict,type.residuals Character strings controlling the scale of
 #'   fitted values and residuals returned by `augment.mlxs_glm()`.
 #' @param se_fit Logical; standard-error analogue for `augment`.
+#' @param bootstrap Logical; should bootstrap standard errors be computed?
+#' @param bootstrap_args List of bootstrap configuration options.
+#' @param output Character string; return format ("data.frame" or "mlx").
 #'
 #' @name mlxs_glm_methods
 NULL

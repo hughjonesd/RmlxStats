@@ -3,6 +3,39 @@
 \name{mlxs_lm_methods}
 \alias{mlxs_lm_methods}
 \title{mlxs_lm method utilities}
+\arguments{
+\item{object}{An \code{mlxs_lm} model fit.}
+
+\item{x}{An \code{mlxs_lm} model fit (for methods with a leading \code{x} argument).}
+
+\item{...}{Additional arguments passed to underlying methods.}
+
+\item{newdata}{Optional data frame for prediction.}
+
+\item{parm}{Parameter specification for confidence intervals.}
+
+\item{level}{Confidence level for intervals.}
+
+\item{bootstrap}{Logical; should bootstrap standard errors be computed?}
+
+\item{bootstrap_args}{List of bootstrap configuration options.}
+
+\item{evaluate}{Logical; evaluate the updated call?}
+
+\item{formula}{An \code{mlxs_lm} object used in place of formula for \code{model.frame}.}
+
+\item{data}{Optional data frame for \code{augment}.}
+
+\item{se_fit}{Logical; should standard errors of fit be included?}
+
+\item{output}{Character string; return format ("data.frame" or "mlx").}
+
+\item{row.names}{Optional row names for data frame conversion.}
+
+\item{optional}{Logical; passed to \code{as.data.frame}.}
+
+\item{digits}{Number of significant digits for printing.}
+}
 \description{
 These helpers provide the familiar S3 surface for \code{mlxs_lm} fits.
 }

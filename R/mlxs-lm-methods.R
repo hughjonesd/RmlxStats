@@ -2,6 +2,23 @@
 #'
 #' These helpers provide the familiar S3 surface for `mlxs_lm` fits.
 #'
+#' @param object An `mlxs_lm` model fit.
+#' @param x An `mlxs_lm` model fit (for methods with a leading `x` argument).
+#' @param ... Additional arguments passed to underlying methods.
+#' @param newdata Optional data frame for prediction.
+#' @param parm Parameter specification for confidence intervals.
+#' @param level Confidence level for intervals.
+#' @param bootstrap Logical; should bootstrap standard errors be computed?
+#' @param bootstrap_args List of bootstrap configuration options.
+#' @param evaluate Logical; evaluate the updated call?
+#' @param formula An `mlxs_lm` object used in place of formula for `model.frame`.
+#' @param data Optional data frame for `augment`.
+#' @param se_fit Logical; should standard errors of fit be included?
+#' @param output Character string; return format ("data.frame" or "mlx").
+#' @param row.names Optional row names for data frame conversion.
+#' @param optional Logical; passed to `as.data.frame`.
+#' @param digits Number of significant digits for printing.
+#'
 #' @name mlxs_lm_methods
 #' @importFrom stats model.frame model.matrix model.response delete.response terms
 #' @importFrom stats update.default predict fitted residuals nobs lm anova confint

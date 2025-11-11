@@ -28,7 +28,6 @@ library(speedglm)
 library(boot)
 library(lmboot)
 library(ggplot2)
-library(dplyr)
 
 ```
 
@@ -301,7 +300,7 @@ boot_data <- summary_results |>
 
 boot_data$method <- factor(boot_data$method, 
                            levels = c("mlxs_case", "lmboot_case", "boot_case",
-                                      "mlxs_resid", "lmboot_resit"))
+                                      "mlxs_resid", "lmboot_resid"))
 ggplot(boot_data, aes(x = method, y = median_sec, fill = is_mlxs)) +
   geom_col() +
   facet_grid(n ~ p, scales = "free", labeller = "label_both") +
