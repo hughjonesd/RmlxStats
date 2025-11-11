@@ -37,6 +37,7 @@ mlxs_lm <- function(formula, data, subset, weights) {
     response <- drop(response)
   }
   design <- model.matrix(terms, mf)
+  assign_vec <- attr(design, "assign")
   weights_raw <- mf[["(weights)", exact = TRUE]]
 
   n_obs <- nrow(design)
@@ -85,7 +86,8 @@ mlxs_lm <- function(formula, data, subset, weights) {
     model = mf,
     qr = fit_res$qr,
     coef_names = colnames(design),
-    weights = weights_mlx
+    weights = weights_mlx,
+    assign = assign_vec
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")

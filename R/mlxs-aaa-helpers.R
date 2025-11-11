@@ -14,3 +14,12 @@
   r_inv <- Rmlx::mlx_solve_triangular(qr_fit$R, eye, upper = TRUE)
   scale * (r_inv %*% t(r_inv))
 }
+
+.mlxs_weighted_sum_of_squares <- function(values, weights = NULL) {
+  vals <- Rmlx::as_mlx(values)
+  if (is.null(weights)) {
+    return(Rmlx::mlx_sum(vals * vals))
+  }
+  w <- Rmlx::as_mlx(weights)
+  Rmlx::mlx_sum(w * vals * vals)
+}

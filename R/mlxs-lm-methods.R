@@ -80,7 +80,138 @@ confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
 
 #' @export
 anova.mlxs_lm <- function(object, ...) {
-  stop("anova.mlxs_lm() is not implemented without converting to base lm.", call. = FALSE)
+  others <- list(...)
+  if (length(others) > 0L) {
+    stop("anova.mlxs_lm() does not yet compare multiple mlxs_lm models.", call. = FALSE)
+  }
+
+  if (is.null(object$residuals) || is.null(object$fitted.values)) {
+    stop("Fitted values and residuals are required to compute ANOVA.", call. = FALSE)
+  }
+
+  assign_vec <- object$assign
+  if (is.null(assign_vec)) {
+    mm <- model.matrix(object$terms, object$model)
+    assign_vec <- attr(mm, "assign")
+  }
+  if (is.null(assign_vec)) {
+    stop("Unable to recover assign vector from the model.", call. = FALSE)
+  }
+
+  effects_mlx <- object$effects
+  if (is.null(effects_mlx)) {
+    stop("QR effects are missing; refit the model to use anova().", call. = FALSE)
+  }
+
+  p <- if (!is.null(object$rank)) object$rank else 0L
+  seq_idx <- if (p > 0L) seq_len(p) else integer()
+  asgn_seq <- assign_vec[seq_idx]
+  effects_seq <- if (p > 0L) effects_mlx[seq_idx, , drop = FALSE] else NULL
+
+  group_ids <- unique(asgn_seq)
+  group_rows <- lapply(group_ids, function(id) which(asgn_seq == id))
+  df_terms_all <- lengths(group_rows, use.names = FALSE)
+  term_labels <- attr(object$terms, "term.labels")
+  if (is.null(term_labels)) {
+    term_labels <- character()
+  }
+  label_map <- vapply(group_ids, function(id) {
+    if (id == 0L) {
+      "(Intercept)"
+    } else if (id <= length(term_labels)) {
+      term_labels[id]
+    } else {
+      paste0("term_", id)
+    }
+  }, character(1))
+  sumsq_terms_all <- lapply(group_rows, function(rows) {
+    comp_rows <- effects_seq[rows, , drop = FALSE]
+    Rmlx::mlx_sum(comp_rows * comp_rows)
+  })
+
+  intercept_attr <- attr(object$terms, "intercept")
+  intercept_present <- !is.null(intercept_attr) && intercept_attr != 0
+  keep_idx <- seq_along(label_map)
+  if (intercept_present) {
+    keep_idx <- keep_idx[label_map != "(Intercept)"]
+  }
+  label_terms <- label_map[keep_idx]
+  df_terms <- df_terms_all[keep_idx]
+  sumsq_terms <- sumsq_terms_all[keep_idx]
+
+  resid_ss <- .mlxs_weighted_sum_of_squares(object$residuals, object$weights)
+  fitted_ss <- .mlxs_weighted_sum_of_squares(object$fitted.values, object$weights)
+  if (as.numeric(resid_ss) < 1e-10 * max(as.numeric(fitted_ss), .Machine$double.eps)) {
+    warning("ANOVA F-tests on an essentially perfect fit are unreliable", call. = FALSE)
+  }
+
+  resid_df <- object$df.residual
+  resid_ms <- resid_ss / Rmlx::mlx_scalar(resid_df)
+  meansq_terms <- Map(function(ss, df) ss / Rmlx::mlx_scalar(df), sumsq_terms, df_terms)
+  f_terms <- lapply(meansq_terms, function(ms) ms / resid_ms)
+  f_numeric <- vapply(f_terms, as.numeric, numeric(1))
+  p_vals <- pf(f_numeric, df_terms, resid_df, lower.tail = FALSE)
+
+  result <- list(
+    labels = c(label_terms, "Residuals"),
+    df = c(df_terms, resid_df),
+    sumsq = c(sumsq_terms, list(resid_ss)),
+    meansq = c(meansq_terms, list(resid_ms)),
+    fvalue = c(f_terms, list(Rmlx::mlx_scalar(NA_real_))),
+    pvalue = c(p_vals, NA_real_)
+  )
+  vars <- attr(object$terms, "variables")
+  response_label <- if (!is.null(vars) && length(vars) >= 2L) {
+    paste(deparse(vars[[2L]], width.cutoff = 500L), collapse = "")
+  } else {
+    "<response>"
+  }
+  heading <- c("Analysis of Variance Table\n", paste("Response:", response_label))
+  attr(result, "heading") <- heading
+  class(result) <- c("mlxs_anova", "anova")
+  result
+}
+
+#' @export
+as.data.frame.mlxs_anova <- function(x, row.names = NULL, optional = FALSE, ...) {
+  sumsq_num <- vapply(x$sumsq, as.numeric, numeric(1))
+  meansq_num <- vapply(x$meansq, as.numeric, numeric(1))
+  fvalue_num <- vapply(
+    x$fvalue,
+    function(val) {
+      if (is.null(val)) {
+        NA_real_
+      } else {
+        out <- as.numeric(val)
+        if (length(out) == 0L || is.nan(out)) NA_real_ else out
+      }
+    },
+    numeric(1)
+  )
+
+  table <- data.frame(
+    Df = x$df,
+    `Sum Sq` = sumsq_num,
+    `Mean Sq` = meansq_num,
+    `F value` = fvalue_num,
+    `Pr(>F)` = x$pvalue,
+    check.names = FALSE,
+    stringsAsFactors = FALSE
+  )
+  if (is.null(row.names)) {
+    row.names <- x$labels
+  }
+  rownames(table) <- row.names
+  attr(table, "heading") <- attr(x, "heading")
+  class(table) <- c("anova", "data.frame")
+  table
+}
+
+#' @export
+print.mlxs_anova <- function(x, ...) {
+  df <- as.data.frame(x)
+  print(df, ...)
+  invisible(x)
 }
 
 #' @export
