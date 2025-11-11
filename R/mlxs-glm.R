@@ -170,13 +170,13 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
 
   for (iter in seq_len(control$maxit)) {
     var_mu_mlx <- family$variance(mu_mlx)
-    var_numeric <- .mlxs_as_numeric(var_mu_mlx)
+    var_numeric <- as.numeric(var_mu_mlx)
     if (any(!is.finite(var_numeric))) {
       stop("Non-finite variance function result.", call. = FALSE)
     }
 
     mu_eta_mlx <- family$mu.eta(eta_mlx)
-    mu_eta_numeric <- .mlxs_as_numeric(mu_eta_mlx)
+    mu_eta_numeric <- as.numeric(mu_eta_mlx)
     if (any(mu_eta_numeric == 0)) {
       stop("Zero derivative of link function detected.", call. = FALSE)
     }
@@ -192,14 +192,14 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     beta_new_mlx <- wls_fit$coefficients
     qr_state <- wls_fit$qr
     delta_vec <- beta_new_mlx - beta_mlx
-    delta_val <- max(abs(.mlxs_as_numeric(delta_vec)))
+    delta_val <- max(abs(as.numeric(delta_vec)))
 
     eta_mlx <- X_mlx %*% beta_new_mlx
     mu_mlx <- family$linkinv(eta_mlx)
     mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
     dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-    deviance_val <- sum(.mlxs_as_numeric(dev_res_mlx))
+    deviance_val <- sum(as.numeric(dev_res_mlx))
     dev_change_val <- if (is.finite(dev_prev)) {
       abs(deviance_val - dev_prev) / (0.1 + abs(deviance_val))
     } else {
@@ -309,7 +309,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   mu <- as.numeric(as.matrix(mu_mlx))
 
   response_vec <- if (inherits(response, "mlx")) {
-    .mlxs_as_numeric(response)
+    as.numeric(response)
   } else if (is.matrix(response) && ncol(response) == 1L) {
     drop(response)
   } else {
@@ -321,13 +321,13 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     env <- new.env(parent = environment())
     initialize_vars <- list(
       y = response_vec,
-      weights = .mlxs_as_numeric(weights_mlx),
+      weights = as.numeric(weights_mlx),
       start = NULL,
       etastart = NULL,
       mustart = mu,
       offset = offset,
       nobs = n_obs,
-      n = .mlxs_as_numeric(weights_mlx)
+      n = as.numeric(weights_mlx)
     )
     for (nm in names(initialize_vars)) {
       assign(nm, initialize_vars[[nm]], envir = env)
@@ -350,7 +350,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     }
   } else {
     mu_mlx <- family$linkinv(eta_mlx)
-    mu <- .mlxs_as_numeric(mu_mlx)
+    mu <- as.numeric(mu_mlx)
   }
 
   eps_mlx <- Rmlx::mlx_scalar(.Machine$double.eps)
@@ -377,10 +377,10 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
   }
 
-  dev_res_vec <- .mlxs_as_numeric(irls_state$dev_resids)
+  dev_res_vec <- as.numeric(irls_state$dev_resids)
   deviance <- sum(dev_res_vec)
 
-  fitted_values <- .mlxs_as_numeric(irls_state$mu)
+  fitted_values <- as.numeric(irls_state$mu)
   deviance_resid_mlx <- sign(irls_state$residual) * sqrt(irls_state$dev_resids)
   working_weights_mlx <- Rmlx::mlx_clip(irls_state$w, min = .Machine$double.eps)^2
   working_residuals_mlx <- irls_state$residual / irls_state$mu_eta
@@ -403,7 +403,7 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   null_mu_mlx <- .mlxs_glm_clamp_mu(null_mu_mlx, family)
   null_dev <- sum(as.numeric(as.matrix(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx))))
 
-  weights_for_aic <- .mlxs_as_numeric(weights_mlx)
+  weights_for_aic <- as.numeric(weights_mlx)
   aic <- family$aic(response_vec, weights_for_aic, fitted_values, weights_for_aic, deviance) + 2 * n_coef
 
   list(

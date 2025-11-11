@@ -154,7 +154,7 @@ summary.mlxs_glm <- function(object,
   stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
   
   p_mlx <- if (stat_label == "t value") {
-    stat_num <- .mlxs_as_numeric(stat_mlx)
+    stat_num <- as.numeric(stat_mlx)
     p_num <- 2 * stats::pt(-abs(stat_num), df = object$df.residual)
     Rmlx::mlx_vector(p_num)
   } else {
@@ -192,10 +192,10 @@ summary.mlxs_glm <- function(object,
 print.summary.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
   cat("Call:\n")
   print(x$call)
-  est <- .mlxs_as_numeric(x$coefficients)
-  se <- .mlxs_as_numeric(x$std.error)
-  stat <- .mlxs_as_numeric(x$statistic)
-  p <- .mlxs_as_numeric(x$p.value)
+  est <- as.numeric(x$coefficients)
+  se <- as.numeric(x$std.error)
+  stat <- as.numeric(x$statistic)
+  p <- as.numeric(x$p.value)
   stat_col <- x$stat_label
   p_col <- if (stat_col == "t value") "Pr(>|t|)" else "Pr(>|z|)"
   stat_block <- cbind(stat, p)
@@ -260,10 +260,10 @@ tidy.mlxs_glm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   data.frame(
     term = sum_obj$coef_names,
-    estimate = .mlxs_as_numeric(sum_obj$coefficients),
-    std.error = .mlxs_as_numeric(sum_obj$std.error),
-    statistic = .mlxs_as_numeric(sum_obj$statistic),
-    p.value = .mlxs_as_numeric(sum_obj$p.value),
+    estimate = as.numeric(sum_obj$coefficients),
+    std.error = as.numeric(sum_obj$std.error),
+    statistic = as.numeric(sum_obj$statistic),
+    p.value = as.numeric(sum_obj$p.value),
     row.names = NULL
   )
 }
@@ -310,9 +310,9 @@ augment.mlxs_glm <- function(x, data = x$model, newdata = NULL,
   }
 
   out <- as.data.frame(if (is.null(newdata)) data else newdata)
-  out$.fitted <- .mlxs_as_numeric(fitted_vals)
+  out$.fitted <- as.numeric(fitted_vals)
   if (!is.null(resid_vals)) {
-    out$.resid <- .mlxs_as_numeric(resid_vals)
+    out$.resid <- as.numeric(resid_vals)
   }
   if (is.null(newdata)) {
     rownames(out) <- rownames(data)

@@ -46,7 +46,7 @@ residuals.mlxs_lm <- function(object, ...) {
 vcov.mlxs_lm <- function(object, ...) {
   qr_fit <- object$qr
   n_coef <- length(.mlxs_coef_names(object))
-  rss <- .mlxs_as_numeric(Rmlx::mlx_sum(object$residuals * object$residuals))
+  rss <- as.numeric(Rmlx::mlx_sum(object$residuals * object$residuals))
   sigma2 <- rss / object$df.residual
   .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = sigma2)
 }
@@ -54,7 +54,7 @@ vcov.mlxs_lm <- function(object, ...) {
 #' @export
 confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
   cf <- coef(object)
-  cf_num <- .mlxs_as_numeric(cf)
+  cf_num <- as.numeric(cf)
   coef_names <- .mlxs_coef_names(object)
   if (missing(parm)) {
     parm <- seq_len(length(cf_num))
@@ -114,20 +114,20 @@ summary.mlxs_lm <- function(object,
     )
     se_mlx <- bootstrap_info$se
   }
-  se_num <- .mlxs_as_numeric(se_mlx)
-  est <- .mlxs_as_numeric(object$coefficients)
+  se_num <- as.numeric(se_mlx)
+  est <- as.numeric(object$coefficients)
   tvals <- est / se_num
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
   resid_mlx <- residuals(object)
   rdf <- object$df.residual
-  rss <- .mlxs_as_numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
+  rss <- as.numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
   sigma <- sqrt(rss / rdf)
   fitted_mlx <- fitted(object)
   y_mlx <- resid_mlx + fitted_mlx
   n_obs <- nobs(object)
-  y_mean <- .mlxs_as_numeric(Rmlx::mlx_sum(y_mlx)) / n_obs
+  y_mean <- as.numeric(Rmlx::mlx_sum(y_mlx)) / n_obs
   centered <- y_mlx - Rmlx::mlx_scalar(y_mean)
-  tss <- .mlxs_as_numeric(Rmlx::mlx_sum(centered * centered))
+  tss <- as.numeric(Rmlx::mlx_sum(centered * centered))
   r.squared <- if (tss < .Machine$double.eps) 1 else 1 - rss / tss
   df.int <- attr(object$terms, "intercept")
   if (is.null(df.int)) df.int <- 1L
@@ -177,16 +177,16 @@ print.summary.mlxs_lm <- function(x, ...) {
   cat("Call:\n")
   print(x$call)
   cat("\nResiduals:\n")
-  resid_vals <- .mlxs_as_numeric(x$residuals)
+  resid_vals <- as.numeric(x$residuals)
   resid_quants <- quantile(resid_vals, probs = c(0, 0.25, 0.5, 0.75, 1))
   names(resid_quants) <- c("Min", "1Q", "Median", "3Q", "Max")
   print(resid_quants)
   cat("\nCoefficients:\n")
   coef_table <- cbind(
-    Estimate = .mlxs_as_numeric(x$coef),
-    `Std. Error` = .mlxs_as_numeric(x$std.error),
-    `t value` = .mlxs_as_numeric(x$statistic),
-    `Pr(>|t|)` = .mlxs_as_numeric(x$p.value)
+    Estimate = as.numeric(x$coef),
+    `Std. Error` = as.numeric(x$std.error),
+    `t value` = as.numeric(x$statistic),
+    `Pr(>|t|)` = as.numeric(x$p.value)
   )
   rownames(coef_table) <- x$coef_names
   printCoefmat(coef_table, has.Pvalue = TRUE)
@@ -235,10 +235,10 @@ tidy.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   data.frame(
     term = sum_obj$coef_names,
-    estimate = .mlxs_as_numeric(sum_obj$coef),
-    std.error = .mlxs_as_numeric(sum_obj$std.error),
-    statistic = .mlxs_as_numeric(sum_obj$statistic),
-    p.value = .mlxs_as_numeric(sum_obj$p.value),
+    estimate = as.numeric(sum_obj$coef),
+    std.error = as.numeric(sum_obj$std.error),
+    statistic = as.numeric(sum_obj$statistic),
+    p.value = as.numeric(sum_obj$p.value),
     row.names = NULL
   )
 }
@@ -247,7 +247,7 @@ tidy.mlxs_lm <- function(x, ...) {
 glance.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   n <- nobs(x)
-  resid_vec <- .mlxs_as_numeric(residuals(x))
+  resid_vec <- as.numeric(residuals(x))
   rss <- sum(resid_vec^2)
   sigma <- sum_obj$sigma
   k <- sum_obj$df[1]
@@ -295,8 +295,8 @@ augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL,
     return(list(.fitted = fitted_vals, .resid = residuals_vals))
   }
 
-  fitted_num <- .mlxs_as_numeric(fitted_vals)
-  residuals_num <- if (!is.null(residuals_vals)) .mlxs_as_numeric(residuals_vals) else NULL
+  fitted_num <- as.numeric(fitted_vals)
+  residuals_num <- if (!is.null(residuals_vals)) as.numeric(residuals_vals) else NULL
 
   if (!is.null(rownames(mm))) {
     names(fitted_num) <- rownames(mm)
