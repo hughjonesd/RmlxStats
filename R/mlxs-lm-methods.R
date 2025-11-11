@@ -215,6 +215,21 @@ print.mlxs_anova <- function(x, ...) {
 }
 
 #' @export
+tidy.mlxs_anova <- function(x, ...) {
+  df <- as.data.frame(x)
+  data.frame(
+    term = rownames(df),
+    df = df$Df,
+    sumsq = df[["Sum Sq"]],
+    meansq = df[["Mean Sq"]],
+    statistic = df[["F value"]],
+    p.value = df[["Pr(>F)"]],
+    row.names = NULL,
+    stringsAsFactors = FALSE
+  )
+}
+
+#' @export
 summary.mlxs_lm <- function(object,
                             bootstrap = FALSE,
                             bootstrap_args = list(),

@@ -92,6 +92,13 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   expect_equal(anova_df[["F value"]], base_anova[["F value"]], tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(anova_df[["Pr(>F)"]], base_anova[["Pr(>F)"]], tolerance = 1e-6, ignore_attr = TRUE)
   expect_output(print(anova_mlx), "Analysis of Variance Table")
+  tidy_anova <- tidy(anova_mlx)
+  expect_equal(tidy_anova$term, rownames(base_anova))
+  expect_equal(tidy_anova$df, base_anova$Df)
+  expect_equal(tidy_anova$sumsq, base_anova[["Sum Sq"]], tolerance = 1e-6)
+  expect_equal(tidy_anova$meansq, base_anova[["Mean Sq"]], tolerance = 1e-6)
+  expect_equal(tidy_anova$statistic, base_anova[["F value"]], tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(tidy_anova$p.value, base_anova[["Pr(>F)"]], tolerance = 1e-6, ignore_attr = TRUE)
 
   updated <- update(mlx_fit, . ~ . + wt)
   updated_base <- update(base_fit, . ~ . + wt)
