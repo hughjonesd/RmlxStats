@@ -5,5 +5,4 @@ vignettes/*.R
 vignettes/.build.timestamp
 .Rproj.user
 .Rhistory
-docs/*
-!docs/github-issues.md
+docs/
