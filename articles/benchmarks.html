@@ -42,6 +42,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/hughjonesd/RmlxStats/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -58,7 +59,7 @@
       <h1>Benchmarks</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/hughjonesd/RmlxStats/blob/HEAD/vignettes/benchmarks.Rmd" class="external-link"><code>vignettes/benchmarks.Rmd</code></a></small>
       <div class="d-none name"><code>benchmarks.Rmd</code></div>
     </div>
 
@@ -265,349 +266,20 @@ due to computational cost.</p>
 <h2 id="summary-tables">Summary Tables<a class="anchor" aria-label="anchor" href="#summary-tables"></a>
 </h2>
 <p>We compare RmlxStats functions both against base R, and against the
-fastest alternative tested.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Helper function to calculate speedup percentage</span></span>
-<span><span class="va">calc_speedup</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">baseline</span>, <span class="va">mlxs</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="op">(</span><span class="op">(</span><span class="va">baseline</span> <span class="op">-</span> <span class="va">mlxs</span><span class="op">)</span> <span class="op">/</span> <span class="va">baseline</span><span class="op">)</span> <span class="op">*</span> <span class="fl">100</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Create comparison data frame</span></span>
-<span><span class="va">comparison_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  mlxs_time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  base_time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  fastest_time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  fastest_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Map methods to model types</span></span>
-<span><span class="va">lm_mlxs</span> <span class="op">&lt;-</span> <span class="st">"mlxs_lm"</span></span>
-<span><span class="va">lm_base</span> <span class="op">&lt;-</span> <span class="st">"lm"</span></span>
-<span><span class="va">glm_mlxs</span> <span class="op">&lt;-</span> <span class="st">"mlxs_glm"</span></span>
-<span><span class="va">glm_base</span> <span class="op">&lt;-</span> <span class="st">"glm"</span></span>
-<span><span class="va">boot_case_mlxs</span> <span class="op">&lt;-</span> <span class="st">"mlxs_case"</span></span>
-<span><span class="va">boot_case_base</span> <span class="op">&lt;-</span> <span class="st">"boot_case"</span></span>
-<span><span class="va">boot_resid_mlxs</span> <span class="op">&lt;-</span> <span class="st">"mlxs_resid"</span></span>
-<span><span class="va">boot_resid_base</span> <span class="op">&lt;-</span> <span class="st">"lmboot_resid"</span></span>
-<span></span>
-<span><span class="co"># Process each model type</span></span>
-<span><span class="va">models</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"lm"</span>, mlxs <span class="op">=</span> <span class="va">lm_mlxs</span>, base <span class="op">=</span> <span class="va">lm_base</span>, type <span class="op">=</span> <span class="st">"LM"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"glm"</span>, mlxs <span class="op">=</span> <span class="va">glm_mlxs</span>, base <span class="op">=</span> <span class="va">glm_base</span>, type <span class="op">=</span> <span class="st">"GLM"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"boot_case"</span>, mlxs <span class="op">=</span> <span class="va">boot_case_mlxs</span>, base <span class="op">=</span> <span class="va">boot_case_base</span>, type <span class="op">=</span> <span class="st">"Bootstrap"</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>name <span class="op">=</span> <span class="st">"boot_resid"</span>, mlxs <span class="op">=</span> <span class="va">boot_resid_mlxs</span>, base <span class="op">=</span> <span class="va">boot_resid_base</span>, type <span class="op">=</span> <span class="st">"Bootstrap"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">model_info</span> <span class="kw">in</span> <span class="va">models</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">model_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="va">model_info</span><span class="op">$</span><span class="va">type</span><span class="op">)</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">model_info</span><span class="op">$</span><span class="va">type</span> <span class="op">==</span> <span class="st">"Bootstrap"</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">pattern</span> <span class="op">&lt;-</span> <span class="kw">if</span><span class="op">(</span><span class="va">model_info</span><span class="op">$</span><span class="va">name</span> <span class="op">==</span> <span class="st">"boot_case"</span><span class="op">)</span> <span class="st">"case"</span> <span class="kw">else</span> <span class="st">"resid"</span></span>
-<span>    <span class="va">model_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">model_data</span>, <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">pattern</span>, <span class="va">method</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span>  <span class="co"># Get unique n/p combinations</span></span>
-<span>  <span class="va">configs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">model_data</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"n"</span>, <span class="st">"p"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span>  <span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">configs</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">n_val</span> <span class="op">&lt;-</span> <span class="va">configs</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>    <span class="va">p_val</span> <span class="op">&lt;-</span> <span class="va">configs</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span></span>
-<span>    <span class="va">config_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">model_data</span>, <span class="va">n</span> <span class="op">==</span> <span class="va">n_val</span> <span class="op">&amp;</span> <span class="va">p</span> <span class="op">==</span> <span class="va">p_val</span><span class="op">)</span></span>
-<span></span>
-<span>    <span class="va">mlxs_time</span> <span class="op">&lt;-</span> <span class="va">config_data</span><span class="op">$</span><span class="va">median_sec</span><span class="op">[</span><span class="va">config_data</span><span class="op">$</span><span class="va">method</span> <span class="op">==</span> <span class="va">model_info</span><span class="op">$</span><span class="va">mlxs</span><span class="op">]</span></span>
-<span>    <span class="va">base_time</span> <span class="op">&lt;-</span> <span class="va">config_data</span><span class="op">$</span><span class="va">median_sec</span><span class="op">[</span><span class="va">config_data</span><span class="op">$</span><span class="va">method</span> <span class="op">==</span> <span class="va">model_info</span><span class="op">$</span><span class="va">base</span><span class="op">]</span></span>
-<span></span>
-<span>    <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">mlxs_time</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">base_time</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="co"># Find fastest non-mlxs method</span></span>
-<span>      <span class="va">non_mlxs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">config_data</span>, <span class="op">!</span><span class="va">is_mlxs</span><span class="op">)</span></span>
-<span>      <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">non_mlxs</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>        <span class="va">fastest_idx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.min</a></span><span class="op">(</span><span class="va">non_mlxs</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span></span>
-<span>        <span class="va">fastest_time</span> <span class="op">&lt;-</span> <span class="va">non_mlxs</span><span class="op">$</span><span class="va">median_sec</span><span class="op">[</span><span class="va">fastest_idx</span><span class="op">]</span></span>
-<span>        <span class="va">fastest_method</span> <span class="op">&lt;-</span> <span class="va">non_mlxs</span><span class="op">$</span><span class="va">method</span><span class="op">[</span><span class="va">fastest_idx</span><span class="op">]</span></span>
-<span>      <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>        <span class="va">fastest_time</span> <span class="op">&lt;-</span> <span class="va">base_time</span></span>
-<span>        <span class="va">fastest_method</span> <span class="op">&lt;-</span> <span class="va">model_info</span><span class="op">$</span><span class="va">base</span></span>
-<span>      <span class="op">}</span></span>
-<span></span>
-<span>      <span class="va">comparison_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">comparison_data</span>, <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>        model <span class="op">=</span> <span class="va">model_info</span><span class="op">$</span><span class="va">name</span>,</span>
-<span>        n <span class="op">=</span> <span class="va">n_val</span>,</span>
-<span>        p <span class="op">=</span> <span class="va">p_val</span>,</span>
-<span>        mlxs_time <span class="op">=</span> <span class="va">mlxs_time</span>,</span>
-<span>        base_time <span class="op">=</span> <span class="va">base_time</span>,</span>
-<span>        fastest_time <span class="op">=</span> <span class="va">fastest_time</span>,</span>
-<span>        fastest_method <span class="op">=</span> <span class="va">fastest_method</span>,</span>
-<span>        stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>      <span class="op">)</span><span class="op">)</span></span>
-<span>    <span class="op">}</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="co"># Table 1: mlxs vs base R</span></span>
-<span><span class="va">base_comparison</span> <span class="op">&lt;-</span> <span class="va">comparison_data</span></span>
-<span><span class="va">base_comparison</span><span class="op">$</span><span class="va">speedup</span> <span class="op">&lt;-</span> <span class="fu">calc_speedup</span><span class="op">(</span><span class="va">base_comparison</span><span class="op">$</span><span class="va">base_time</span>, <span class="va">base_comparison</span><span class="op">$</span><span class="va">mlxs_time</span><span class="op">)</span></span>
-<span><span class="va">base_comparison</span><span class="op">$</span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"n="</span>, <span class="va">base_comparison</span><span class="op">$</span><span class="va">n</span>, <span class="st">", p="</span>, <span class="va">base_comparison</span><span class="op">$</span><span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">base_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span><span class="va">base_comparison</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model"</span>, <span class="st">"config"</span>, <span class="st">"speedup"</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>                      idvar <span class="op">=</span> <span class="st">"model"</span>, timevar <span class="op">=</span> <span class="st">"config"</span>, direction <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">base_table</span><span class="op">$</span><span class="va">model</span></span>
-<span><span class="va">base_table</span><span class="op">$</span><span class="va">model</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"speedup\\."</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Table 2: mlxs vs fastest alternative</span></span>
-<span><span class="va">fastest_comparison</span> <span class="op">&lt;-</span> <span class="va">comparison_data</span></span>
-<span><span class="va">fastest_comparison</span><span class="op">$</span><span class="va">speedup</span> <span class="op">&lt;-</span> <span class="fu">calc_speedup</span><span class="op">(</span><span class="va">fastest_comparison</span><span class="op">$</span><span class="va">fastest_time</span>, <span class="va">fastest_comparison</span><span class="op">$</span><span class="va">mlxs_time</span><span class="op">)</span></span>
-<span><span class="va">fastest_comparison</span><span class="op">$</span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"n="</span>, <span class="va">fastest_comparison</span><span class="op">$</span><span class="va">n</span>, <span class="st">", p="</span>, <span class="va">fastest_comparison</span><span class="op">$</span><span class="va">p</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">fastest_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/reshape.html" class="external-link">reshape</a></span><span class="op">(</span><span class="va">fastest_comparison</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"model"</span>, <span class="st">"config"</span>, <span class="st">"speedup"</span><span class="op">)</span><span class="op">]</span>,</span>
-<span>                         idvar <span class="op">=</span> <span class="st">"model"</span>, timevar <span class="op">=</span> <span class="st">"config"</span>, direction <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">fastest_table</span><span class="op">$</span><span class="va">model</span></span>
-<span><span class="va">fastest_table</span><span class="op">$</span><span class="va">model</span> <span class="op">&lt;-</span> <span class="cn">NULL</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">gsub</a></span><span class="op">(</span><span class="st">"speedup\\."</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Format and display tables with human-readable row names</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"lm"</span> <span class="op">=</span> <span class="st">"Linear Model"</span>,</span>
-<span>  <span class="st">"glm"</span> <span class="op">=</span> <span class="st">"Logistic Regression"</span>,</span>
-<span>  <span class="st">"boot_case"</span> <span class="op">=</span> <span class="st">"Bootstrap (Case)"</span>,</span>
-<span>  <span class="st">"boot_resid"</span> <span class="op">=</span> <span class="st">"Bootstrap (Residual)"</span></span>
-<span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">base_table</span><span class="op">)</span><span class="op">]</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>  <span class="st">"lm"</span> <span class="op">=</span> <span class="st">"Linear Model"</span>,</span>
-<span>  <span class="st">"glm"</span> <span class="op">=</span> <span class="st">"Logistic Regression"</span>,</span>
-<span>  <span class="st">"boot_case"</span> <span class="op">=</span> <span class="st">"Bootstrap (Case)"</span>,</span>
-<span>  <span class="st">"boot_resid"</span> <span class="op">=</span> <span class="st">"Bootstrap (Residual)"</span></span>
-<span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">fastest_table</span><span class="op">)</span><span class="op">]</span></span>
-<span></span>
-<span><span class="co"># Display NA as blank cells</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>knitr.kable.NA <span class="op">=</span> <span class="st">''</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">base_table</span>, digits <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>             caption <span class="op">=</span> <span class="st">"RmlxStats vs Base R: Speedup (%)"</span>,</span>
-<span>             format <span class="op">=</span> <span class="st">"pipe"</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
-<caption>RmlxStats vs Base R: Speedup (%)</caption>
-<colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="right">n=2000, p=50</th>
-<th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
-<th align="right">n=2000, p=100</th>
-<th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">36.0</td>
-<td align="right">56.3</td>
-<td align="right">60.5</td>
-<td align="right">59.0</td>
-<td align="right">72.5</td>
-<td align="right">76.4</td>
-<td align="right">74.1</td>
-<td align="right">84.5</td>
-<td align="right">86.5</td>
-</tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">10.2</td>
-<td align="right">64.5</td>
-<td align="right">77.3</td>
-<td align="right">59.9</td>
-<td align="right">80.3</td>
-<td align="right">86.3</td>
-<td align="right">81.8</td>
-<td align="right">88.4</td>
-<td align="right">90.7</td>
-</tr>
-<tr class="odd">
-<td align="left">Bootstrap (Case)</td>
-<td align="right">74.1</td>
-<td align="right">77.2</td>
-<td align="right"></td>
-<td align="right">81.4</td>
-<td align="right">84.2</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-</tr>
-<tr class="even">
-<td align="left">Bootstrap (Residual)</td>
-<td align="right">24.1</td>
-<td align="right">56.3</td>
-<td align="right"></td>
-<td align="right">72.1</td>
-<td align="right">84.1</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">fastest_table</span>, digits <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>             caption <span class="op">=</span> <span class="st">"RmlxStats vs Fastest Alternative: Speedup (%)"</span>,</span>
-<span>             format <span class="op">=</span> <span class="st">"pipe"</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
-<caption>RmlxStats vs Fastest Alternative: Speedup (%)</caption>
-<colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="right">n=2000, p=50</th>
-<th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
-<th align="right">n=2000, p=100</th>
-<th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">2.0</td>
-<td align="right">26.8</td>
-<td align="right">37.1</td>
-<td align="right">13.8</td>
-<td align="right">42.8</td>
-<td align="right">53.0</td>
-<td align="right">38.9</td>
-<td align="right">62.7</td>
-<td align="right">69.2</td>
-</tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">-7.6</td>
-<td align="right">54.2</td>
-<td align="right">70.1</td>
-<td align="right">54.1</td>
-<td align="right">75.3</td>
-<td align="right">82.9</td>
-<td align="right">79.8</td>
-<td align="right">85.6</td>
-<td align="right">88.7</td>
-</tr>
-<tr class="odd">
-<td align="left">Bootstrap (Case)</td>
-<td align="right">74.1</td>
-<td align="right">77.2</td>
-<td align="right"></td>
-<td align="right">81.4</td>
-<td align="right">84.2</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-</tr>
-<tr class="even">
-<td align="left">Bootstrap (Residual)</td>
-<td align="right">24.1</td>
-<td align="right">56.3</td>
-<td align="right"></td>
-<td align="right">72.1</td>
-<td align="right">84.1</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-</tr>
-</tbody>
-</table>
-<p>Positive values indicate RmlxStats is faster; negative values
-indicate it is slower.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">plot_benchmark</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">data</span>, <span class="va">title</span>, <span class="va">subtitle</span> <span class="op">=</span> <span class="st">"Lower is better"</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu">ggplot</span><span class="op">(</span><span class="va">data</span>, <span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">method</span>, y <span class="op">=</span> <span class="va">median_sec</span>, fill <span class="op">=</span> <span class="va">is_mlxs</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">geom_col</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">facet_grid</span><span class="op">(</span><span class="va">n</span> <span class="op">~</span> <span class="va">p</span>, scales <span class="op">=</span> <span class="st">"free"</span>, labeller <span class="op">=</span> <span class="st">"label_both"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">scale_fill_manual</span><span class="op">(</span></span>
-<span>      values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRUE"</span> <span class="op">=</span> <span class="st">"orange3"</span>, <span class="st">"FALSE"</span> <span class="op">=</span> <span class="st">"#95A5A6"</span><span class="op">)</span>,</span>
-<span>      labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRUE"</span> <span class="op">=</span> <span class="st">"RmlxStats"</span>, <span class="st">"FALSE"</span> <span class="op">=</span> <span class="st">"Other"</span><span class="op">)</span>,</span>
-<span>      name <span class="op">=</span> <span class="st">"Package"</span></span>
-<span>    <span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">labs</span><span class="op">(</span></span>
-<span>      title <span class="op">=</span> <span class="va">title</span>,</span>
-<span>      x <span class="op">=</span> <span class="st">"Method"</span>,</span>
-<span>      y <span class="op">=</span> <span class="st">"Median Time (seconds)"</span>,</span>
-<span>      subtitle <span class="op">=</span> <span class="va">subtitle</span></span>
-<span>    <span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">theme_minimal</span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">11</span><span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">theme</span><span class="op">(</span></span>
-<span>      axis.text.x <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>      strip.text <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span>,</span>
-<span>      legend.position <span class="op">=</span> <span class="st">"top"</span></span>
-<span>    <span class="op">)</span> <span class="op">+</span></span>
-<span>    <span class="fu">coord_flip</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">}</span></span></code></pre></div>
+fastest alternative tested. Numbers show
+<code>alternative time/RmlxStats time</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="linear-models">Linear Models<a class="anchor" aria-label="anchor" href="#linear-models"></a>
 </h2>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lm_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"LM"</span><span class="op">)</span></span>
-<span><span class="fu">plot_benchmark</span><span class="op">(</span><span class="va">lm_data</span>, <span class="st">"Linear Model Benchmark: Time by Dataset Size"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="benchmarks_files/figure-html/plot-lm-1.png" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="glm-models">GLM Models<a class="anchor" aria-label="anchor" href="#glm-models"></a>
 </h2>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">glm_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"GLM"</span><span class="op">)</span></span>
-<span><span class="fu">plot_benchmark</span><span class="op">(</span><span class="va">glm_data</span>, <span class="st">"GLM Benchmark: Time by Dataset Size"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="benchmarks_files/figure-html/plot-glm-1.png" width="768"></p>
 </div>
 <div class="section level2">
-<h2 id="bootstrap">Bootstrap<a class="anchor" aria-label="anchor" href="#bootstrap"></a>
+<h2 id="bootstraps">Bootstraps<a class="anchor" aria-label="anchor" href="#bootstraps"></a>
 </h2>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">boot_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">summary_results</span>, <span class="va">model_type</span> <span class="op">==</span> <span class="st">"Bootstrap"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">boot_data</span><span class="op">$</span><span class="va">method</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">boot_data</span><span class="op">$</span><span class="va">method</span>, </span>
-<span>                           levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lmboot_resid"</span>, <span class="st">"mlxs_resid"</span>,</span>
-<span>                                      <span class="st">"lmboot_case"</span>, <span class="st">"boot_case"</span>, <span class="st">"mlxs_case"</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu">plot_benchmark</span><span class="op">(</span></span>
-<span>  <span class="va">boot_data</span>,</span>
-<span>  <span class="st">"Bootstrap Benchmark: Time by Dataset Size"</span>,</span>
-<span>  subtitle <span class="op">=</span> <span class="st">"Lower is better. Bootstrap with 50 iterations."</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="benchmarks_files/figure-html/plot-bootstrap-1.png" width="768"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
