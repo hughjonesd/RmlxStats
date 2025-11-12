@@ -234,15 +234,10 @@ summary_results <- aggregate(
 ## Summary Tables
 
 We compare RmlxStats functions both against base R, and against the fastest
-alternative tested.
+alternative tested. Numbers show `alternative time/RmlxStats time`. 
 
-```{r summary-tables}
-# Helper function to calculate speedup percentage
-calc_speedup <- function(baseline, mlxs) {
-  ((baseline - mlxs) / baseline) * 100
-}
+```{r summary-tables, include = FALSE}
 
-# Create comparison data frame
 comparison_data <- data.frame(
   model = character(),
   n = numeric(),
@@ -318,8 +313,8 @@ for (model_info in models) {
 
 # Table 1: mlxs vs base R
 base_comparison <- comparison_data
-base_comparison$speedup <- calc_speedup(base_comparison$base_time, base_comparison$mlxs_time)
-base_comparison$config <- paste0("n=", base_comparison$n, ", p=", base_comparison$p)
+base_comparison$speedup <- base_comparison$base_time/base_comparison$mlxs_time
+base_comparison$config <- paste0("n ", base_comparison$n, "/ p ", base_comparison$p)
 
 base_table <- reshape(base_comparison[, c("model", "config", "speedup")],
                       idvar = "model", timevar = "config", direction = "wide")
@@ -329,8 +324,8 @@ colnames(base_table) <- gsub("speedup\\.", "", colnames(base_table))
 
 # Table 2: mlxs vs fastest alternative
 fastest_comparison <- comparison_data
-fastest_comparison$speedup <- calc_speedup(fastest_comparison$fastest_time, fastest_comparison$mlxs_time)
-fastest_comparison$config <- paste0("n=", fastest_comparison$n, ", p=", fastest_comparison$p)
+fastest_comparison$speedup <- fastest_comparison$fastest_time/fastest_comparison$mlxs_time
+fastest_comparison$config <- paste0("n ", fastest_comparison$n, "/ p ", fastest_comparison$p)
 
 fastest_table <- reshape(fastest_comparison[, c("model", "config", "speedup")],
                          idvar = "model", timevar = "config", direction = "wide")
@@ -357,31 +352,30 @@ rownames(fastest_table) <- c(
 options(knitr.kable.NA = '')
 
 knitr::kable(base_table, digits = 1,
-             caption = "RmlxStats vs Base R: Speedup (%)",
+             caption = "RmlxStats vs Base R. Above 1 → RmlxStats faster",
              format = "pipe")
 
 knitr::kable(fastest_table, digits = 1,
-             caption = "RmlxStats vs Fastest Alternative: Speedup (%)",
+             caption = "RmlxStats vs Fastest Alternative. Above 1 → RmlxStats faster",
              format = "pipe")
 ```
 
-Positive values indicate RmlxStats is faster; negative values indicate it is slower.
 
-```{r plot-function}
+```{r plot-function, include = FALSE}
 
 plot_benchmark <- function(data, title, subtitle = "Lower is better") {
-  ggplot(data, aes(x = method, y = median_sec, fill = is_mlxs)) +
+  ggplot(data, aes(x = median_sec, y = method, fill = is_mlxs)) +
     geom_col() +
-    facet_grid(n ~ p, scales = "free", labeller = "label_both") +
+    facet_grid(p ~ n, scales = "free", labeller = "label_both") +
     scale_fill_manual(
-      values = c("TRUE" = "orange3", "FALSE" = "#95A5A6"),
+      values = c("TRUE" = "yellow3", "FALSE" = "grey40"),
       labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
-      name = "Package"
+      name = ""
     ) +
     labs(
       title = title,
-      x = "Method",
-      y = "Median Time (seconds)",
+      x = "Median Time (seconds)",
+      y = "Method",
       subtitle = subtitle
     ) +
     theme_minimal(base_size = 11) +
@@ -389,28 +383,27 @@ plot_benchmark <- function(data, title, subtitle = "Lower is better") {
       axis.text.x = element_text(angle = 45, hjust = 1),
       strip.text = element_text(face = "bold"),
       legend.position = "top"
-    ) +
-    coord_flip()
+    )
 }
 ```
 
 ## Linear Models
 
-```{r plot-lm}
+```{r plot-lm, include = FALSE}
 lm_data <- subset(summary_results, model_type == "LM")
 plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
 ## GLM Models
 
-```{r plot-glm}
+```{r plot-glm, include = FALSE}
 glm_data <- subset(summary_results, model_type == "GLM")
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
-## Bootstrap
+## Bootstraps
 
-```{r plot-bootstrap}
+```{r plot-bootstrap, include = FALSE}
 boot_data <- subset(summary_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
