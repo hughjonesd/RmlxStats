@@ -61,15 +61,26 @@
 <div class="section level2">
 <h2 id="when-to-use">When to use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h2>
-<p>Very roughly, RmlxStats becomes competitive once you have ~10,000 rows and ~50 columns. Below that, startup costs dominate. See the benchmarks vignette for more details.</p>
+<p>RmlxStats offers large speedups against both base R functions, and speed-optimized packages like speedglm and RCppEigen. Speedups are especially large for regressions with many predictors (large p).</p>
+<p>Very roughly, if you have 50 or more predictors and 10,000 or more rows, or if your regressions are taking measurable time to complete, RmlxStats is worth trying:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># On my machine</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">system.time</span>({lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(arr_delay <span class="sc">~</span> dep_delay <span class="sc">+</span> <span class="fu">factor</span>(<span class="fu">paste</span>(month,day)), <span class="at">data =</span> nycflights13<span class="sc">::</span>flights); })</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>   user  system elapsed </span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a> <span class="fl">31.310</span>   <span class="fl">0.179</span>  <span class="fl">31.479</span> </span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="sc">&gt;</span> <span class="fu">system.time</span>({lm2 <span class="ot">&lt;-</span> <span class="fu">mlxs_lm</span>(arr_delay <span class="sc">~</span> dep_delay <span class="sc">+</span> <span class="fu">factor</span>(<span class="fu">paste</span>(month,day)), <span class="at">data =</span> nycflights13<span class="sc">::</span>flights); Rmlx<span class="sc">::</span><span class="fu">mlx_eval</span>(lm2<span class="sc">$</span>coefficients)})</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>   user  system elapsed </span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="fl">4.421</span>   <span class="fl">0.271</span>   <span class="fl">2.818</span> </span></code></pre></div>
+<p>See the benchmarks vignette for more details.</p>
+<p>GPU calculations use float32 precision, so if you need higher numerical accuracy than this, RmlxStats may not be the right tool.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install Apple’s MLX runtime (provides the Metal-backed tensor engine):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">brew</span> install mlx</span></code></pre></div>
+<p>Install Apple’s MLX runtime:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="ex">brew</span> install mlx</span></code></pre></div>
 <p>Then:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"hughjonesd/RmlxStats"</span><span class="op">)</span></span></code></pre></div>
 <p>which will also install Rmlx.</p>
 </div>

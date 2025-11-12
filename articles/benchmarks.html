@@ -119,14 +119,14 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">lm_formula</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="va">formula_str</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">bm</span> <span class="op">&lt;-</span> <span class="fu">mark</span><span class="op">(</span></span>
-<span>    lm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
+<span>    <span class="st">"stats::lm"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
 <span>    mlxs_lm <span class="op">=</span> <span class="op">{</span></span>
 <span>      <span class="va">l</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_lm.html">mlxs_lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span></span>
 <span>      <span class="fu">Rmlx</span><span class="fu">::</span><span class="fu"><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_eval.html" class="external-link">mlx_eval</a></span><span class="op">(</span><span class="va">l</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span></span>
 <span>    <span class="op">}</span>,</span>
-<span>    feols <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
-<span>    fastLm <span class="op">=</span> <span class="fu">RcppEigen</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RcppEigen/man/fastLm.html" class="external-link">fastLm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
-<span>    speedlm <span class="op">=</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedlm.html" class="external-link">speedlm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
+<span>    <span class="st">"fixest::feols"</span> <span class="op">=</span> <span class="fu">feols</span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
+<span>    <span class="st">"RcppEigen::fastLm"</span> <span class="op">=</span> <span class="fu">RcppEigen</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RcppEigen/man/fastLm.html" class="external-link">fastLm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
+<span>    <span class="st">"speedglm::speedlm"</span> <span class="op">=</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedlm.html" class="external-link">speedlm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
 <span>    iterations <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>    check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>    filter_gc <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -155,7 +155,7 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">glm_formula</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="va">formula_str</span><span class="op">)</span></span>
 <span></span>
 <span>  <span class="va">bm</span> <span class="op">&lt;-</span> <span class="fu">mark</span><span class="op">(</span></span>
-<span>    glm <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    <span class="st">"stats::glm"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>                             data <span class="op">=</span> <span class="va">subset_data</span>,</span>
 <span>                             control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    mlxs_glm <span class="op">=</span> <span class="op">{</span></span>
@@ -164,7 +164,7 @@ predictors (<code>p</code>).</p>
 <span>                        control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span>, epsilon <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span></span>
 <span>      <span class="fu">Rmlx</span><span class="fu">::</span><span class="fu"><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_eval.html" class="external-link">mlx_eval</a></span><span class="op">(</span><span class="va">g</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span></span>
 <span>    <span class="op">}</span>,</span>
-<span>    speedglm <span class="op">=</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedglm.html" class="external-link">speedglm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>    <span class="st">"speedglm::speedglm"</span> <span class="op">=</span> <span class="fu">speedglm</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/speedglm/man/speedglm.html" class="external-link">speedglm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>                                   data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
 <span>    iterations <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>    check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -272,77 +272,33 @@ fastest alternative tested. Numbers show
 <caption>RmlxStats vs Base R (%). Above 100% → RmlxStats is
 faster</caption>
 <colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
+<col width="27%">
+<col width="16%">
+<col width="18%">
+<col width="18%">
+<col width="19%">
 </colgroup>
 <thead><tr class="header">
 <th align="left"></th>
 <th align="right">n=2000, p=50</th>
 <th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
 <th align="right">n=2000, p=100</th>
 <th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">157.0</td>
-<td align="right">221.2</td>
-<td align="right">268.1</td>
-<td align="right">238.5</td>
-<td align="right">359.2</td>
-<td align="right">411.7</td>
-<td align="right">392.0</td>
-<td align="right">581.9</td>
-<td align="right">814.5</td>
-</tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">110.3</td>
-<td align="right">276.7</td>
-<td align="right">439.8</td>
-<td align="right">232.9</td>
-<td align="right">502.6</td>
-<td align="right">795.5</td>
-<td align="right">531.1</td>
-<td align="right">851.9</td>
-<td align="right">1070.0</td>
-</tr>
-<tr class="odd">
 <td align="left">Bootstrap (Case)</td>
-<td align="right">374.2</td>
-<td align="right">460.5</td>
-<td align="right"></td>
-<td align="right">513.3</td>
-<td align="right">621.3</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<td align="right">374.1</td>
+<td align="right">463.6</td>
+<td align="right">334.1</td>
+<td align="right">629.0</td>
 </tr>
 <tr class="even">
 <td align="left">Bootstrap (Residual)</td>
-<td align="right">126.7</td>
-<td align="right">236.8</td>
-<td align="right"></td>
-<td align="right">358.3</td>
-<td align="right">626.9</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<td align="right">131.5</td>
+<td align="right">226.1</td>
+<td align="right">321.2</td>
+<td align="right">636.4</td>
 </tr>
 </tbody>
 </table>
@@ -350,77 +306,33 @@ faster</caption>
 <caption>RmlxStats vs Fastest Alternative (%). Above 100% → RmlxStats is
 faster</caption>
 <colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
+<col width="27%">
+<col width="16%">
+<col width="18%">
+<col width="18%">
+<col width="19%">
 </colgroup>
 <thead><tr class="header">
 <th align="left"></th>
 <th align="right">n=2000, p=50</th>
 <th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
 <th align="right">n=2000, p=100</th>
 <th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">103.7</td>
-<td align="right">130.7</td>
-<td align="right">171.7</td>
-<td align="right">124.5</td>
-<td align="right">183.4</td>
-<td align="right">205.4</td>
-<td align="right">163.5</td>
-<td align="right">255.0</td>
-<td align="right">364.5</td>
-</tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">92.2</td>
-<td align="right">216.0</td>
-<td align="right">341.5</td>
-<td align="right">201.3</td>
-<td align="right">411.6</td>
-<td align="right">610.2</td>
-<td align="right">475.4</td>
-<td align="right">702.3</td>
-<td align="right">870.8</td>
-</tr>
-<tr class="odd">
 <td align="left">Bootstrap (Case)</td>
-<td align="right">374.2</td>
-<td align="right">460.5</td>
-<td align="right"></td>
-<td align="right">513.3</td>
-<td align="right">621.3</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<td align="right">374.1</td>
+<td align="right">463.6</td>
+<td align="right">334.1</td>
+<td align="right">629.0</td>
 </tr>
 <tr class="even">
 <td align="left">Bootstrap (Residual)</td>
-<td align="right">126.7</td>
-<td align="right">236.8</td>
-<td align="right"></td>
-<td align="right">358.3</td>
-<td align="right">626.9</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<td align="right">131.5</td>
+<td align="right">226.1</td>
+<td align="right">321.2</td>
+<td align="right">636.4</td>
 </tr>
 </tbody>
 </table>
