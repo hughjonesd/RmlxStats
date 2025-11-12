@@ -366,14 +366,18 @@ huxtable::as_hux(base_table, add_rownames = "") |>
   huxtable::set_font_size(11) |> 
   huxtable::set_caption(
     "RmlxStats time vs base R (%). Below 100% → RmlxStats is faster")|> 
-  huxtable::style_headers(bold = TRUE)
+  huxtable::style_headers(bold = TRUE) |> 
+  huxtable::map_text_color(-1, -1,
+                                 huxtable::by_colorspace("green3", "grey40", "red3"))
 
 huxtable::as_hux(fastest_table, add_rownames = "") |> 
   huxtable::set_font_size(11) |> 
   huxtable::set_number_format(-1, -1, 1) |> 
   huxtable::set_caption(
     "RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is faster") |> 
-  huxtable::style_headers(bold = TRUE)
+  huxtable::style_headers(bold = TRUE)|> 
+  huxtable::map_text_color(-1, -1, 
+                                 huxtable::by_colorspace("green3", "grey40", "red3"))
 ```
 
 
