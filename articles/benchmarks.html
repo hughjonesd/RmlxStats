@@ -96,6 +96,10 @@ predictors (<code>p</code>).</p>
 <span><span class="va">n_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">10000</span>, <span class="fl">50000</span><span class="op">)</span></span>
 <span><span class="va">p_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># for fast debugging</span></span>
+<span><span class="co"># p_sizes &lt;- p_sizes/10</span></span>
+<span><span class="co"># n_sizes &lt;- n_sizes/10</span></span>
+<span></span>
 <span><span class="va">bench_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
 <span>  n <span class="op">=</span> <span class="va">n_sizes</span>,</span>
 <span>  p <span class="op">=</span> <span class="va">p_sizes</span>,</span>
@@ -186,8 +190,8 @@ predictors (<code>p</code>).</p>
 due to computational cost.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">boot_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
-<span>  n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">10000</span><span class="op">)</span>,</span>
-<span>  p <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">100</span><span class="op">)</span>,</span>
+<span>  n <span class="op">=</span> <span class="va">n_sizes</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
+<span>  p <span class="op">=</span> <span class="va">p_sizes</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
 <span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -245,24 +249,6 @@ due to computational cost.</p>
 <span><span class="va">boot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">boot_results</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
-</h2>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">lm_df</span>, <span class="va">glm_df</span>, <span class="va">boot_df</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">all_results</span><span class="op">$</span><span class="va">method</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">$</span><span class="va">expression</span><span class="op">)</span></span>
-<span><span class="va">all_results</span><span class="op">$</span><span class="va">median_sec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">$</span><span class="va">median</span>, units <span class="op">=</span> <span class="st">"s"</span><span class="op">)</span></span>
-<span><span class="va">all_results</span><span class="op">$</span><span class="va">is_mlxs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^mlxs"</span>, <span class="va">all_results</span><span class="op">$</span><span class="va">method</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Summary statistics</span></span>
-<span><span class="va">all_results_clean</span> <span class="op">&lt;-</span> <span class="va">all_results</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">all_results</span><span class="op">$</span><span class="va">median_sec</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">summary_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span></span>
-<span>  <span class="va">median_sec</span> <span class="op">~</span> <span class="va">model_type</span> <span class="op">+</span> <span class="va">n</span> <span class="op">+</span> <span class="va">p</span> <span class="op">+</span> <span class="va">method</span> <span class="op">+</span> <span class="va">is_mlxs</span>,</span>
-<span>  data <span class="op">=</span> <span class="va">all_results_clean</span>,</span>
-<span>  FUN <span class="op">=</span> <span class="va">median</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="summary-tables">Summary Tables<a class="anchor" aria-label="anchor" href="#summary-tables"></a>
 </h2>
 <p>We compare RmlxStats functions both against base R, and against the
@@ -272,33 +258,77 @@ fastest alternative tested. Numbers show
 <caption>RmlxStats time vs Base R (%). Below 100% → RmlxStats is
 faster</caption>
 <colgroup>
-<col width="27%">
-<col width="16%">
-<col width="18%">
-<col width="18%">
-<col width="19%">
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
 </colgroup>
 <thead><tr class="header">
 <th align="left"></th>
 <th align="right">n=2000, p=50</th>
 <th align="right">n=10000, p=50</th>
+<th align="right">n=50000, p=50</th>
 <th align="right">n=2000, p=100</th>
 <th align="right">n=10000, p=100</th>
+<th align="right">n=50000, p=100</th>
+<th align="right">n=2000, p=200</th>
+<th align="right">n=10000, p=200</th>
+<th align="right">n=50000, p=200</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td align="left">Linear Model</td>
+<td align="right">59.8</td>
+<td align="right">45.0</td>
+<td align="right">37.3</td>
+<td align="right">41.1</td>
+<td align="right">27.3</td>
+<td align="right">24.3</td>
+<td align="right">26.0</td>
+<td align="right">15.9</td>
+<td align="right">12.8</td>
+</tr>
+<tr class="even">
+<td align="left">Logistic Regression</td>
+<td align="right">92.0</td>
+<td align="right">39.4</td>
+<td align="right">24.9</td>
+<td align="right">41.2</td>
+<td align="right">19.5</td>
+<td align="right">12.8</td>
+<td align="right">18.8</td>
+<td align="right">12.1</td>
+<td align="right">10.1</td>
+</tr>
+<tr class="odd">
 <td align="left">Bootstrap (Case)</td>
-<td align="right">27.2</td>
+<td align="right">26.3</td>
 <td align="right">21.8</td>
+<td align="right"></td>
 <td align="right">19.4</td>
-<td align="right">16.6</td>
+<td align="right">16.3</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 <tr class="even">
 <td align="left">Bootstrap (Residual)</td>
-<td align="right">77.3</td>
-<td align="right">44.2</td>
-<td align="right">27.7</td>
-<td align="right">18.0</td>
+<td align="right">78.0</td>
+<td align="right">41.1</td>
+<td align="right"></td>
+<td align="right">28.0</td>
+<td align="right">15.9</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 </tbody>
 </table>
@@ -306,33 +336,77 @@ faster</caption>
 <caption>RmlxStats time vs Fastest Alternative (%). Below 100% →
 RmlxStats is faster</caption>
 <colgroup>
-<col width="27%">
-<col width="16%">
-<col width="18%">
-<col width="18%">
-<col width="19%">
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
 </colgroup>
 <thead><tr class="header">
 <th align="left"></th>
 <th align="right">n=2000, p=50</th>
 <th align="right">n=10000, p=50</th>
+<th align="right">n=50000, p=50</th>
 <th align="right">n=2000, p=100</th>
 <th align="right">n=10000, p=100</th>
+<th align="right">n=50000, p=100</th>
+<th align="right">n=2000, p=200</th>
+<th align="right">n=10000, p=200</th>
+<th align="right">n=50000, p=200</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td align="left">Linear Model</td>
+<td align="right">92.0</td>
+<td align="right">76.3</td>
+<td align="right">61.6</td>
+<td align="right">82.6</td>
+<td align="right">59.9</td>
+<td align="right">47.5</td>
+<td align="right">61.8</td>
+<td align="right">36.7</td>
+<td align="right">27.5</td>
+</tr>
+<tr class="even">
+<td align="left">Logistic Regression</td>
+<td align="right">115.7</td>
+<td align="right">50.0</td>
+<td align="right">32.7</td>
+<td align="right">47.8</td>
+<td align="right">24.0</td>
+<td align="right">16.8</td>
+<td align="right">20.7</td>
+<td align="right">14.7</td>
+<td align="right">12.4</td>
+</tr>
+<tr class="odd">
 <td align="left">Bootstrap (Case)</td>
-<td align="right">27.2</td>
+<td align="right">26.3</td>
 <td align="right">21.8</td>
+<td align="right"></td>
 <td align="right">19.4</td>
-<td align="right">16.6</td>
+<td align="right">16.3</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 <tr class="even">
 <td align="left">Bootstrap (Residual)</td>
-<td align="right">77.3</td>
-<td align="right">44.2</td>
-<td align="right">27.7</td>
-<td align="right">18.0</td>
+<td align="right">78.0</td>
+<td align="right">41.1</td>
+<td align="right"></td>
+<td align="right">28.0</td>
+<td align="right">15.9</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
 </tr>
 </tbody>
 </table>
