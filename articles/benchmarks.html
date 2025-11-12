@@ -124,7 +124,7 @@ predictors (<code>p</code>).</p>
 <span></span>
 <span>  <span class="va">bm</span> <span class="op">&lt;-</span> <span class="fu">mark</span><span class="op">(</span></span>
 <span>    <span class="st">"stats::lm"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span>,</span>
-<span>    mlxs_lm <span class="op">=</span> <span class="op">{</span></span>
+<span>    <span class="st">"RmlxStats::mlxs_lm"</span> <span class="op">=</span> <span class="op">{</span></span>
 <span>      <span class="va">l</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_lm.html">mlxs_lm</a></span><span class="op">(</span><span class="va">lm_formula</span>, data <span class="op">=</span> <span class="va">subset_data</span><span class="op">)</span></span>
 <span>      <span class="fu">Rmlx</span><span class="fu">::</span><span class="fu"><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_eval.html" class="external-link">mlx_eval</a></span><span class="op">(</span><span class="va">l</span><span class="op">$</span><span class="va">coefficients</span><span class="op">)</span></span>
 <span>    <span class="op">}</span>,</span>
@@ -162,7 +162,7 @@ predictors (<code>p</code>).</p>
 <span>    <span class="st">"stats::glm"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/family.html" class="external-link">binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>                             data <span class="op">=</span> <span class="va">subset_data</span>,</span>
 <span>                             control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    mlxs_glm <span class="op">=</span> <span class="op">{</span></span>
+<span>    <span class="st">"RmlxStats::mlxs_glm"</span> <span class="op">=</span> <span class="op">{</span></span>
 <span>      <span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/mlxs_glm.html">mlxs_glm</a></span><span class="op">(</span><span class="va">glm_formula</span>, family <span class="op">=</span> <span class="fu"><a href="../reference/mlxs_binomial.html">mlxs_binomial</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>                        data <span class="op">=</span> <span class="va">subset_data</span>,</span>
 <span>                        control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>maxit <span class="op">=</span> <span class="fl">50</span>, epsilon <span class="op">=</span> <span class="fl">1e-6</span><span class="op">)</span><span class="op">)</span></span>
@@ -254,159 +254,141 @@ due to computational cost.</p>
 <p>We compare RmlxStats functions both against base R, and against the
 fastest alternative tested. Numbers show
 <code>RmlxStats time/alternative time</code>.</p>
-<table class="table">
-<caption>RmlxStats time vs Base R (%). Below 100% → RmlxStats is
-faster</caption>
-<colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="right">n=2000, p=50</th>
-<th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
-<th align="right">n=2000, p=100</th>
-<th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:summary-tables">
+<caption style="caption-side: top; text-align: center;">RmlxStats time vs base R (%). Below 100% → RmlxStats is faster</caption>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<thead><tr>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=200</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=200</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=200</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">59.8</td>
-<td align="right">45.0</td>
-<td align="right">37.3</td>
-<td align="right">41.1</td>
-<td align="right">27.3</td>
-<td align="right">24.3</td>
-<td align="right">26.0</td>
-<td align="right">15.9</td>
-<td align="right">12.8</td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">61.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">39.5</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">37.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">41.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">27.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">22.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">26.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">17.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">13.6</td>
 </tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">92.0</td>
-<td align="right">39.4</td>
-<td align="right">24.9</td>
-<td align="right">41.2</td>
-<td align="right">19.5</td>
-<td align="right">12.8</td>
-<td align="right">18.8</td>
-<td align="right">12.1</td>
-<td align="right">10.1</td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">90.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">35.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">23.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">40.9</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">20.6</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">13.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">19.5</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">12.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">9.5</td>
 </tr>
-<tr class="odd">
-<td align="left">Bootstrap (Case)</td>
-<td align="right">26.3</td>
-<td align="right">21.8</td>
-<td align="right"></td>
-<td align="right">19.4</td>
-<td align="right">16.3</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">26.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">21.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">19.5</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">16.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
 </tr>
-<tr class="even">
-<td align="left">Bootstrap (Residual)</td>
-<td align="right">78.0</td>
-<td align="right">41.1</td>
-<td align="right"></td>
-<td align="right">28.0</td>
-<td align="right">15.9</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">77.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">46.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">28.7</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">17.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
 </tr>
 </tbody>
 </table>
-<table class="table">
-<caption>RmlxStats time vs Fastest Alternative (%). Below 100% →
-RmlxStats is faster</caption>
-<colgroup>
-<col width="14%">
-<col width="8%">
-<col width="9%">
-<col width="9%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-<col width="9%">
-<col width="10%">
-<col width="10%">
-</colgroup>
-<thead><tr class="header">
-<th align="left"></th>
-<th align="right">n=2000, p=50</th>
-<th align="right">n=10000, p=50</th>
-<th align="right">n=50000, p=50</th>
-<th align="right">n=2000, p=100</th>
-<th align="right">n=10000, p=100</th>
-<th align="right">n=50000, p=100</th>
-<th align="right">n=2000, p=200</th>
-<th align="right">n=10000, p=200</th>
-<th align="right">n=50000, p=200</th>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:summary-tables">
+<caption style="caption-side: top; text-align: center;">RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is faster</caption>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<col>
+<thead><tr>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=50</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=100</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=200</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=200</th>
+<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=200</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
-<td align="left">Linear Model</td>
-<td align="right">92.0</td>
-<td align="right">76.3</td>
-<td align="right">61.6</td>
-<td align="right">82.6</td>
-<td align="right">59.9</td>
-<td align="right">47.5</td>
-<td align="right">61.8</td>
-<td align="right">36.7</td>
-<td align="right">27.5</td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">95.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">73.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">59.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">86.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">57.7</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">45.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">65.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">40.9</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">32.7</td>
 </tr>
-<tr class="even">
-<td align="left">Logistic Regression</td>
-<td align="right">115.7</td>
-<td align="right">50.0</td>
-<td align="right">32.7</td>
-<td align="right">47.8</td>
-<td align="right">24.0</td>
-<td align="right">16.8</td>
-<td align="right">20.7</td>
-<td align="right">14.7</td>
-<td align="right">12.4</td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">109.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">46.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">29.9</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">46.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">25.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">17.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">21.6</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">14.5</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">11.5</td>
 </tr>
-<tr class="odd">
-<td align="left">Bootstrap (Case)</td>
-<td align="right">26.3</td>
-<td align="right">21.8</td>
-<td align="right"></td>
-<td align="right">19.4</td>
-<td align="right">16.3</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">26.1</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">21.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">19.5</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">16.8</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
 </tr>
-<tr class="even">
-<td align="left">Bootstrap (Residual)</td>
-<td align="right">78.0</td>
-<td align="right">41.1</td>
-<td align="right"></td>
-<td align="right">28.0</td>
-<td align="right">15.9</td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
-<td align="right"></td>
+<tr>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">77.2</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">46.3</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">28.7</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">17.0</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
 </tr>
 </tbody>
 </table>
