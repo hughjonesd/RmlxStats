@@ -55,18 +55,18 @@ mlxs_glmnet <- function(x,
   n_obs <- nrow(x)
   n_pred <- ncol(x)
 
+  # Convert to MLX early
+  x_mlx <- Rmlx::as_mlx(x)
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1))
+
   if (standardize) {
-    x_center <- colMeans(x)
-    x_scale <- apply(x, 2, stats::sd)
-    x_scale[is.na(x_scale) | x_scale == 0] <- 1
-    x_mlx_scaled <- scale(Rmlx::as_mlx(x), center = x_center, scale = x_scale)
-    x_std <- as.matrix(x_mlx_scaled)
-    attr(x_std, "scaled:center") <- x_center
-    attr(x_std, "scaled:scale") <- x_scale
+    x_std_mlx <- scale(x_mlx)
+    x_center <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:center"), c(n_pred, 1))
+    x_scale <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:scale"), c(n_pred, 1))
   } else {
-    x_std <- x
-    x_center <- rep(0, n_pred)
-    x_scale <- rep(1, n_pred)
+    x_std_mlx <- x_mlx
+    x_center <- Rmlx::mlx_zeros(c(n_pred, 1))
+    x_scale <- Rmlx::mlx_ones(c(n_pred, 1))
   }
 
   if (family_name %in% c("binomial", "quasibinomial")) {
@@ -82,8 +82,10 @@ mlxs_glmnet <- function(x,
     mu0 <- rep(intercept_val, n_obs)
   }
 
-  residual0 <- mu0 - y
-  z0 <- drop(crossprod(x_std, residual0) / n_obs)
+  mu0_mlx <- Rmlx::as_mlx(matrix(mu0, ncol = 1))
+  residual0_mlx <- mu0_mlx - y_mlx
+  z0_mlx <- crossprod(x_std_mlx, residual0_mlx) / n_obs
+  z0 <- as.numeric(z0_mlx)
   lambda_max <- max(abs(z0)) / max(alpha, 1e-8)
   if (is.finite(lambda_max) && lambda_max == 0) {
     lambda_max <- 1
@@ -98,22 +100,35 @@ mlxs_glmnet <- function(x,
   n_lambda <- length(lambda)
 
   ones_mlx <- Rmlx::as_mlx(matrix(1, nrow = n_obs, ncol = 1))
-  x_mlx <- Rmlx::as_mlx(x_std)
-  y_mlx <- Rmlx::as_mlx(matrix(y, ncol = 1))
-  beta_mlx <- Rmlx::as_mlx(matrix(0, nrow = n_pred, ncol = 1))
+  beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1))
+  intercept_mlx <- Rmlx::as_mlx(matrix(intercept_val, nrow = 1, ncol = 1))
 
-  beta_store <- matrix(0, nrow = n_pred, ncol = n_lambda)
-  intercept_store <- numeric(n_lambda)
+  # Keep stores as MLX to avoid per-lambda conversions
+  beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
+  intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1))
   grad_prev <- z0
   lambda_prev <- lambda[1]
 
-  col_sq_sums <- colSums(x_std^2)
+  col_sq_sums_mlx <- Rmlx::colSums(x_std_mlx^2)
+  col_sq_sums <- as.numeric(col_sq_sums_mlx)
   base_lipschitz <- max(col_sq_sums) / n_obs
   if (family_name %in% c("binomial", "quasibinomial")) {
     base_lipschitz <- 0.25 * base_lipschitz
   }
 
-  eta_mlx <- x_mlx %*% beta_mlx + ones_mlx * Rmlx::as_mlx(intercept_val)
+  # Tolerance as MLX scalar for comparisons
+  tol_mlx <- Rmlx::as_mlx(matrix(tol, nrow = 1, ncol = 1))
+
+  # Get compiled iteration function (caches on first call)
+  iter_func <- .get_compiled_iteration()
+
+  # Family flag for compiled function (1 = gaussian, 0 = binomial)
+  is_gaussian_flag <- Rmlx::as_mlx(matrix(
+    if (family_name == "gaussian") 1 else 0,
+    nrow = 1, ncol = 1
+  ))
+
+  eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
 
@@ -129,7 +144,8 @@ mlxs_glmnet <- function(x,
     } else {
       cutoff <- alpha * (2 * lambda_val - lambda_prev)
       strong_set <- which(abs(grad_prev) > cutoff)
-      beta_numeric <- beta_store[, idx - 1]
+      # Convert previous beta column to R only for strong rules check
+      beta_numeric <- as.numeric(beta_store_mlx[, idx - 1])
       nonzero_set <- which(beta_numeric != 0)
       active_idx <- sort(unique(c(strong_set, nonzero_set)))
       if (length(active_idx) == 0) {
@@ -137,57 +153,56 @@ mlxs_glmnet <- function(x,
       }
     }
 
+    # Precompute threshold for compiled function
+    thresh <- lambda_val * alpha * step
+
     for (iter in seq_len(maxit)) {
-      x_active <- x_mlx[, active_idx, drop = FALSE]
+      x_active <- x_std_mlx[, active_idx, drop = FALSE]
       beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
 
-      grad_active <- crossprod(x_active, residual_mlx) / n_obs
-      if (alpha < 1) {
-        grad_active <- grad_active + beta_prev_subset * (lambda_val * (1 - alpha))
-      }
+      # Call compiled iteration function
+      result <- iter_func(
+        x_active, beta_prev_subset, residual_mlx,
+        intercept_mlx, eta_mlx, y_mlx, ones_mlx,
+        n_obs, step, lambda_val, alpha, thresh,
+        is_gaussian_flag
+      )
 
-      beta_temp <- beta_prev_subset - grad_active * step
-      thresh <- lambda_val * alpha * step
-      beta_new_subset <- .mlxs_soft_threshold(beta_temp, thresh)
-      delta_beta <- beta_new_subset - beta_prev_subset
+      # Extract results
+      beta_mlx[active_idx, ] <- result$beta_new
+      intercept_mlx <- result$intercept_new
+      eta_mlx <- result$eta_new
+      residual_mlx <- result$residual_new
 
-      beta_mlx[active_idx, ] <- matrix(as.numeric(beta_new_subset), ncol = 1)
-
-      residual_sum <- Rmlx::mlx_sum(residual_mlx)
-      intercept_grad <- residual_sum / n_obs
-      intercept_delta <- step * as.numeric(intercept_grad)
-      intercept_val <- intercept_val - intercept_delta
-
-      if (any(abs(delta_beta) > tol)) {
-        eta_mlx <- eta_mlx + x_active %*% delta_beta
-      }
-      if (abs(intercept_delta) > tol) {
-        eta_mlx <- eta_mlx - ones_mlx * intercept_delta
-      }
-
-      mu_mlx <- family$linkinv(eta_mlx)
-      residual_mlx <- mu_mlx - y_mlx
-
-      max_change <- max(abs(as.numeric(delta_beta)))
-      if (max_change < tol && abs(intercept_delta) < tol) {
+      # Convergence check using MLX operations
+      delta_beta_max <- max(abs(result$delta_beta))
+      intercept_delta_abs <- abs(result$intercept_delta)
+      if (as.logical(delta_beta_max < tol) && as.logical(intercept_delta_abs < tol)) {
         break
       }
     }
 
-    beta_store[, idx] <- as.numeric(beta_mlx)
-    intercept_store[idx] <- intercept_val
+    # Store in MLX - no conversion until the end
+    beta_store_mlx[, idx] <- beta_mlx
+    intercept_store_mlx[idx, ] <- intercept_mlx
 
-    grad_prev <- as.numeric(crossprod(x_mlx, residual_mlx) / n_obs)
+    grad_prev <- as.numeric(crossprod(x_std_mlx, residual_mlx) / n_obs)
     lambda_prev <- lambda_val
   }
 
   if (standardize) {
-    beta_unscaled <- sweep(beta_store, 1, x_scale, "/")
-    intercept_unscaled <- intercept_store - colSums(beta_unscaled * x_center)
+    beta_unscaled <- beta_store_mlx / x_scale
+    intercept_adjustment <- Rmlx::colSums(beta_unscaled * x_center)
+    intercept_adjustment <- Rmlx::mlx_reshape(intercept_adjustment, c(n_lambda, 1))
+    intercept_unscaled <- intercept_store_mlx - intercept_adjustment
   } else {
-    beta_unscaled <- beta_store
-    intercept_unscaled <- intercept_store
+    beta_unscaled <- beta_store_mlx
+    intercept_unscaled <- intercept_store_mlx
   }
+  
+  # Convert to R only once at the very end
+  beta_unscaled <- as.matrix(beta_unscaled)
+  intercept_unscaled <- as.numeric(intercept_unscaled)
 
   rownames(beta_unscaled) <- colnames(x)
   result <- list(
@@ -208,13 +223,11 @@ mlxs_glmnet <- function(x,
 }
 
 .mlxs_soft_threshold <- function(z, thresh) {
-  thresh_vec <- Rmlx::as_mlx(thresh)
-  zero_like <- Rmlx::mlx_zeros_like(z)
-  one_like <- Rmlx::mlx_full(dim(z), 1)
-  neg_one_like <- Rmlx::mlx_full(dim(z), -1)
+  # Soft threshold: sign(z) * max(|z| - thresh, 0)
+  # Simplified to reduce temporary allocations
   abs_z <- abs(z)
-  magnitude <- abs_z - thresh_vec
-  magnitude <- Rmlx::mlx_where(magnitude > zero_like, magnitude, zero_like)
-  sign_vec <- Rmlx::mlx_where(z >= zero_like, one_like, neg_one_like)
-  magnitude * sign_vec
+  magnitude <- Rmlx::mlx_maximum(abs_z - thresh, 0)
+  # Compute sign as z / |z|, with small epsilon to avoid division by zero
+  sign_z <- z / (abs_z + 1e-10)
+  magnitude * sign_z
 }

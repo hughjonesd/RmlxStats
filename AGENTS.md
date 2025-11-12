@@ -92,6 +92,8 @@ guidance are called out below.
   https://hughjonesd.github.io/Rmlx/reference/index.html.
 - R arrays are column-major while MLX tensors are row-major; double-check axis
   handling if reductions behave unexpectedly.
+- Use explicit `Rmlx::colMeans()` and `Rmlx::colSums()` rather than unqualified
+  calls to avoid namespace confusion between base R and Rmlx methods.
 
 ### Testing Notes
 - Tests should compare MLX-backed results to base-R equivalents (e.g., `stats::lm`).
@@ -105,6 +107,98 @@ guidance are called out below.
 - Update the pkgdown site configuration (future work) so new exports appear in the
   reference index.
 
+### MLX Performance Characteristics (Learned from mlxs_glmnet optimization)
+
+#### What MLX Does Well
+- **Parallel matrix operations**: Large matrix multiplications, crossprod, etc.
+- **Batch processing**: Operating on multiple data elements simultaneously
+- **Staying on device**: Keeping data in MLX throughout a computation pipeline
+- **Vectorized operations**: Element-wise operations on large arrays
+
+#### What MLX Does Poorly (vs Fortran/C++)
+- **Small sequential operations**: Building computation graphs has overhead
+- **Frequent MLX↔R conversions**: Each conversion triggers evaluation
+- **Branching logic**: Conditionals and early exits in tight loops
+- **Single-element comparisons**: `as.logical(x > tol)` for scalars has overhead
+
+#### Conversion Overhead Is Usually Small
+Investigation of `mlxs_glmnet` revealed:
+- Eliminated ~20,000-50,000 conversions per run
+- Performance impact: ~0% (within measurement noise)
+- **Algorithm choice matters far more than conversion count**
+
+#### When to Convert to MLX
+- **Early conversion wins**: Convert inputs to MLX immediately after validation
+- **Late conversion to R**: Only convert final results back to R
+- **Keep intermediate results in MLX**: Even if you need one value in R, keep the
+  MLX version around for subsequent computations
+
+#### MLX Axis Handling
+- MLX uses C-style axis numbering in underlying C++, but Rmlx adapts to R conventions
+- Test axis operations carefully; sometimes best to compute in R then convert result
+
+#### Comparison Operators in Conditionals
+- MLX comparison returns MLX array: `x > tol` returns mlx object
+- Cannot use directly in `if()`: must convert with `as.logical()` or `as.numeric()`
+- Example: `if (as.logical(delta < tol))` works; `if (delta < tol)` errors
+
+#### mlx_compile() Capabilities and Limitations
+
+**What CAN be compiled:**
+- Pure MLX operations: matrix multiply, element-wise ops, reductions
+- Conditional logic using `mlx_where()` instead of `if/else`
+- Simple mathematical expressions (`1/(1 + exp(-x))`, etc.)
+- Functions returning a single MLX array
+
+**Measured speedups:**
+- Simple iteration logic: 1.5-1.6x speedup
+- Complex compiled functions: potentially higher
+- Worth implementing for hot paths
+
+**When to use:**
+- Inner loops executing 100s-1000s of times
+- Pure computational logic without side effects
+- When profiling shows the function is a bottleneck
+
+**Example pattern:**
+```r
+inner_core <- function(x, y, params) {
+  # Pure MLX computation
+  result <- ... # expensive operations
+  result
+}
+
+inner_compiled <- mlx_compile(inner_core)
+
+for (iter in 1:max_iter) {
+  result <- inner_compiled(x, y, params)
+  # Convergence check in R
+  if (converged(result)) break
+}
+```
+
+#### Algorithm Design for GPU
+- **Think parallel**: Can multiple coordinates/lambdas be processed simultaneously?
+- **Batch operations**: Group similar operations together
+- **Avoid sequential updates**: Each sequential step wastes GPU parallelism
+- **Example**: Coordinate descent naturally parallelizes across coordinates;
+  proximal gradient is inherently sequential
+
+#### Storage in MLX
+- Keep result storage arrays (`beta_store`, `intercept_store`) as MLX
+- Assign directly to MLX arrays: `beta_store_mlx[, idx] <- beta_mlx`
+- Only convert entire result array at the end
+- Eliminates per-iteration conversion overhead (though often small)
+
+#### When GPU Won't Help
+The `mlxs_glmnet` optimization showed GPU provides no speedup when:
+1. Algorithm is inherently sequential (e.g., proximal gradient descent)
+2. Operations are small and frequent (graph-building overhead dominates)
+3. No opportunity for parallel processing
+4. Highly optimized CPU code exists (e.g., Fortran glmnet)
+
+In such cases, focus on algorithmic improvements over GPU utilization.
+
 ### Handy Tips
 - `usethis::` helpers streamline chores; prefer them for package setup.
 - MLX arrays currently lack a default constructor; supply shape/dtype explicitly
@@ -114,3 +208,5 @@ guidance are called out below.
 - In user-facing docs, prefer the term *array* over *tensor* to match R conventions.
 - Add concise internal comments for non-obvious helper logic; keep the codebase
   self-explanatory.
+- Use `mlx_zeros()` to pre-allocate result arrays rather than converting from R
+- Profile before optimizing: conversion overhead is often smaller than expected
