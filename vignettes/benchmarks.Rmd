@@ -9,6 +9,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 editor_options:
   chunk_output_type: console
+params:
+  develop: FALSE
 ---
 
 ```{r setup, include=FALSE, message=FALSE}
@@ -28,6 +30,7 @@ library(speedglm)
 library(boot)
 library(lmboot)
 library(ggplot2)
+library(huxtable)
 
 ```
 
@@ -62,6 +65,12 @@ full_data <- data.frame(
 n_sizes <- c(2000, 10000, 50000)
 p_sizes <- c(50, 100, 200)
 
+# for fast debugging
+if (params$develop) {
+  p_sizes <- p_sizes/10
+  n_sizes <- n_sizes/10
+}
+
 bench_grid <- expand.grid(
   n = n_sizes,
   p = p_sizes,
@@ -87,7 +96,7 @@ for (i in seq_len(nrow(bench_grid))) {
 
   bm <- mark(
     "stats::lm" = lm(lm_formula, data = subset_data),
-    mlxs_lm = {
+    "RmlxStats::mlxs_lm" = {
       l <- mlxs_lm(lm_formula, data = subset_data)
       Rmlx::mlx_eval(l$coefficients)
     },
@@ -125,7 +134,7 @@ for (i in seq_len(nrow(bench_grid))) {
     "stats::glm" = glm(glm_formula, family = binomial(),
                              data = subset_data,
                              control = list(maxit = 50)),
-    mlxs_glm = {
+    "RmlxStats::mlxs_glm" = {
       g <- mlxs_glm(glm_formula, family = mlxs_binomial(),
                         data = subset_data,
                         control = list(maxit = 50, epsilon = 1e-6))
@@ -154,8 +163,8 @@ computational cost.
 
 ```{r bootstrap-benchmarks, warning=FALSE}
 boot_grid <- expand.grid(
-  n = c(2000, 10000),
-  p = c(50, 100),
+  n = n_sizes[1:2],
+  p = p_sizes[1:2],
   stringsAsFactors = FALSE
 )
 
@@ -213,14 +222,13 @@ for (i in seq_len(nrow(boot_grid))) {
 boot_df <- do.call(rbind, boot_results)
 ```
 
-## Visualization
 
-```{r prepare-viz-data}
+```{r prepare-viz-data, include = FALSE}
 all_results <- rbind(lm_df, glm_df, boot_df)
 
 all_results$method <- as.character(all_results$expression)
 all_results$median_sec <- as.numeric(all_results$median, units = "s")
-all_results$is_mlxs <- grepl("^mlxs", all_results$method)
+all_results$is_mlxs <- grepl("mlxs", all_results$method)
 
 # Summary statistics
 all_results_clean <- all_results[!is.na(all_results$median_sec), ]
@@ -234,7 +242,7 @@ summary_results <- aggregate(
 ## Summary Tables
 
 We compare RmlxStats functions both against base R, and against the fastest
-alternative tested. Numbers show `alternative time/RmlxStats time`. 
+alternative tested. Numbers show `RmlxStats time/alternative time`. 
 
 ```{r summary-tables, echo = FALSE}
 
@@ -250,10 +258,10 @@ comparison_data <- data.frame(
 )
 
 # Map methods to model types
-lm_mlxs <- "mlxs_lm"
-lm_base <- "lm"
-glm_mlxs <- "mlxs_glm"
-glm_base <- "glm"
+lm_mlxs <- "RmlxStats::mlxs_lm"
+lm_base <- "stats::lm"
+glm_mlxs <- "RmlxStats::mlxs_glm"
+glm_base <- "stats::glm"
 boot_case_mlxs <- "mlxs_case"
 boot_case_base <- "boot_case"
 boot_resid_mlxs <- "mlxs_resid"
@@ -314,7 +322,7 @@ for (model_info in models) {
 # Table 1: mlxs vs base R
 base_comparison <- comparison_data
 base_comparison$speedup <- 100 *
-  base_comparison$base_time/base_comparison$mlxs_time
+  base_comparison$mlxs_time/base_comparison$base_time
 base_comparison$config <- paste0("n=", base_comparison$n, ", p=", base_comparison$p)
 
 base_table <- reshape(base_comparison[, c("model", "config", "speedup")],
@@ -326,7 +334,7 @@ colnames(base_table) <- gsub("speedup\\.", "", colnames(base_table))
 # Table 2: mlxs vs fastest alternative
 fastest_comparison <- comparison_data
 fastest_comparison$speedup <- 100 *
-  fastest_comparison$fastest_time/fastest_comparison$mlxs_time
+  fastest_comparison$mlxs_time/fastest_comparison$fastest_time
 fastest_comparison$config <- paste0("n=", fastest_comparison$n, ", p=", fastest_comparison$p)
 
 fastest_table <- reshape(fastest_comparison[, c("model", "config", "speedup")],
@@ -353,19 +361,25 @@ rownames(fastest_table) <- c(
 # Display NA as blank cells
 options(knitr.kable.NA = '')
 
-knitr::kable(base_table, digits = 1,
-             caption = "RmlxStats vs Base R (%). Above 100% → RmlxStats is faster",
-             format = "pipe")
+huxtable::as_hux(base_table, add_rownames = "") |> 
+  huxtable::set_number_format(-1, -1, 1) |> 
+  huxtable::set_font_size(11) |> 
+  huxtable::set_caption(
+    "RmlxStats time vs base R (%). Below 100% → RmlxStats is faster")|> 
+  huxtable::style_headers(bold = TRUE)
 
-knitr::kable(fastest_table, digits = 1,
-             caption = "RmlxStats vs Fastest Alternative (%). Above 100% → RmlxStats is faster",
-             format = "pipe")
+huxtable::as_hux(fastest_table, add_rownames = "") |> 
+  huxtable::set_font_size(11) |> 
+  huxtable::set_number_format(-1, -1, 1) |> 
+  huxtable::set_caption(
+    "RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is faster") |> 
+  huxtable::style_headers(bold = TRUE)
 ```
 
 
 ```{r plot-function, echo = FALSE}
 
-plot_benchmark <- function(data, title, subtitle = "Lower is better") {
+plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary across columns") {
   ggplot(data, aes(x = median_sec, y = method, fill = is_mlxs)) +
     geom_col() +
     facet_grid(p ~ n, scales = "free", labeller = "label_both") +
@@ -414,8 +428,7 @@ boot_data$method <- factor(boot_data$method,
 
 plot_benchmark(
   boot_data,
-  "Bootstrap Benchmark: Time by Dataset Size",
-  subtitle = "Lower is better. Bootstrap with 50 iterations."
+  "Bootstrap Benchmark: Time by Dataset Size"
 )
 ```
 

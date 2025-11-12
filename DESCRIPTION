@@ -38,8 +38,8 @@ Suggests:
     speedglm,
     glmnet,
     fastglm,
-    tidyr,
-    lmboot
+    lmboot,
+    huxtable
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Encoding: UTF-8
