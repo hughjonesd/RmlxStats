@@ -86,14 +86,14 @@ for (i in seq_len(nrow(bench_grid))) {
   lm_formula <- as.formula(formula_str)
 
   bm <- mark(
-    lm = lm(lm_formula, data = subset_data),
+    "stats::lm" = lm(lm_formula, data = subset_data),
     mlxs_lm = {
       l <- mlxs_lm(lm_formula, data = subset_data)
       Rmlx::mlx_eval(l$coefficients)
     },
-    feols = feols(lm_formula, data = subset_data),
-    fastLm = RcppEigen::fastLm(lm_formula, data = subset_data),
-    speedlm = speedglm::speedlm(lm_formula, data = subset_data),
+    "fixest::feols" = feols(lm_formula, data = subset_data),
+    "RcppEigen::fastLm" = RcppEigen::fastLm(lm_formula, data = subset_data),
+    "speedglm::speedlm" = speedglm::speedlm(lm_formula, data = subset_data),
     iterations = 3,
     check = FALSE,
     filter_gc = FALSE
@@ -122,7 +122,7 @@ for (i in seq_len(nrow(bench_grid))) {
   glm_formula <- as.formula(formula_str)
 
   bm <- mark(
-    glm = glm(glm_formula, family = binomial(),
+    "stats::glm" = glm(glm_formula, family = binomial(),
                              data = subset_data,
                              control = list(maxit = 50)),
     mlxs_glm = {
@@ -131,7 +131,7 @@ for (i in seq_len(nrow(bench_grid))) {
                         control = list(maxit = 50, epsilon = 1e-6))
       Rmlx::mlx_eval(g$coefficients)
     },
-    speedglm = speedglm::speedglm(glm_formula, family = binomial(),
+    "speedglm::speedglm" = speedglm::speedglm(glm_formula, family = binomial(),
                                    data = subset_data),
     iterations = 3,
     check = FALSE,
@@ -236,7 +236,7 @@ summary_results <- aggregate(
 We compare RmlxStats functions both against base R, and against the fastest
 alternative tested. Numbers show `alternative time/RmlxStats time`. 
 
-```{r summary-tables, include = FALSE}
+```{r summary-tables, echo = FALSE}
 
 comparison_data <- data.frame(
   model = character(),
@@ -313,8 +313,9 @@ for (model_info in models) {
 
 # Table 1: mlxs vs base R
 base_comparison <- comparison_data
-base_comparison$speedup <- base_comparison$base_time/base_comparison$mlxs_time
-base_comparison$config <- paste0("n ", base_comparison$n, "/ p ", base_comparison$p)
+base_comparison$speedup <- 100 *
+  base_comparison$base_time/base_comparison$mlxs_time
+base_comparison$config <- paste0("n=", base_comparison$n, ", p=", base_comparison$p)
 
 base_table <- reshape(base_comparison[, c("model", "config", "speedup")],
                       idvar = "model", timevar = "config", direction = "wide")
@@ -324,8 +325,9 @@ colnames(base_table) <- gsub("speedup\\.", "", colnames(base_table))
 
 # Table 2: mlxs vs fastest alternative
 fastest_comparison <- comparison_data
-fastest_comparison$speedup <- fastest_comparison$fastest_time/fastest_comparison$mlxs_time
-fastest_comparison$config <- paste0("n ", fastest_comparison$n, "/ p ", fastest_comparison$p)
+fastest_comparison$speedup <- 100 *
+  fastest_comparison$fastest_time/fastest_comparison$mlxs_time
+fastest_comparison$config <- paste0("n=", fastest_comparison$n, ", p=", fastest_comparison$p)
 
 fastest_table <- reshape(fastest_comparison[, c("model", "config", "speedup")],
                          idvar = "model", timevar = "config", direction = "wide")
@@ -352,16 +354,16 @@ rownames(fastest_table) <- c(
 options(knitr.kable.NA = '')
 
 knitr::kable(base_table, digits = 1,
-             caption = "RmlxStats vs Base R. Above 1 → RmlxStats faster",
+             caption = "RmlxStats vs Base R (%). Above 100% → RmlxStats is faster",
              format = "pipe")
 
 knitr::kable(fastest_table, digits = 1,
-             caption = "RmlxStats vs Fastest Alternative. Above 1 → RmlxStats faster",
+             caption = "RmlxStats vs Fastest Alternative (%). Above 100% → RmlxStats is faster",
              format = "pipe")
 ```
 
 
-```{r plot-function, include = FALSE}
+```{r plot-function, echo = FALSE}
 
 plot_benchmark <- function(data, title, subtitle = "Lower is better") {
   ggplot(data, aes(x = median_sec, y = method, fill = is_mlxs)) +
@@ -389,21 +391,21 @@ plot_benchmark <- function(data, title, subtitle = "Lower is better") {
 
 ## Linear Models
 
-```{r plot-lm, include = FALSE}
+```{r plot-lm, echo = FALSE}
 lm_data <- subset(summary_results, model_type == "LM")
 plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
 ## GLM Models
 
-```{r plot-glm, include = FALSE}
+```{r plot-glm, echo = FALSE}
 glm_data <- subset(summary_results, model_type == "GLM")
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
 ## Bootstraps
 
-```{r plot-bootstrap, include = FALSE}
+```{r plot-bootstrap, echo = FALSE}
 boot_data <- subset(summary_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
