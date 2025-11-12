@@ -268,18 +268,176 @@ due to computational cost.</p>
 <p>We compare RmlxStats functions both against base R, and against the
 fastest alternative tested. Numbers show
 <code>alternative time/RmlxStats time</code>.</p>
+<table class="table">
+<caption>RmlxStats vs Base R. Above 1 → RmlxStats faster</caption>
+<colgroup>
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">n 2000/ p 50</th>
+<th align="right">n 10000/ p 50</th>
+<th align="right">n 50000/ p 50</th>
+<th align="right">n 2000/ p 100</th>
+<th align="right">n 10000/ p 100</th>
+<th align="right">n 50000/ p 100</th>
+<th align="right">n 2000/ p 200</th>
+<th align="right">n 10000/ p 200</th>
+<th align="right">n 50000/ p 200</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Linear Model</td>
+<td align="right">1.6</td>
+<td align="right">2.2</td>
+<td align="right">2.6</td>
+<td align="right">2.4</td>
+<td align="right">3.8</td>
+<td align="right">4.3</td>
+<td align="right">4.1</td>
+<td align="right">6.3</td>
+<td align="right">7.9</td>
+</tr>
+<tr class="even">
+<td align="left">Logistic Regression</td>
+<td align="right">1.1</td>
+<td align="right">2.8</td>
+<td align="right">4.3</td>
+<td align="right">2.4</td>
+<td align="right">5.1</td>
+<td align="right">7.9</td>
+<td align="right">5.1</td>
+<td align="right">8.5</td>
+<td align="right">9.4</td>
+</tr>
+<tr class="odd">
+<td align="left">Bootstrap (Case)</td>
+<td align="right">3.9</td>
+<td align="right">4.8</td>
+<td align="right"></td>
+<td align="right">5.3</td>
+<td align="right">6.4</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">Bootstrap (Residual)</td>
+<td align="right">1.3</td>
+<td align="right">2.3</td>
+<td align="right"></td>
+<td align="right">3.6</td>
+<td align="right">5.7</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<caption>RmlxStats vs Fastest Alternative. Above 1 → RmlxStats
+faster</caption>
+<colgroup>
+<col width="14%">
+<col width="8%">
+<col width="9%">
+<col width="9%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+<col width="9%">
+<col width="10%">
+<col width="10%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="right">n 2000/ p 50</th>
+<th align="right">n 10000/ p 50</th>
+<th align="right">n 50000/ p 50</th>
+<th align="right">n 2000/ p 100</th>
+<th align="right">n 10000/ p 100</th>
+<th align="right">n 50000/ p 100</th>
+<th align="right">n 2000/ p 200</th>
+<th align="right">n 10000/ p 200</th>
+<th align="right">n 50000/ p 200</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Linear Model</td>
+<td align="right">1.1</td>
+<td align="right">1.4</td>
+<td align="right">1.6</td>
+<td align="right">1.2</td>
+<td align="right">1.7</td>
+<td align="right">2.1</td>
+<td align="right">1.7</td>
+<td align="right">2.7</td>
+<td align="right">3.5</td>
+</tr>
+<tr class="even">
+<td align="left">Logistic Regression</td>
+<td align="right">0.9</td>
+<td align="right">2.1</td>
+<td align="right">3.3</td>
+<td align="right">2.1</td>
+<td align="right">4.1</td>
+<td align="right">5.9</td>
+<td align="right">5.1</td>
+<td align="right">7.0</td>
+<td align="right">7.6</td>
+</tr>
+<tr class="odd">
+<td align="left">Bootstrap (Case)</td>
+<td align="right">3.9</td>
+<td align="right">4.8</td>
+<td align="right"></td>
+<td align="right">5.3</td>
+<td align="right">6.4</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="left">Bootstrap (Residual)</td>
+<td align="right">1.3</td>
+<td align="right">2.3</td>
+<td align="right"></td>
+<td align="right">3.6</td>
+<td align="right">5.7</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level2">
 <h2 id="linear-models">Linear Models<a class="anchor" aria-label="anchor" href="#linear-models"></a>
 </h2>
+<p><img src="benchmarks_files/figure-html/plot-lm-1.png" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="glm-models">GLM Models<a class="anchor" aria-label="anchor" href="#glm-models"></a>
 </h2>
+<p><img src="benchmarks_files/figure-html/plot-glm-1.png" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="bootstraps">Bootstraps<a class="anchor" aria-label="anchor" href="#bootstraps"></a>
 </h2>
+<p><img src="benchmarks_files/figure-html/plot-bootstrap-1.png" width="768"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
