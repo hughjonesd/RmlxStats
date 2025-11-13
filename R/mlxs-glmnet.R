@@ -132,8 +132,7 @@ mlxs_glmnet <- function(x,
     if (family_name == "gaussian") {
       loss_fn <- function(beta) {
         eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-        residual <- y_mlx - eta
-        loss_smooth <- sum(residual^2) / (2 * n_obs)
+        loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
         if (ridge_penalty > 0) {
           loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
         }
@@ -156,10 +155,7 @@ mlxs_glmnet <- function(x,
       loss_fn <- function(beta) {
         eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
         mu <- 1 / (1 + exp(-eta))
-        # Negative log-likelihood (with small epsilon to avoid log(0))
-        eps <- 1e-10
-        mu_safe <- Rmlx::mlx_clip(mu, eps, 1 - eps)
-        loss_smooth <- -sum(y_mlx * log(mu_safe) + (1 - y_mlx) * log(1 - mu_safe)) / n_obs
+        loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
         if (ridge_penalty > 0) {
           loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
         }
@@ -184,26 +180,49 @@ mlxs_glmnet <- function(x,
       stop("Unsupported family: ", family_name, call. = FALSE)
     }
 
-    result <- Rmlx::mlx_coordinate_descent(
-      loss_fn = loss_fn,
-      beta_init = beta_mlx,
-      lambda = l1_penalty,
-      grad_fn = grad_fn,
-      lipschitz = lipschitz,
-      batch_size = NULL,
-      compile = FALSE,
-      max_iter = maxit,
-      tol = tol
-    )
+    # Alternate between updating beta and intercept
+    for (outer_iter in seq_len(10)) {  # Outer iterations for intercept
+      result <- Rmlx::mlx_coordinate_descent(
+        loss_fn = loss_fn,
+        beta_init = beta_mlx,
+        lambda = l1_penalty,
+        grad_fn = grad_fn,
+        lipschitz = lipschitz,
+        batch_size = NULL,
+        compile = FALSE,
+        max_iter = maxit %/% 10,  # Fewer inner iterations
+        tol = tol
+      )
 
-    beta_mlx <- result$beta
+      beta_mlx <- result$beta
 
-    # Update intercept (mean of residuals on standardized data)
-    if (intercept) {
-      residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
-      intercept_mlx <- sum(residual_mlx) / n_obs
-    } else {
-      intercept_mlx <- 0
+      # Update intercept
+      if (intercept) {
+        if (family_name == "gaussian") {
+          # For Gaussian, intercept is mean of residuals
+          residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
+          intercept_new <- sum(residual_mlx) / n_obs
+        } else if (family_name %in% c("binomial", "quasibinomial")) {
+          # For binomial, use Newton step for intercept
+          eta <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+          mu <- 1 / (1 + exp(-eta))
+          residual <- mu - y_mlx
+          w <- mu * (1 - mu)
+          grad_intercept <- sum(residual) / n_obs
+          hess_intercept <- sum(w) / n_obs
+          intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
+        }
+
+        # Check intercept convergence
+        if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
+          intercept_mlx <- intercept_new
+          break
+        }
+        intercept_mlx <- intercept_new
+      } else {
+        intercept_mlx <- 0
+        break
+      }
     }
 
     # Store results
