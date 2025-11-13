@@ -116,76 +116,38 @@ mlxs_glmnet <- function(x,
     base_lipschitz <- 0.25 * base_lipschitz
   }
 
-  # Tolerance as MLX scalar for comparisons
-  tol_mlx <- Rmlx::as_mlx(matrix(tol, nrow = 1, ncol = 1))
-
-  # Get compiled iteration function (caches on first call)
-  iter_func <- .get_compiled_iteration()
-
-  # Family flag for compiled function (1 = gaussian, 0 = binomial)
-  is_gaussian_flag <- Rmlx::as_mlx(matrix(
-    if (family_name == "gaussian") 1 else 0,
-    nrow = 1, ncol = 1
-  ))
-
   eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
 
+  # Coordinate descent path
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
-    step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
-    if (!is.finite(step) || step <= 0) {
-      step <- 1e-3
-    }
 
-    if (idx == 1) {
-      active_idx <- seq_len(n_pred)
-    } else {
-      cutoff <- alpha * (2 * lambda_val - lambda_prev)
-      strong_set <- which(abs(grad_prev) > cutoff)
-      # Convert previous beta column to R only for strong rules check
-      beta_numeric <- as.numeric(beta_store_mlx[, idx - 1])
-      nonzero_set <- which(beta_numeric != 0)
-      active_idx <- sort(unique(c(strong_set, nonzero_set)))
-      if (length(active_idx) == 0) {
-        active_idx <- which.max(abs(grad_prev))
-      }
-    }
+    # Run coordinate descent for this lambda
+    result <- .coordinate_descent_elastic_net(
+      X = x_std_mlx,
+      y = y_mlx,
+      lambda = lambda_val,
+      alpha = alpha,
+      beta_init = beta_mlx,
+      intercept_init = intercept_mlx,
+      fit_intercept = intercept,
+      max_iter = maxit,
+      tol = tol,
+      col_sq_sums = col_sq_sums
+    )
 
-    # Precompute threshold for compiled function
-    thresh <- lambda_val * alpha * step
+    beta_mlx <- result$beta
+    intercept_mlx <- result$intercept
 
-    for (iter in seq_len(maxit)) {
-      x_active <- x_std_mlx[, active_idx, drop = FALSE]
-      beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
-
-      # Call compiled iteration function
-      result <- iter_func(
-        x_active, beta_prev_subset, residual_mlx,
-        intercept_mlx, eta_mlx, y_mlx, ones_mlx,
-        n_obs, step, lambda_val, alpha, thresh,
-        is_gaussian_flag
-      )
-
-      # Extract results
-      beta_mlx[active_idx, ] <- result$beta_new
-      intercept_mlx <- result$intercept_new
-      eta_mlx <- result$eta_new
-      residual_mlx <- result$residual_new
-
-      # Convergence check using MLX operations
-      delta_beta_max <- max(abs(result$delta_beta))
-      intercept_delta_abs <- abs(result$intercept_delta)
-      if (as.logical(delta_beta_max < tol) && as.logical(intercept_delta_abs < tol)) {
-        break
-      }
-    }
-
-    # Store in MLX - no conversion until the end
+    # Store results
     beta_store_mlx[, idx] <- beta_mlx
     intercept_store_mlx[idx, ] <- intercept_mlx
 
+    # Update for strong rules (future optimization)
+    eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+    residual_mlx <- y_mlx - eta_mlx
     grad_prev <- as.numeric(crossprod(x_std_mlx, residual_mlx) / n_obs)
     lambda_prev <- lambda_val
   }
