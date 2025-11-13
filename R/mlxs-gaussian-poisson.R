@@ -28,7 +28,8 @@ mlxs_gaussian <- function(link = "identity") {
   }
 
   base_family$dev.resids <- function(y, mu, wt) {
-    wt * ((y - mu)^2)
+    # Use Rmlx MSE loss with reduction="none" for per-observation losses
+    wt * Rmlx::mlx_mse_loss(mu, y, reduction = "none")
   }
 
   base_family$aic <- function(y, n, mu, wt, dev) {
