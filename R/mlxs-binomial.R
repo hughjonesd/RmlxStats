@@ -49,13 +49,19 @@ mlxs_binomial <- function(link = "logit") {
   mu <- Rmlx::as_mlx(mu)
   wt <- Rmlx::as_mlx(wt)
 
-  eps <- 1e-6
-  mu_clamped <- .mlxs_binomial_clip_unit(mu, eps)
-  y_clamped <- .mlxs_binomial_clip_unit(y, eps)
+  # Use Rmlx binary cross entropy with reduction="none"
+  # Deviance = 2 * wt * (saturated_loglik - fitted_loglik)
+  # where saturated_loglik = y*log(y) + (1-y)*log(1-y)
+  # and fitted_loglik = y*log(mu) + (1-y)*log(1-mu)
+  # BCE(mu, y) = -(y*log(mu) + (1-y)*log(1-mu)) = -fitted_loglik
+  # So deviance = 2 * wt * (saturated_loglik + BCE)
 
-  term1 <- y * (log(y_clamped) - log(mu_clamped))
-  term2 <- (1 - y) * (log(1 - y_clamped) - log(1 - mu_clamped))
-  2 * wt * (term1 + term2)
+  eps <- 1e-6
+  y_clamped <- .mlxs_binomial_clip_unit(y, eps)
+  saturated_loglik <- y * log(y_clamped) + (1 - y) * log(1 - y_clamped)
+
+  bce <- Rmlx::mlx_binary_cross_entropy(mu, y, reduction = "none")
+  2 * wt * (saturated_loglik + bce)
 }
 
 .mlxs_binomial_clip_unit <- function(x, eps) {
