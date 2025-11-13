@@ -125,21 +125,86 @@ mlxs_glmnet <- function(x,
     lambda_val <- lambda[idx]
 
     # Run coordinate descent for this lambda
-    result <- .coordinate_descent_elastic_net(
-      X = x_std_mlx,
-      y = y_mlx,
-      lambda = lambda_val,
-      alpha = alpha,
+    ridge_penalty <- lambda_val * (1 - alpha)
+    l1_penalty <- lambda_val * alpha
+
+    # Define loss and gradient based on family
+    if (family_name == "gaussian") {
+      loss_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        residual <- y_mlx - eta
+        loss_smooth <- sum(residual^2) / (2 * n_obs)
+        if (ridge_penalty > 0) {
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+        }
+        loss_smooth
+      }
+
+      grad_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        residual <- y_mlx - eta
+        grad <- -crossprod(x_std_mlx, residual) / n_obs
+        if (ridge_penalty > 0) {
+          grad <- grad + ridge_penalty * beta
+        }
+        grad
+      }
+
+      lipschitz <- col_sq_sums / n_obs + ridge_penalty
+
+    } else if (family_name %in% c("binomial", "quasibinomial")) {
+      loss_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        mu <- 1 / (1 + exp(-eta))
+        # Negative log-likelihood (with small epsilon to avoid log(0))
+        eps <- 1e-10
+        mu_safe <- Rmlx::mlx_clip(mu, eps, 1 - eps)
+        loss_smooth <- -sum(y_mlx * log(mu_safe) + (1 - y_mlx) * log(1 - mu_safe)) / n_obs
+        if (ridge_penalty > 0) {
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+        }
+        loss_smooth
+      }
+
+      grad_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        mu <- 1 / (1 + exp(-eta))
+        residual <- mu - y_mlx
+        grad <- crossprod(x_std_mlx, residual) / n_obs
+        if (ridge_penalty > 0) {
+          grad <- grad + ridge_penalty * beta
+        }
+        grad
+      }
+
+      # For binomial, Lipschitz constant scaled by max(mu * (1-mu)) = 0.25
+      lipschitz <- 0.25 * col_sq_sums / n_obs + ridge_penalty
+
+    } else {
+      stop("Unsupported family: ", family_name, call. = FALSE)
+    }
+
+    result <- Rmlx::mlx_coordinate_descent(
+      loss_fn = loss_fn,
       beta_init = beta_mlx,
-      intercept_init = intercept_mlx,
-      fit_intercept = intercept,
+      lambda = l1_penalty,
+      grad_fn = grad_fn,
+      lipschitz = lipschitz,
+      batch_size = NULL,
+      compile = FALSE,
       max_iter = maxit,
-      tol = tol,
-      col_sq_sums = col_sq_sums
+      tol = tol
     )
 
     beta_mlx <- result$beta
-    intercept_mlx <- result$intercept
+
+    # Update intercept (mean of residuals on standardized data)
+    if (intercept) {
+      residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
+      intercept_mlx <- sum(residual_mlx) / n_obs
+    } else {
+      intercept_mlx <- 0
+    }
 
     # Store results
     beta_store_mlx[, idx] <- beta_mlx
