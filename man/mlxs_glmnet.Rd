@@ -15,7 +15,8 @@ mlxs_glmnet(
   standardize = TRUE,
   intercept = TRUE,
   maxit = 1000,
-  tol = 1e-06
+  tol = 1e-06,
+  use_strong_rules = TRUE
 )
 }
 \arguments{
@@ -45,6 +46,9 @@ fitting? Coefficients are returned on the original scale regardless.}
 \item{maxit}{Maximum proximal-gradient iterations per lambda value.}
 
 \item{tol}{Convergence tolerance on the coefficient updates.}
+
+\item{use_strong_rules}{Should strong rules be used to screen out inactive
+predictors? This can speed up fitting for sparse problems.}
 }
 \value{
 An object of class \code{mlxs_glmnet} containing the fitted coefficient

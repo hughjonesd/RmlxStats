@@ -24,6 +24,8 @@
 #' @param intercept Should an intercept be fit?
 #' @param maxit Maximum proximal-gradient iterations per lambda value.
 #' @param tol Convergence tolerance on the coefficient updates.
+#' @param use_strong_rules Should strong rules be used to screen out inactive
+#'   predictors? This can speed up fitting for sparse problems.
 #' @return An object of class `mlxs_glmnet` containing the fitted coefficient
 #'   path, intercepts, lambda sequence, and scaling information.
 #' @export
@@ -37,7 +39,8 @@ mlxs_glmnet <- function(x,
                         standardize = TRUE,
                         intercept = TRUE,
                         maxit = 1000,
-                        tol = 1e-6) {
+                        tol = 1e-6,
+                        use_strong_rules = TRUE) {
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
     stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)
@@ -116,47 +119,6 @@ mlxs_glmnet <- function(x,
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
 
-  # Define loss and gradient based on family
-  # These functions capture ridge_penalty which is updated in the loop
-  if (family_name == "gaussian") {
-    loss_fn <- function(beta) {
-      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-      loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
-      loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
-      loss_smooth
-    }
-
-    grad_fn <- function(beta) {
-      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-      residual <- y_mlx - eta
-      grad <- -crossprod(x_std_mlx, residual) / n_obs
-      grad <- grad + ridge_penalty * beta
-      grad
-    }
-  } else if (family_name %in% c("binomial", "quasibinomial")) {
-    loss_fn <- function(beta) {
-      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-      mu <- 1 / (1 + exp(-eta))
-      loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
-      loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
-      loss_smooth
-    }
-
-    grad_fn <- function(beta) {
-      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-      mu <- 1 / (1 + exp(-eta))
-      residual <- mu - y_mlx
-      grad <- crossprod(x_std_mlx, residual) / n_obs
-      grad <- grad + ridge_penalty * beta
-      grad
-    }
-  } else {
-    stop("Unsupported family: ", family_name, call. = FALSE)
-  }
-
-  loss_fn <- Rmlx::mlx_compile(loss_fn)
-  grad_fn <- Rmlx::mlx_compile(grad_fn)
-
   # Coordinate descent path
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
@@ -165,53 +127,142 @@ mlxs_glmnet <- function(x,
     ridge_penalty <- lambda_val * (1 - alpha)
     l1_penalty <- lambda_val * alpha
 
-    lipschitz <- col_sq_sums / n_obs + ridge_penalty
-    if (family_name %in% c("binomial", "quasibinomial")) {
-      # For binomial, Lipschitz constant scaled by max(mu * (1-mu)) = 0.25
-      lipschitz <- 0.25 * lipschitz
+    # Apply strong rules screening
+    active_set <- rep(TRUE, n_pred)
+    if (use_strong_rules && idx > 1) {
+      # Strong rule: discard j if |grad_j(lambda_prev)| < alpha * (2*lambda_k - lambda_{k-1})
+      strong_threshold <- alpha * (2 * lambda_val - lambda_prev)
+      active_set <- abs(grad_prev) >= strong_threshold
+
+      # Always keep variables that were active at previous lambda
+      beta_prev_active <- abs(as.numeric(beta_mlx)) > 0
+      active_set <- active_set | beta_prev_active
+
+      # Ensure at least one predictor is active
+      if (!any(active_set)) {
+        active_set[which.max(abs(grad_prev))] <- TRUE
+      }
     }
-    lipschitz <- Rmlx::as_mlx(lipschitz)
 
-    # Run coordinate descent for beta with current intercept fixed
-    result <- Rmlx::mlx_coordinate_descent(
-      loss_fn = loss_fn,
-      beta_init = beta_mlx,
-      lambda = l1_penalty,
-      grad_fn = grad_fn,
-      lipschitz = lipschitz,
-      compile = FALSE,
-      max_iter = maxit,
-      tol = tol
-    )
+    # Fit with KKT checking loop
+    repeat {
+      # Subset to active predictors (if all active, this is the full set)
+      active_idx <- which(active_set)
+      x_active_mlx <- x_std_mlx[, active_idx, drop = FALSE]
+      beta_active_mlx <- beta_mlx[active_idx, , drop = FALSE]
+      col_sq_sums_active <- col_sq_sums[active_idx]
 
-    beta_mlx <- result$beta
-
-    # Update intercept analytically after beta convergence
-    if (intercept) {
+      # Define loss and gradient on active set
       if (family_name == "gaussian") {
-        # For Gaussian, intercept is mean of residuals
-        residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
-        intercept_mlx <- sum(residual_mlx) / n_obs
-      } else if (family_name %in% c("binomial", "quasibinomial")) {
-        # For binomial, use Newton-Raphson for intercept (1-2 iterations)
-        for (intercept_iter in seq_len(2)) {
-          eta <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+        loss_active <- function(beta) {
+          eta <- x_active_mlx %*% beta + ones_mlx * intercept_mlx
+          loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+          loss_smooth
+        }
+        grad_active <- function(beta) {
+          eta <- x_active_mlx %*% beta + ones_mlx * intercept_mlx
+          residual <- y_mlx - eta
+          grad <- -crossprod(x_active_mlx, residual) / n_obs
+          grad <- grad + ridge_penalty * beta
+          grad
+        }
+      } else {
+        loss_active <- function(beta) {
+          eta <- x_active_mlx %*% beta + ones_mlx * intercept_mlx
+          mu <- 1 / (1 + exp(-eta))
+          loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+          loss_smooth
+        }
+        grad_active <- function(beta) {
+          eta <- x_active_mlx %*% beta + ones_mlx * intercept_mlx
           mu <- 1 / (1 + exp(-eta))
           residual <- mu - y_mlx
-          w <- mu * (1 - mu)
-          grad_intercept <- sum(residual) / n_obs
-          hess_intercept <- sum(w) / n_obs
-          intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
-
-          if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
-            intercept_mlx <- intercept_new
-            break
-          }
-          intercept_mlx <- intercept_new
+          grad <- crossprod(x_active_mlx, residual) / n_obs
+          grad <- grad + ridge_penalty * beta
+          grad
         }
       }
-    } else {
-      intercept_mlx <- Rmlx::as_mlx(0)
+
+      lipschitz_active <- col_sq_sums_active / n_obs + ridge_penalty
+      if (family_name %in% c("binomial", "quasibinomial")) {
+        lipschitz_active <- 0.25 * lipschitz_active
+      }
+      lipschitz_active <- Rmlx::as_mlx(lipschitz_active)
+
+      # Compile and run coordinate descent
+      loss_active_compiled <- Rmlx::mlx_compile(loss_active)
+      grad_active_compiled <- Rmlx::mlx_compile(grad_active)
+
+      result <- Rmlx::mlx_coordinate_descent(
+        loss_fn = loss_active_compiled,
+        beta_init = beta_active_mlx,
+        lambda = l1_penalty,
+        grad_fn = grad_active_compiled,
+        lipschitz = lipschitz_active,
+        compile = FALSE,
+        max_iter = maxit,
+        tol = tol
+      )
+
+      # Expand beta back to full size (if all active, this is a no-op)
+      beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1))
+      beta_mlx[active_idx, ] <- result$beta
+
+      # Update intercept
+      if (intercept) {
+        if (family_name == "gaussian") {
+          residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
+          intercept_mlx <- sum(residual_mlx) / n_obs
+        } else if (family_name %in% c("binomial", "quasibinomial")) {
+          for (intercept_iter in seq_len(2)) {
+            eta <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+            mu <- 1 / (1 + exp(-eta))
+            residual <- mu - y_mlx
+            w <- mu * (1 - mu)
+            grad_intercept <- sum(residual) / n_obs
+            hess_intercept <- sum(w) / n_obs
+            intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
+            if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
+              intercept_mlx <- intercept_new
+              break
+            }
+            intercept_mlx <- intercept_new
+          }
+        }
+      } else {
+        intercept_mlx <- Rmlx::as_mlx(0)
+      }
+
+      # Check KKT conditions if strong rules were used and some predictors were screened out
+      if (!use_strong_rules || sum(active_set) == n_pred) {
+        break  # No screening, so no KKT check needed
+      }
+
+      # Compute gradient for all predictors
+      eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+      if (family_name == "gaussian") {
+        residual_full <- y_mlx - eta_mlx
+        grad_full <- -crossprod(x_std_mlx, residual_full) / n_obs
+      } else {
+        mu <- 1 / (1 + exp(-eta_mlx))
+        residual_full <- mu - y_mlx
+        grad_full <- crossprod(x_std_mlx, residual_full) / n_obs
+      }
+      grad_full <- as.numeric(grad_full) + ridge_penalty * as.numeric(beta_mlx)
+
+      # Check KKT violations for inactive predictors
+      inactive_set <- !active_set
+      kkt_threshold <- l1_penalty + tol
+      violations <- inactive_set & (abs(grad_full) > kkt_threshold)
+
+      if (!any(violations)) {
+        break  # No violations, we're done
+      }
+
+      # Add violators to active set and refit
+      active_set <- active_set | violations
     }
 
     # Store results
