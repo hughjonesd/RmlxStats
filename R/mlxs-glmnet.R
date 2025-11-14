@@ -180,30 +180,29 @@ mlxs_glmnet <- function(x,
       stop("Unsupported family: ", family_name, call. = FALSE)
     }
 
-    # Alternate between updating beta and intercept
-    for (outer_iter in seq_len(10)) {  # Outer iterations for intercept
-      result <- Rmlx::mlx_coordinate_descent(
-        loss_fn = loss_fn,
-        beta_init = beta_mlx,
-        lambda = l1_penalty,
-        grad_fn = grad_fn,
-        lipschitz = lipschitz,
-        batch_size = NULL,
-        compile = FALSE,
-        max_iter = maxit %/% 10,  # Fewer inner iterations
-        tol = tol
-      )
+    # Run coordinate descent for beta with current intercept fixed
+    result <- Rmlx::mlx_coordinate_descent(
+      loss_fn = loss_fn,
+      beta_init = beta_mlx,
+      lambda = l1_penalty,
+      grad_fn = grad_fn,
+      lipschitz = lipschitz,
+      compile = FALSE,
+      max_iter = maxit,
+      tol = tol
+    )
 
-      beta_mlx <- result$beta
+    beta_mlx <- result$beta
 
-      # Update intercept
-      if (intercept) {
-        if (family_name == "gaussian") {
-          # For Gaussian, intercept is mean of residuals
-          residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
-          intercept_new <- sum(residual_mlx) / n_obs
-        } else if (family_name %in% c("binomial", "quasibinomial")) {
-          # For binomial, use Newton step for intercept
+    # Update intercept analytically after beta convergence
+    if (intercept) {
+      if (family_name == "gaussian") {
+        # For Gaussian, intercept is mean of residuals
+        residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
+        intercept_mlx <- sum(residual_mlx) / n_obs
+      } else if (family_name %in% c("binomial", "quasibinomial")) {
+        # For binomial, use Newton-Raphson for intercept (1-2 iterations)
+        for (intercept_iter in seq_len(2)) {
           eta <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
           mu <- 1 / (1 + exp(-eta))
           residual <- mu - y_mlx
@@ -211,23 +210,26 @@ mlxs_glmnet <- function(x,
           grad_intercept <- sum(residual) / n_obs
           hess_intercept <- sum(w) / n_obs
           intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
-        }
 
-        # Check intercept convergence
-        if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
+          if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
+            intercept_mlx <- intercept_new
+            break
+          }
           intercept_mlx <- intercept_new
-          break
         }
-        intercept_mlx <- intercept_new
-      } else {
-        intercept_mlx <- 0
-        break
       }
+    } else {
+      intercept_mlx <- Rmlx::as_mlx(0)
     }
 
     # Store results
     beta_store_mlx[, idx] <- beta_mlx
     intercept_store_mlx[idx, ] <- intercept_mlx
+
+    # Force evaluation at each lambda (outer loop iteration)
+    # See: https://ml-explore.github.io/mlx/build/html/usage/lazy_evaluation.html
+    Rmlx::mlx_eval(beta_mlx)
+    Rmlx::mlx_eval(intercept_mlx)
 
     # Update for strong rules (future optimization)
     eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx

@@ -1,3 +1,6 @@
+# Suppress R CMD check notes for closure variables
+utils::globalVariables("compiled")
+
 .mlxs_coef_names <- function(object) {
   if (!is.null(object$coef_names)) {
     return(object$coef_names)
