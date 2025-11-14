@@ -134,12 +134,15 @@ mlxs_glmnet <- function(x,
       strong_threshold <- alpha * (2 * lambda_val - lambda_prev)
       active_set <- abs(grad_prev) >= strong_threshold
 
+      # Handle NAs (treat as active to be safe)
+      active_set[is.na(active_set)] <- TRUE
+
       # Always keep variables that were active at previous lambda
       beta_prev_active <- abs(as.numeric(beta_mlx)) > 0
       active_set <- active_set | beta_prev_active
 
       # Ensure at least one predictor is active
-      if (!any(active_set)) {
+      if (!any(active_set, na.rm = TRUE)) {
         active_set[which.max(abs(grad_prev))] <- TRUE
       }
     }
@@ -257,7 +260,10 @@ mlxs_glmnet <- function(x,
       kkt_threshold <- l1_penalty + tol
       violations <- inactive_set & (abs(grad_full) > kkt_threshold)
 
-      if (!any(violations)) {
+      # Handle NAs (treat as no violation to be safe)
+      violations[is.na(violations)] <- FALSE
+
+      if (!any(violations, na.rm = TRUE)) {
         break  # No violations, we're done
       }
 
