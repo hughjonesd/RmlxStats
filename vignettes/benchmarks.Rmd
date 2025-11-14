@@ -162,8 +162,8 @@ For bootstrap, we use only the smaller datasets due to computational cost.
 
 ```{r bootstrap-benchmarks, warning=FALSE}
 boot_grid <- expand.grid(
-  n = n_sizes[1:3],
-  p = p_sizes[1:2],
+  n = n_sizes[1:2],
+  p = p_sizes[1:3],
   stringsAsFactors = FALSE
 )
 
