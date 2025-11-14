@@ -111,14 +111,51 @@ mlxs_glmnet <- function(x,
 
   col_sq_sums_mlx <- Rmlx::colSums(x_std_mlx^2)
   col_sq_sums <- as.numeric(col_sq_sums_mlx)
-  base_lipschitz <- max(col_sq_sums) / n_obs
-  if (family_name %in% c("binomial", "quasibinomial")) {
-    base_lipschitz <- 0.25 * base_lipschitz
-  }
 
   eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
+
+  # Define loss and gradient based on family
+  # These functions capture ridge_penalty which is updated in the loop
+  if (family_name == "gaussian") {
+    loss_fn <- function(beta) {
+      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+      loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
+      loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+      loss_smooth
+    }
+
+    grad_fn <- function(beta) {
+      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+      residual <- y_mlx - eta
+      grad <- -crossprod(x_std_mlx, residual) / n_obs
+      grad <- grad + ridge_penalty * beta
+      grad
+    }
+  } else if (family_name %in% c("binomial", "quasibinomial")) {
+    loss_fn <- function(beta) {
+      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+      mu <- 1 / (1 + exp(-eta))
+      loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
+      loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+      loss_smooth
+    }
+
+    grad_fn <- function(beta) {
+      eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+      mu <- 1 / (1 + exp(-eta))
+      residual <- mu - y_mlx
+      grad <- crossprod(x_std_mlx, residual) / n_obs
+      grad <- grad + ridge_penalty * beta
+      grad
+    }
+  } else {
+    stop("Unsupported family: ", family_name, call. = FALSE)
+  }
+
+  loss_fn <- Rmlx::mlx_compile(loss_fn)
+  grad_fn <- Rmlx::mlx_compile(grad_fn)
 
   # Coordinate descent path
   for (idx in seq_along(lambda)) {
@@ -128,57 +165,12 @@ mlxs_glmnet <- function(x,
     ridge_penalty <- lambda_val * (1 - alpha)
     l1_penalty <- lambda_val * alpha
 
-    # Define loss and gradient based on family
-    if (family_name == "gaussian") {
-      loss_fn <- function(beta) {
-        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-        loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
-        if (ridge_penalty > 0) {
-          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
-        }
-        loss_smooth
-      }
-
-      grad_fn <- function(beta) {
-        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-        residual <- y_mlx - eta
-        grad <- -crossprod(x_std_mlx, residual) / n_obs
-        if (ridge_penalty > 0) {
-          grad <- grad + ridge_penalty * beta
-        }
-        grad
-      }
-
-      lipschitz <- col_sq_sums / n_obs + ridge_penalty
-
-    } else if (family_name %in% c("binomial", "quasibinomial")) {
-      loss_fn <- function(beta) {
-        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-        mu <- 1 / (1 + exp(-eta))
-        loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
-        if (ridge_penalty > 0) {
-          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
-        }
-        loss_smooth
-      }
-
-      grad_fn <- function(beta) {
-        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
-        mu <- 1 / (1 + exp(-eta))
-        residual <- mu - y_mlx
-        grad <- crossprod(x_std_mlx, residual) / n_obs
-        if (ridge_penalty > 0) {
-          grad <- grad + ridge_penalty * beta
-        }
-        grad
-      }
-
+    lipschitz <- col_sq_sums / n_obs + ridge_penalty
+    if (family_name %in% c("binomial", "quasibinomial")) {
       # For binomial, Lipschitz constant scaled by max(mu * (1-mu)) = 0.25
-      lipschitz <- 0.25 * col_sq_sums / n_obs + ridge_penalty
-
-    } else {
-      stop("Unsupported family: ", family_name, call. = FALSE)
+      lipschitz <- 0.25 * lipschitz
     }
+    lipschitz <- Rmlx::as_mlx(lipschitz)
 
     # Run coordinate descent for beta with current intercept fixed
     result <- Rmlx::mlx_coordinate_descent(
