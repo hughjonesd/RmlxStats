@@ -43,6 +43,12 @@ guidance are called out below.
 - **READ THE MLX AND LOCAL CODEBASE.** Before changing behaviour, scan the existing MLX
   helpers and this repo to stay aligned with current conventions—assume the answer
   probably already exists somewhere nearby.
+- **CHECK YOUR CODE BEFORE THEORIZING.** When debugging performance issues, verify the
+  implementation is correct before building theories about algorithmic trade-offs or
+  architectural constraints. Profile to find bottlenecks, then inspect the actual code
+  at those hot spots. A simple bug (unnecessary loop, missing vectorization) is more
+  likely than a fundamental architectural mismatch. Be empirical and modest about
+  your capabilities.
 
 ## Commit & Pull Request Guidelines
 - Follow imperative, capitalized commit messages (e.g., `Add mlxs_lm interface`).

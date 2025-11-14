@@ -116,76 +116,124 @@ mlxs_glmnet <- function(x,
     base_lipschitz <- 0.25 * base_lipschitz
   }
 
-  # Tolerance as MLX scalar for comparisons
-  tol_mlx <- Rmlx::as_mlx(matrix(tol, nrow = 1, ncol = 1))
-
-  # Get compiled iteration function (caches on first call)
-  iter_func <- .get_compiled_iteration()
-
-  # Family flag for compiled function (1 = gaussian, 0 = binomial)
-  is_gaussian_flag <- Rmlx::as_mlx(matrix(
-    if (family_name == "gaussian") 1 else 0,
-    nrow = 1, ncol = 1
-  ))
-
   eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   residual_mlx <- mu_mlx - y_mlx
 
+  # Coordinate descent path
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
-    step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
-    if (!is.finite(step) || step <= 0) {
-      step <- 1e-3
-    }
 
-    if (idx == 1) {
-      active_idx <- seq_len(n_pred)
+    # Run coordinate descent for this lambda
+    ridge_penalty <- lambda_val * (1 - alpha)
+    l1_penalty <- lambda_val * alpha
+
+    # Define loss and gradient based on family
+    if (family_name == "gaussian") {
+      loss_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        loss_smooth <- Rmlx::mlx_mse_loss(eta, y_mlx, reduction = "mean")
+        if (ridge_penalty > 0) {
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+        }
+        loss_smooth
+      }
+
+      grad_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        residual <- y_mlx - eta
+        grad <- -crossprod(x_std_mlx, residual) / n_obs
+        if (ridge_penalty > 0) {
+          grad <- grad + ridge_penalty * beta
+        }
+        grad
+      }
+
+      lipschitz <- col_sq_sums / n_obs + ridge_penalty
+
+    } else if (family_name %in% c("binomial", "quasibinomial")) {
+      loss_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        mu <- 1 / (1 + exp(-eta))
+        loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
+        if (ridge_penalty > 0) {
+          loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
+        }
+        loss_smooth
+      }
+
+      grad_fn <- function(beta) {
+        eta <- x_std_mlx %*% beta + ones_mlx * intercept_mlx
+        mu <- 1 / (1 + exp(-eta))
+        residual <- mu - y_mlx
+        grad <- crossprod(x_std_mlx, residual) / n_obs
+        if (ridge_penalty > 0) {
+          grad <- grad + ridge_penalty * beta
+        }
+        grad
+      }
+
+      # For binomial, Lipschitz constant scaled by max(mu * (1-mu)) = 0.25
+      lipschitz <- 0.25 * col_sq_sums / n_obs + ridge_penalty
+
     } else {
-      cutoff <- alpha * (2 * lambda_val - lambda_prev)
-      strong_set <- which(abs(grad_prev) > cutoff)
-      # Convert previous beta column to R only for strong rules check
-      beta_numeric <- as.numeric(beta_store_mlx[, idx - 1])
-      nonzero_set <- which(beta_numeric != 0)
-      active_idx <- sort(unique(c(strong_set, nonzero_set)))
-      if (length(active_idx) == 0) {
-        active_idx <- which.max(abs(grad_prev))
-      }
+      stop("Unsupported family: ", family_name, call. = FALSE)
     }
 
-    # Precompute threshold for compiled function
-    thresh <- lambda_val * alpha * step
+    # Run coordinate descent for beta with current intercept fixed
+    result <- Rmlx::mlx_coordinate_descent(
+      loss_fn = loss_fn,
+      beta_init = beta_mlx,
+      lambda = l1_penalty,
+      grad_fn = grad_fn,
+      lipschitz = lipschitz,
+      compile = FALSE,
+      max_iter = maxit,
+      tol = tol
+    )
 
-    for (iter in seq_len(maxit)) {
-      x_active <- x_std_mlx[, active_idx, drop = FALSE]
-      beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
+    beta_mlx <- result$beta
 
-      # Call compiled iteration function
-      result <- iter_func(
-        x_active, beta_prev_subset, residual_mlx,
-        intercept_mlx, eta_mlx, y_mlx, ones_mlx,
-        n_obs, step, lambda_val, alpha, thresh,
-        is_gaussian_flag
-      )
+    # Update intercept analytically after beta convergence
+    if (intercept) {
+      if (family_name == "gaussian") {
+        # For Gaussian, intercept is mean of residuals
+        residual_mlx <- y_mlx - x_std_mlx %*% beta_mlx
+        intercept_mlx <- sum(residual_mlx) / n_obs
+      } else if (family_name %in% c("binomial", "quasibinomial")) {
+        # For binomial, use Newton-Raphson for intercept (1-2 iterations)
+        for (intercept_iter in seq_len(2)) {
+          eta <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+          mu <- 1 / (1 + exp(-eta))
+          residual <- mu - y_mlx
+          w <- mu * (1 - mu)
+          grad_intercept <- sum(residual) / n_obs
+          hess_intercept <- sum(w) / n_obs
+          intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
 
-      # Extract results
-      beta_mlx[active_idx, ] <- result$beta_new
-      intercept_mlx <- result$intercept_new
-      eta_mlx <- result$eta_new
-      residual_mlx <- result$residual_new
-
-      # Convergence check using MLX operations
-      delta_beta_max <- max(abs(result$delta_beta))
-      intercept_delta_abs <- abs(result$intercept_delta)
-      if (as.logical(delta_beta_max < tol) && as.logical(intercept_delta_abs < tol)) {
-        break
+          if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
+            intercept_mlx <- intercept_new
+            break
+          }
+          intercept_mlx <- intercept_new
+        }
       }
+    } else {
+      intercept_mlx <- Rmlx::as_mlx(0)
     }
 
-    # Store in MLX - no conversion until the end
+    # Store results
     beta_store_mlx[, idx] <- beta_mlx
     intercept_store_mlx[idx, ] <- intercept_mlx
 
+    # Force evaluation at each lambda (outer loop iteration)
+    # See: https://ml-explore.github.io/mlx/build/html/usage/lazy_evaluation.html
+    Rmlx::mlx_eval(beta_mlx)
+    Rmlx::mlx_eval(intercept_mlx)
+
+    # Update for strong rules (future optimization)
+    eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
+    residual_mlx <- y_mlx - eta_mlx
     grad_prev <- as.numeric(crossprod(x_std_mlx, residual_mlx) / n_obs)
     lambda_prev <- lambda_val
   }
