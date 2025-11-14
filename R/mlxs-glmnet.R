@@ -26,6 +26,9 @@
 #' @param tol Convergence tolerance on the coefficient updates.
 #' @param use_strong_rules Should strong rules be used to screen out inactive
 #'   predictors? This can speed up fitting for sparse problems.
+#' @param block_size Number of coefficients to update per gradient evaluation.
+#'   Set to 1 for classic coordinate descent; larger values (e.g., 16-64) batch
+#'   updates for speed at the cost of a slightly more conservative step size.
 #' @return An object of class `mlxs_glmnet` containing the fitted coefficient
 #'   path, intercepts, lambda sequence, and scaling information.
 #' @export
@@ -40,7 +43,8 @@ mlxs_glmnet <- function(x,
                         intercept = TRUE,
                         maxit = 1000,
                         tol = 1e-6,
-                        use_strong_rules = TRUE) {
+                        use_strong_rules = TRUE,
+                        block_size = 1L) {
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
     stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)
@@ -151,9 +155,17 @@ mlxs_glmnet <- function(x,
     repeat {
       # Subset to active predictors (if all active, this is the full set)
       active_idx <- which(active_set)
+
+      # Debug: check for empty active set
+      if (length(active_idx) == 0) {
+        stop("Empty active set at lambda index ", idx,
+             ". This should not happen - strong rules logic has a bug.")
+      }
+
       x_active_mlx <- x_std_mlx[, active_idx, drop = FALSE]
       beta_active_mlx <- beta_mlx[active_idx, , drop = FALSE]
       col_sq_sums_active <- col_sq_sums[active_idx]
+
 
       # Define loss and gradient on active set
       if (family_name == "gaussian") {
@@ -192,22 +204,78 @@ mlxs_glmnet <- function(x,
       if (family_name %in% c("binomial", "quasibinomial")) {
         lipschitz_active <- 0.25 * lipschitz_active
       }
-      lipschitz_active <- Rmlx::as_mlx(lipschitz_active)
 
-      # Compile and run coordinate descent
-      loss_active_compiled <- Rmlx::mlx_compile(loss_active)
-      grad_active_compiled <- Rmlx::mlx_compile(grad_active)
+      # Add small epsilon for numerical stability when ridge_penalty is 0
+      lipschitz_active <- lipschitz_active + 1e-8
+
+      lipschitz_active <- Rmlx::mlx_reshape(Rmlx::as_mlx(lipschitz_active),
+                                            c(length(active_idx), 1))
+
+      block_size_active <- max(1L, min(as.integer(block_size), length(active_idx)))
+      if (block_size_active > 1L && family_name == "gaussian") {
+        block_indices <- split(seq_len(length(active_idx)),
+                               ceiling(seq_len(length(active_idx)) / block_size_active))
+        for (blk in block_indices) {
+          if (length(blk) <= 1L) next
+          x_block <- x_active_mlx[, blk, drop = FALSE]
+          gram <- crossprod(x_block, x_block) / n_obs
+          if (ridge_penalty > 0) {
+            eye_blk <- Rmlx::mlx_eye(length(blk), dtype = gram$dtype, device = gram$device)
+            gram <- gram + ridge_penalty * eye_blk
+          }
+          svd_vals <- Rmlx::svd(gram, nu = 0, nv = 0)
+          spectral <- max(as.numeric(svd_vals$d))
+          diag_vals <- as.numeric(lipschitz_active[blk, , drop = FALSE])
+          diag_max <- max(diag_vals)
+          if (spectral > diag_max && diag_max > 0) {
+            scale <- spectral / diag_max
+            lipschitz_active[blk, ] <- lipschitz_active[blk, ] * scale
+          }
+        }
+      } else {
+        block_size_active <- 1L
+      }
+
+      grad_cache <- NULL
+      if (family_name == "gaussian") {
+        grad_cache <- new.env(parent = emptyenv())
+        grad_cache$type <- "gaussian"
+        grad_cache$x <- x_active_mlx
+        grad_cache$n_obs <- n_obs
+        grad_cache$ridge_penalty <- ridge_penalty
+        grad_cache$residual <- y_mlx - (x_active_mlx %*% beta_active_mlx + ones_mlx * intercept_mlx)
+      } else if (family_name %in% c("binomial", "quasibinomial")) {
+        grad_cache <- new.env(parent = emptyenv())
+        grad_cache$type <- "binomial"
+        grad_cache$x <- x_active_mlx
+        grad_cache$n_obs <- n_obs
+        grad_cache$ridge_penalty <- ridge_penalty
+        grad_cache$y <- y_mlx
+        grad_cache$eta <- x_active_mlx %*% beta_active_mlx + ones_mlx * intercept_mlx
+        grad_cache$mu <- 1 / (1 + exp(-grad_cache$eta))
+        grad_cache$residual <- grad_cache$mu - y_mlx
+      }
+
+      # Run coordinate descent (let it handle compilation internally)
 
       result <- Rmlx::mlx_coordinate_descent(
-        loss_fn = loss_active_compiled,
+        loss_fn = loss_active,
         beta_init = beta_active_mlx,
         lambda = l1_penalty,
-        grad_fn = grad_active_compiled,
+        grad_fn = grad_active,
         lipschitz = lipschitz_active,
-        compile = FALSE,
         max_iter = maxit,
-        tol = tol
+        tol = tol,
+        block_size = block_size_active,
+        grad_cache = grad_cache
       )
+
+      # Check for NaN in result
+      result_beta_vec <- as.numeric(result$beta)
+      if (any(is.nan(result_beta_vec))) {
+        warning(sprintf("Coordinate descent produced NaN at lambda index %d (lambda=%.6f, converged=%s, iterations=%d)",
+                        idx, lambda_val, result$converged, result$iterations))
+      }
 
       # Expand beta back to full size (if all active, this is a no-op)
       beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1))

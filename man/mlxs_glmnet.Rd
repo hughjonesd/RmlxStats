@@ -16,7 +16,8 @@ mlxs_glmnet(
   intercept = TRUE,
   maxit = 1000,
   tol = 1e-06,
-  use_strong_rules = TRUE
+  use_strong_rules = TRUE,
+  block_size = 1L
 )
 }
 \arguments{
@@ -49,6 +50,10 @@ fitting? Coefficients are returned on the original scale regardless.}
 
 \item{use_strong_rules}{Should strong rules be used to screen out inactive
 predictors? This can speed up fitting for sparse problems.}
+
+\item{block_size}{Number of coefficients to update per gradient evaluation.
+Set to 1 for classic coordinate descent; larger values (e.g., 16-64) batch
+updates for speed at the cost of a slightly more conservative step size.}
 }
 \value{
 An object of class \code{mlxs_glmnet} containing the fitted coefficient
