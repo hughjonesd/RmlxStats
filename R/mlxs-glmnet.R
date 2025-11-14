@@ -4,9 +4,9 @@
 #' the heavy linear algebra. Currently supports Gaussian and binomial families
 #' with an optional intercept and column standardisation.
 #'
-#' @note This function is a proof-of-concept. On large dense problems it is
-#'   typically several times slower than the highly optimised
-#'   [glmnet::glmnet()] implementation.
+#' @note This function is early work. It is currently only faster than 
+#'   [glmnet::glmnet()] for very large data: roughly 100,000 observations 
+#'   and 1000 predictors.
 #'
 #' @param x Numeric matrix of predictors (observations in rows).
 #' @param y Numeric response vector (for binomial, values must be 0/1).
