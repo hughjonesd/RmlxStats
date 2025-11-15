@@ -14,7 +14,7 @@ test_that("mlxs_glmnet matches glmnet for gaussian lasso", {
                      standardize = TRUE, maxit = 3000, tol = 1e-6)
 
   expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(fit$a0[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("mlxs_glmnet matches glmnet for binomial lasso", {
@@ -33,7 +33,7 @@ test_that("mlxs_glmnet matches glmnet for binomial lasso", {
                      standardize = TRUE, maxit = 4000, tol = 1e-6)
 
   expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(fit$a0[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("mlxs_glmnet works with standardize = FALSE", {
@@ -50,7 +50,7 @@ test_that("mlxs_glmnet works with standardize = FALSE", {
                      standardize = FALSE, maxit = 3000, tol = 1e-6)
 
   expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(fit$a0[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("strong rules produce identical results to non-screened for gaussian", {
@@ -70,9 +70,9 @@ test_that("strong rules produce identical results to non-screened for gaussian",
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1,
                                nlambda = 20, use_strong_rules = FALSE)
 
-  expect_equal(fit_with_rules$beta, fit_no_rules$beta, tolerance = 1e-5)
-  expect_equal(fit_with_rules$a0, fit_no_rules$a0, tolerance = 1e-5)
-  expect_equal(fit_with_rules$lambda, fit_no_rules$lambda)
+  expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$lambda), as.numeric(fit_no_rules$lambda))
 })
 
 test_that("strong rules produce identical results to non-screened for binomial", {
@@ -94,8 +94,8 @@ test_that("strong rules produce identical results to non-screened for binomial",
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_binomial(), alpha = 1,
                                nlambda = 15, use_strong_rules = FALSE)
 
-  expect_equal(fit_with_rules$beta, fit_no_rules$beta, tolerance = 1e-5)
-  expect_equal(fit_with_rules$a0, fit_no_rules$a0, tolerance = 1e-5)
+  expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
 })
 
 test_that("strong rules work with elastic net (alpha < 1)", {
@@ -111,8 +111,8 @@ test_that("strong rules work with elastic net (alpha < 1)", {
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 0.5,
                                nlambda = 20, use_strong_rules = FALSE)
 
-  expect_equal(fit_with_rules$beta, fit_no_rules$beta, tolerance = 1e-5)
-  expect_equal(fit_with_rules$a0, fit_no_rules$a0, tolerance = 1e-5)
+  expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
 })
 
 test_that("strong rules work with very sparse problems", {
@@ -132,12 +132,12 @@ test_that("strong rules work with very sparse problems", {
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1,
                                nlambda = 25, use_strong_rules = FALSE)
 
-  expect_equal(fit_with_rules$beta, fit_no_rules$beta, tolerance = 1e-5)
-  expect_equal(fit_with_rules$a0, fit_no_rules$a0, tolerance = 1e-5)
+  expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
 
   # Check that some screening actually happened
   # (most lambdas should have fewer than p non-zero coefficients)
-  n_nonzero_per_lambda <- colSums(abs(fit_with_rules$beta) > 1e-8)
+  n_nonzero_per_lambda <- colSums(abs(as.matrix(fit_with_rules$beta)) > 1e-8)
   expect_true(median(n_nonzero_per_lambda) < p)
 })
 
@@ -156,6 +156,6 @@ test_that("strong rules work with dense problems", {
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1,
                                nlambda = 15, use_strong_rules = FALSE)
 
-  expect_equal(fit_with_rules$beta, fit_no_rules$beta, tolerance = 1e-5)
-  expect_equal(fit_with_rules$a0, fit_no_rules$a0, tolerance = 1e-5)
+  expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
+  expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
 })

@@ -29,8 +29,10 @@
 #' @param block_size Number of coefficients to update per gradient evaluation.
 #'   Set to 1 for classic coordinate descent; larger values (e.g., 16-64) batch
 #'   updates for speed at the cost of a slightly more conservative step size.
-#' @return An object of class `mlxs_glmnet` containing the fitted coefficient
-#'   path, intercepts, lambda sequence, and scaling information.
+#' @return An object of class `mlxs_glmnet` containing MLX arrays for the
+#'   coefficient path (`beta`), intercepts (`a0`), and lambda sequence
+#'   (`lambda`). Use `as.matrix()` / `as.numeric()` or the provided print
+#'   method to materialise these on the host when needed.
 #' @export
 mlxs_glmnet <- function(x,
                         y,
@@ -92,8 +94,8 @@ mlxs_glmnet <- function(x,
   mu0_mlx <- Rmlx::as_mlx(matrix(mu0, ncol = 1))
   residual0_mlx <- mu0_mlx - y_mlx
   z0_mlx <- crossprod(x_std_mlx, residual0_mlx) / n_obs
-  z0 <- as.numeric(z0_mlx)
-  lambda_max <- max(abs(z0)) / max(alpha, 1e-8)
+  z0_vals <- as.numeric(z0_mlx)
+  lambda_max <- max(abs(z0_vals)) / max(alpha, 1e-8)
   if (is.finite(lambda_max) && lambda_max == 0) {
     lambda_max <- 1
   }
@@ -113,7 +115,7 @@ mlxs_glmnet <- function(x,
   # Keep stores as MLX to avoid per-lambda conversions
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1))
-  grad_prev <- z0
+  grad_prev <- z0_mlx
   lambda_prev <- lambda[1]
 
   col_sq_sums_mlx <- Rmlx::colSums(x_std_mlx^2)
@@ -134,9 +136,10 @@ mlxs_glmnet <- function(x,
     # Apply strong rules screening
     active_set <- rep(TRUE, n_pred)
     if (use_strong_rules && idx > 1) {
+      grad_prev_host <- as.numeric(grad_prev)
       # Strong rule: discard j if |grad_j(lambda_prev)| < alpha * (2*lambda_k - lambda_{k-1})
       strong_threshold <- alpha * (2 * lambda_val - lambda_prev)
-      active_set <- abs(grad_prev) >= strong_threshold
+      active_set <- abs(grad_prev_host) >= strong_threshold
 
       # Handle NAs (treat as active to be safe)
       active_set[is.na(active_set)] <- TRUE
@@ -147,12 +150,14 @@ mlxs_glmnet <- function(x,
 
       # Ensure at least one predictor is active
       if (!any(active_set, na.rm = TRUE)) {
-        active_set[which.max(abs(grad_prev))] <- TRUE
+        active_set[which.max(abs(grad_prev_host))] <- TRUE
       }
     }
+    active_mask <- Rmlx::as_mlx(matrix(as.integer(active_set), ncol = 1), dtype = "bool")
 
     # Fit with KKT checking loop
     repeat {
+      active_set <- as.logical(as.array(active_mask))
       # Subset to active predictors (if all active, this is the full set)
       active_idx <- which(active_set)
 
@@ -321,12 +326,13 @@ mlxs_glmnet <- function(x,
         residual_full <- mu - y_mlx
         grad_full <- crossprod(x_std_mlx, residual_full) / n_obs
       }
-      grad_full <- as.numeric(grad_full) + ridge_penalty * as.numeric(beta_mlx)
+      grad_full <- grad_full + ridge_penalty * beta_mlx
 
       # Check KKT violations for inactive predictors
-      inactive_set <- !active_set
+      inactive_mask <- !active_mask
       kkt_threshold <- l1_penalty + tol
-      violations <- inactive_set & (abs(grad_full) > kkt_threshold)
+      violations_mask <- inactive_mask & (abs(grad_full) > kkt_threshold)
+      violations <- as.logical(as.array(violations_mask))
 
       # Handle NAs (treat as no violation to be safe)
       violations[is.na(violations)] <- FALSE
@@ -337,6 +343,7 @@ mlxs_glmnet <- function(x,
 
       # Add violators to active set and refit
       active_set <- active_set | violations
+      active_mask <- active_mask | violations_mask
     }
 
     # Store results
@@ -351,7 +358,7 @@ mlxs_glmnet <- function(x,
     # Update for strong rules (future optimization)
     eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
     residual_mlx <- y_mlx - eta_mlx
-    grad_prev <- as.numeric(crossprod(x_std_mlx, residual_mlx) / n_obs)
+    grad_prev <- crossprod(x_std_mlx, residual_mlx) / n_obs
     lambda_prev <- lambda_val
   }
 
@@ -364,22 +371,19 @@ mlxs_glmnet <- function(x,
     beta_unscaled <- beta_store_mlx
     intercept_unscaled <- intercept_store_mlx
   }
-  
-  # Convert to R only once at the very end
-  beta_unscaled <- as.matrix(beta_unscaled)
-  intercept_unscaled <- as.numeric(intercept_unscaled)
 
-  rownames(beta_unscaled) <- colnames(x)
   result <- list(
     a0 = intercept_unscaled,
     beta = beta_unscaled,
-    lambda = lambda,
+    lambda = Rmlx::as_mlx(lambda),
+    lambda_numeric = lambda,
     alpha = alpha,
     family = family_name,
     standardize = standardize,
     intercept = intercept,
     x_center = x_center,
     x_scale = x_scale,
+    coef_names = colnames(x),
     call = match.call()
   )
 

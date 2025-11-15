@@ -56,8 +56,10 @@ Set to 1 for classic coordinate descent; larger values (e.g., 16-64) batch
 updates for speed at the cost of a slightly more conservative step size.}
 }
 \value{
-An object of class \code{mlxs_glmnet} containing the fitted coefficient
-path, intercepts, lambda sequence, and scaling information.
+An object of class \code{mlxs_glmnet} containing MLX arrays for the
+coefficient path (\code{beta}), intercepts (\code{a0}), and lambda sequence
+(\code{lambda}). Use \code{as.matrix()} / \code{as.numeric()} or the provided print
+method to materialise these on the host when needed.
 }
 \description{
 Fit lasso or elastic-net penalised regression paths using MLX tensors for
