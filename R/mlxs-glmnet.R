@@ -46,7 +46,7 @@ mlxs_glmnet <- function(x,
                         maxit = 1000,
                         tol = 1e-6,
                         use_strong_rules = TRUE,
-                        block_size = 1L) {
+                        block_size = 16L) {
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
     stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)
