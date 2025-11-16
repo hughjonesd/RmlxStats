@@ -1,4 +1,8 @@
 url: https://hughjonesd.github.io/RmlxStats
 template:
   bootstrap: 5
-
+reference:
+  - title: Linear Models
+    contents:
+      - mlxs_lm
+      - mlxs_lm_fit

@@ -17,7 +17,7 @@ mlxs_glmnet(
   maxit = 1000,
   tol = 1e-06,
   use_strong_rules = TRUE,
-  block_size = 1L
+  block_size = 16L
 )
 }
 \arguments{
