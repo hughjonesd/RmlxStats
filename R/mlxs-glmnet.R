@@ -4,8 +4,8 @@
 #' the heavy linear algebra. Currently supports Gaussian and binomial families
 #' with an optional intercept and column standardisation.
 #'
-#' @note This function is early work. It is currently only faster than 
-#'   [glmnet::glmnet()] for very large data: roughly 100,000 observations 
+#' @note This function is early work. It is currently only faster than
+#'   [glmnet::glmnet()] for very large data: roughly 100,000 observations
 #'   and 1000 predictors.
 #'
 #' @param x Numeric matrix of predictors (observations in rows).
@@ -34,25 +34,33 @@
 #'   (`lambda`). Use `as.matrix()` / `as.numeric()` or the provided print
 #'   method to materialise these on the host when needed.
 #' @export
-mlxs_glmnet <- function(x,
-                        y,
-                        family = mlxs_gaussian(),
-                        alpha = 1,
-                        lambda = NULL,
-                        nlambda = 100,
-                        lambda_min_ratio = 1e-4,
-                        standardize = TRUE,
-                        intercept = TRUE,
-                        maxit = 1000,
-                        tol = 1e-6,
-                        use_strong_rules = TRUE,
-                        block_size = 16L) {
+mlxs_glmnet <- function(
+  x,
+  y,
+  family = mlxs_gaussian(),
+  alpha = 1,
+  lambda = NULL,
+  nlambda = 100,
+  lambda_min_ratio = 1e-4,
+  standardize = TRUE,
+  intercept = TRUE,
+  maxit = 1000,
+  tol = 1e-6,
+  use_strong_rules = TRUE,
+  block_size = 16L
+) {
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
-    stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)
+    stop(
+      "mlxs_glmnet() currently supports gaussian and binomial families.",
+      call. = FALSE
+    )
   }
   if (alpha <= 0) {
-    stop("alpha must be > 0 for the current MLX elastic-net implementation.", call. = FALSE)
+    stop(
+      "alpha must be > 0 for the current MLX elastic-net implementation.",
+      call. = FALSE
+    )
   }
 
   x <- as.matrix(x)
@@ -70,7 +78,10 @@ mlxs_glmnet <- function(x,
 
   if (standardize) {
     x_std_mlx <- scale(x_mlx)
-    x_center <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:center"), c(n_pred, 1))
+    x_center <- Rmlx::mlx_reshape(
+      attr(x_std_mlx, "scaled:center"),
+      c(n_pred, 1)
+    )
     x_scale <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:scale"), c(n_pred, 1))
   } else {
     x_std_mlx <- x_mlx
@@ -153,7 +164,10 @@ mlxs_glmnet <- function(x,
         active_set[which.max(abs(grad_prev_host))] <- TRUE
       }
     }
-    active_mask <- Rmlx::as_mlx(matrix(as.integer(active_set), ncol = 1), dtype = "bool")
+    active_mask <- Rmlx::as_mlx(
+      matrix(as.integer(active_set), ncol = 1),
+      dtype = "bool"
+    )
 
     # Fit with KKT checking loop
     repeat {
@@ -163,14 +177,16 @@ mlxs_glmnet <- function(x,
 
       # Debug: check for empty active set
       if (length(active_idx) == 0) {
-        stop("Empty active set at lambda index ", idx,
-             ". This should not happen - strong rules logic has a bug.")
+        stop(
+          "Empty active set at lambda index ",
+          idx,
+          ". This should not happen - strong rules logic has a bug."
+        )
       }
 
       x_active_mlx <- x_std_mlx[, active_idx, drop = FALSE]
       beta_active_mlx <- beta_mlx[active_idx, , drop = FALSE]
       col_sq_sums_active <- col_sq_sums[active_idx]
-
 
       # Define loss and gradient on active set
       if (family_name == "gaussian") {
@@ -191,7 +207,11 @@ mlxs_glmnet <- function(x,
         loss_active <- function(beta) {
           eta <- x_active_mlx %*% beta + ones_mlx * intercept_mlx
           mu <- 1 / (1 + exp(-eta))
-          loss_smooth <- Rmlx::mlx_binary_cross_entropy(mu, y_mlx, reduction = "mean")
+          loss_smooth <- Rmlx::mlx_binary_cross_entropy(
+            mu,
+            y_mlx,
+            reduction = "mean"
+          )
           loss_smooth <- loss_smooth + 0.5 * ridge_penalty * sum(beta^2)
           loss_smooth
         }
@@ -213,19 +233,32 @@ mlxs_glmnet <- function(x,
       # Add small epsilon for numerical stability when ridge_penalty is 0
       lipschitz_active <- lipschitz_active + 1e-8
 
-      lipschitz_active <- Rmlx::mlx_reshape(Rmlx::as_mlx(lipschitz_active),
-                                            c(length(active_idx), 1))
+      lipschitz_active <- Rmlx::mlx_reshape(
+        Rmlx::as_mlx(lipschitz_active),
+        c(length(active_idx), 1)
+      )
 
-      block_size_active <- max(1L, min(as.integer(block_size), length(active_idx)))
+      block_size_active <- max(
+        1L,
+        min(as.integer(block_size), length(active_idx))
+      )
       if (block_size_active > 1L && family_name == "gaussian") {
-        block_indices <- split(seq_len(length(active_idx)),
-                               ceiling(seq_len(length(active_idx)) / block_size_active))
+        block_indices <- split(
+          seq_len(length(active_idx)),
+          ceiling(seq_len(length(active_idx)) / block_size_active)
+        )
         for (blk in block_indices) {
-          if (length(blk) <= 1L) next
+          if (length(blk) <= 1L) {
+            next
+          }
           x_block <- x_active_mlx[, blk, drop = FALSE]
           gram <- crossprod(x_block, x_block) / n_obs
           if (ridge_penalty > 0) {
-            eye_blk <- Rmlx::mlx_eye(length(blk), dtype = gram$dtype, device = gram$device)
+            eye_blk <- Rmlx::mlx_eye(
+              length(blk),
+              dtype = gram$dtype,
+              device = gram$device
+            )
             gram <- gram + ridge_penalty * eye_blk
           }
           svd_vals <- Rmlx::svd(gram, nu = 0, nv = 0)
@@ -248,7 +281,8 @@ mlxs_glmnet <- function(x,
         grad_cache$x <- x_active_mlx
         grad_cache$n_obs <- n_obs
         grad_cache$ridge_penalty <- ridge_penalty
-        grad_cache$residual <- y_mlx - (x_active_mlx %*% beta_active_mlx + ones_mlx * intercept_mlx)
+        grad_cache$residual <- y_mlx -
+          (x_active_mlx %*% beta_active_mlx + ones_mlx * intercept_mlx)
       } else if (family_name %in% c("binomial", "quasibinomial")) {
         grad_cache <- new.env(parent = emptyenv())
         grad_cache$type <- "binomial"
@@ -256,7 +290,9 @@ mlxs_glmnet <- function(x,
         grad_cache$n_obs <- n_obs
         grad_cache$ridge_penalty <- ridge_penalty
         grad_cache$y <- y_mlx
-        grad_cache$eta <- x_active_mlx %*% beta_active_mlx + ones_mlx * intercept_mlx
+        grad_cache$eta <- x_active_mlx %*%
+          beta_active_mlx +
+          ones_mlx * intercept_mlx
         grad_cache$mu <- 1 / (1 + exp(-grad_cache$eta))
         grad_cache$residual <- grad_cache$mu - y_mlx
       }
@@ -278,8 +314,13 @@ mlxs_glmnet <- function(x,
       # Check for NaN in result
       result_beta_vec <- as.numeric(result$beta)
       if (any(is.nan(result_beta_vec))) {
-        warning(sprintf("Coordinate descent produced NaN at lambda index %d (lambda=%.6f, converged=%s, iterations=%d)",
-                        idx, lambda_val, result$converged, result$iterations))
+        warning(sprintf(
+          "Coordinate descent produced NaN at lambda index %d (lambda=%.6f, converged=%s, iterations=%d)",
+          idx,
+          lambda_val,
+          result$converged,
+          result$iterations
+        ))
       }
 
       # Expand beta back to full size (if all active, this is a no-op)
@@ -299,7 +340,8 @@ mlxs_glmnet <- function(x,
             w <- mu * (1 - mu)
             grad_intercept <- sum(residual) / n_obs
             hess_intercept <- sum(w) / n_obs
-            intercept_new <- intercept_mlx - grad_intercept / (hess_intercept + 1e-8)
+            intercept_new <- intercept_mlx -
+              grad_intercept / (hess_intercept + 1e-8)
             if (as.logical(abs(intercept_new - intercept_mlx) < tol)) {
               intercept_mlx <- intercept_new
               break
@@ -313,7 +355,7 @@ mlxs_glmnet <- function(x,
 
       # Check KKT conditions if strong rules were used and some predictors were screened out
       if (!use_strong_rules || sum(active_set) == n_pred) {
-        break  # No screening, so no KKT check needed
+        break # No screening, so no KKT check needed
       }
 
       # Compute gradient for all predictors
@@ -338,7 +380,7 @@ mlxs_glmnet <- function(x,
       violations[is.na(violations)] <- FALSE
 
       if (!any(violations, na.rm = TRUE)) {
-        break  # No violations, we're done
+        break # No violations, we're done
       }
 
       # Add violators to active set and refit
@@ -365,7 +407,10 @@ mlxs_glmnet <- function(x,
   if (standardize) {
     beta_unscaled <- beta_store_mlx / x_scale
     intercept_adjustment <- Rmlx::colSums(beta_unscaled * x_center)
-    intercept_adjustment <- Rmlx::mlx_reshape(intercept_adjustment, c(n_lambda, 1))
+    intercept_adjustment <- Rmlx::mlx_reshape(
+      intercept_adjustment,
+      c(n_lambda, 1)
+    )
     intercept_unscaled <- intercept_store_mlx - intercept_adjustment
   } else {
     beta_unscaled <- beta_store_mlx

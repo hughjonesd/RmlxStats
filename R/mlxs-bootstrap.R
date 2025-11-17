@@ -22,14 +22,23 @@
 #'   `seed`.
 #' @export
 #' @importFrom utils txtProgressBar setTxtProgressBar
-mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
-                      compile = FALSE) {
+mlxs_boot <- function(
+  fun,
+  ...,
+  B = 200L,
+  seed = NULL,
+  progress = FALSE,
+  compile = FALSE
+) {
   if (!is.function(fun)) {
     stop("`fun` must be a function.", call. = FALSE)
   }
   data_list <- list(...)
   if (!length(data_list)) {
-    stop("mlxs_boot() requires at least one argument to resample.", call. = FALSE)
+    stop(
+      "mlxs_boot() requires at least one argument to resample.",
+      call. = FALSE
+    )
   }
 
   keep <- vapply(data_list, Negate(is.null), logical(1))
@@ -42,20 +51,32 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
   dims_first <- vapply(prepared, function(x) Rmlx::mlx_dim(x)[1L], integer(1))
   n_vals <- unique(dims_first)
   if (length(n_vals) != 1L) {
-    stop("All arguments must share the same number of rows for mlxs_boot().", call. = FALSE)
+    stop(
+      "All arguments must share the same number of rows for mlxs_boot().",
+      call. = FALSE
+    )
   }
   n_obs <- n_vals
 
   if (!is.null(seed)) {
     has_seed <- exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
-    old_seed <- if (has_seed) get(".Random.seed", envir = .GlobalEnv, inherits = FALSE) else NULL
-    on.exit({
-      if (has_seed) {
-        assign(".Random.seed", old_seed, envir = .GlobalEnv)
-      } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
-        rm(".Random.seed", envir = .GlobalEnv)
-      }
-    }, add = TRUE)
+    old_seed <- if (has_seed) {
+      get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    } else {
+      NULL
+    }
+    on.exit(
+      {
+        if (has_seed) {
+          assign(".Random.seed", old_seed, envir = .GlobalEnv)
+        } else if (
+          exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+        ) {
+          rm(".Random.seed", envir = .GlobalEnv)
+        }
+      },
+      add = TRUE
+    )
     set.seed(seed)
   }
 
@@ -89,19 +110,24 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
   list(samples = samples, B = B, seed = seed)
 }
 
-.mlxs_bootstrap_coefs <- function(object,
-                                  fit_type = c("lm", "glm"),
-                                  B = 200L,
-                                  seed = NULL,
-                                  progress = FALSE,
-                                  method = c("case", "residual")) {
+.mlxs_bootstrap_coefs <- function(
+  object,
+  fit_type = c("lm", "glm"),
+  B = 200L,
+  seed = NULL,
+  progress = FALSE,
+  method = c("case", "residual")
+) {
   fit_type <- match.arg(fit_type)
   method <- match.arg(method)
 
   if (method == "residual" && fit_type == "glm") {
     fam <- object$family$family
     if (!fam %in% c("gaussian", "quasigaussian")) {
-      stop("Residual bootstrap for mlxs_glm currently supports only gaussian/quasigaussian families.", call. = FALSE)
+      stop(
+        "Residual bootstrap for mlxs_glm currently supports only gaussian/quasigaussian families.",
+        call. = FALSE
+      )
     }
   }
 
@@ -160,7 +186,13 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
     c(list(fun = case_fun, B = B, seed = seed, progress = progress), boot_args)
   )
 
-  .mlxs_bootstrap_from_samples(boot_res$samples, coef_names, B, seed, method = "case")
+  .mlxs_bootstrap_from_samples(
+    boot_res$samples,
+    coef_names,
+    B,
+    seed,
+    method = "case"
+  )
 }
 
 .mlxs_bootstrap_residual <- function(object, B, seed, progress) {
@@ -188,10 +220,22 @@ mlxs_boot <- function(fun, ..., B = 200L, seed = NULL, progress = FALSE,
     progress = progress
   )
 
-  .mlxs_bootstrap_from_samples(boot_res$samples, coef_names, B, seed, method = "residual")
+  .mlxs_bootstrap_from_samples(
+    boot_res$samples,
+    coef_names,
+    B,
+    seed,
+    method = "residual"
+  )
 }
 
-.mlxs_bootstrap_from_samples <- function(sample_list, coef_names, B, seed, method) {
+.mlxs_bootstrap_from_samples <- function(
+  sample_list,
+  coef_names,
+  B,
+  seed,
+  method
+) {
   coef_array <- Rmlx::mlx_stack(sample_list, axis = 3L)
   se_mlx <- Rmlx::mlx_std(coef_array, axis = 3L, drop = FALSE, ddof = 1L)
   se_mlx <- Rmlx::mlx_reshape(se_mlx, c(length(coef_names), 1L))

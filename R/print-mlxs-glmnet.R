@@ -1,6 +1,18 @@
 #' @export
-print.mlxs_glmnet <- function(x, n_lambda = 5L, digits = getOption("digits"), ...) {
-  cat("MLX elastic net fit (family = ", x$family, ", alpha = ", x$alpha, ")\n", sep = "")
+print.mlxs_glmnet <- function(
+  x,
+  n_lambda = 5L,
+  digits = getOption("digits"),
+  ...
+) {
+  cat(
+    "MLX elastic net fit (family = ",
+    x$family,
+    ", alpha = ",
+    x$alpha,
+    ")\n",
+    sep = ""
+  )
 
   lambda_vals <- x$lambda_numeric
   if (length(lambda_vals)) {

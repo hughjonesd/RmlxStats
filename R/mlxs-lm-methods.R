@@ -41,7 +41,11 @@ predict.mlxs_lm <- function(object, newdata = NULL, ...) {
     return(object$fitted.values)
   }
   terms_obj <- terms(object)
-  mf <- model.frame(delete.response(terms_obj), data = newdata, na.action = na.pass)
+  mf <- model.frame(
+    delete.response(terms_obj),
+    data = newdata,
+    na.action = na.pass
+  )
   mm <- model.matrix(delete.response(terms_obj), mf)
   beta_mlx <- object$coefficients
   mm_mlx <- Rmlx::as_mlx(mm)
@@ -99,11 +103,17 @@ confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
 anova.mlxs_lm <- function(object, ...) {
   others <- list(...)
   if (length(others) > 0L) {
-    stop("anova.mlxs_lm() does not yet compare multiple mlxs_lm models.", call. = FALSE)
+    stop(
+      "anova.mlxs_lm() does not yet compare multiple mlxs_lm models.",
+      call. = FALSE
+    )
   }
 
   if (is.null(object$residuals) || is.null(object$fitted.values)) {
-    stop("Fitted values and residuals are required to compute ANOVA.", call. = FALSE)
+    stop(
+      "Fitted values and residuals are required to compute ANOVA.",
+      call. = FALSE
+    )
   }
 
   assign_vec <- object$assign
@@ -117,7 +127,10 @@ anova.mlxs_lm <- function(object, ...) {
 
   effects_mlx <- object$effects
   if (is.null(effects_mlx)) {
-    stop("QR effects are missing; refit the model to use anova().", call. = FALSE)
+    stop(
+      "QR effects are missing; refit the model to use anova().",
+      call. = FALSE
+    )
   }
 
   p <- if (!is.null(object$rank)) object$rank else 0L
@@ -132,15 +145,19 @@ anova.mlxs_lm <- function(object, ...) {
   if (is.null(term_labels)) {
     term_labels <- character()
   }
-  label_map <- vapply(group_ids, function(id) {
-    if (id == 0L) {
-      "(Intercept)"
-    } else if (id <= length(term_labels)) {
-      term_labels[id]
-    } else {
-      paste0("term_", id)
-    }
-  }, character(1))
+  label_map <- vapply(
+    group_ids,
+    function(id) {
+      if (id == 0L) {
+        "(Intercept)"
+      } else if (id <= length(term_labels)) {
+        term_labels[id]
+      } else {
+        paste0("term_", id)
+      }
+    },
+    character(1)
+  )
   sumsq_terms_all <- lapply(group_rows, function(rows) {
     comp_rows <- effects_seq[rows, , drop = FALSE]
     Rmlx::mlx_sum(comp_rows * comp_rows)
@@ -157,14 +174,27 @@ anova.mlxs_lm <- function(object, ...) {
   sumsq_terms <- sumsq_terms_all[keep_idx]
 
   resid_ss <- .mlxs_weighted_sum_of_squares(object$residuals, object$weights)
-  fitted_ss <- .mlxs_weighted_sum_of_squares(object$fitted.values, object$weights)
-  if (as.numeric(resid_ss) < 1e-10 * max(as.numeric(fitted_ss), .Machine$double.eps)) {
-    warning("ANOVA F-tests on an essentially perfect fit are unreliable", call. = FALSE)
+  fitted_ss <- .mlxs_weighted_sum_of_squares(
+    object$fitted.values,
+    object$weights
+  )
+  if (
+    as.numeric(resid_ss) <
+      1e-10 * max(as.numeric(fitted_ss), .Machine$double.eps)
+  ) {
+    warning(
+      "ANOVA F-tests on an essentially perfect fit are unreliable",
+      call. = FALSE
+    )
   }
 
   resid_df <- object$df.residual
   resid_ms <- resid_ss / Rmlx::mlx_scalar(resid_df)
-  meansq_terms <- Map(function(ss, df) ss / Rmlx::mlx_scalar(df), sumsq_terms, df_terms)
+  meansq_terms <- Map(
+    function(ss, df) ss / Rmlx::mlx_scalar(df),
+    sumsq_terms,
+    df_terms
+  )
   f_terms <- lapply(meansq_terms, function(ms) ms / resid_ms)
   f_numeric <- vapply(f_terms, as.numeric, numeric(1))
   p_vals <- pf(f_numeric, df_terms, resid_df, lower.tail = FALSE)
@@ -183,14 +213,22 @@ anova.mlxs_lm <- function(object, ...) {
   } else {
     "<response>"
   }
-  heading <- c("Analysis of Variance Table\n", paste("Response:", response_label))
+  heading <- c(
+    "Analysis of Variance Table\n",
+    paste("Response:", response_label)
+  )
   attr(result, "heading") <- heading
   class(result) <- c("mlxs_anova", "anova")
   result
 }
 
 #' @export
-as.data.frame.mlxs_anova <- function(x, row.names = NULL, optional = FALSE, ...) {
+as.data.frame.mlxs_anova <- function(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  ...
+) {
   sumsq_num <- vapply(x$sumsq, as.numeric, numeric(1))
   meansq_num <- vapply(x$meansq, as.numeric, numeric(1))
   fvalue_num <- vapply(
@@ -247,10 +285,12 @@ tidy.mlxs_anova <- function(x, ...) {
 }
 
 #' @export
-summary.mlxs_lm <- function(object,
-                            bootstrap = FALSE,
-                            bootstrap_args = list(),
-                            ...) {
+summary.mlxs_lm <- function(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(),
+  ...
+) {
   default_args <- list(
     B = 200L,
     seed = NULL,
@@ -293,7 +333,9 @@ summary.mlxs_lm <- function(object,
   tss <- as.numeric(Rmlx::mlx_sum(centered * centered))
   r.squared <- if (tss < .Machine$double.eps) 1 else 1 - rss / tss
   df.int <- attr(object$terms, "intercept")
-  if (is.null(df.int)) df.int <- 1L
+  if (is.null(df.int)) {
+    df.int <- 1L
+  }
   df_model <- object$rank - df.int
   if (df_model > 0) {
     ms_model <- (tss - rss) / df_model
@@ -317,7 +359,11 @@ summary.mlxs_lm <- function(object,
     sigma = sigma,
     df = c(object$rank, rdf, n_obs),
     r.squared = r.squared,
-    adj.r.squared = if (rdf > 0) 1 - (1 - r.squared) * (n_obs - 1) / rdf else NA_real_,
+    adj.r.squared = if (rdf > 0) {
+      1 - (1 - r.squared) * (n_obs - 1) / rdf
+    } else {
+      NA_real_
+    },
     fstatistic = c(value = fstat, numdf = df_model, dendf = rdf),
     p.value.model = p_f,
     cov.scaled = vc,
@@ -353,12 +399,32 @@ print.summary.mlxs_lm <- function(x, ...) {
   )
   rownames(coef_table) <- x$coef_names
   printCoefmat(coef_table, has.Pvalue = TRUE)
-  cat("\nResidual standard error:", format(signif(x$sigma, 4)), "on", x$df[2], "degrees of freedom\n")
+  cat(
+    "\nResidual standard error:",
+    format(signif(x$sigma, 4)),
+    "on",
+    x$df[2],
+    "degrees of freedom\n"
+  )
   if (!is.na(x$fstatistic[1])) {
-    cat("Multiple R-squared:", format(signif(x$r.squared, 4)), ",  Adjusted R-squared:",
-        format(signif(x$adj.r.squared, 4)), "\n")
-    cat("F-statistic:", format(signif(x$fstatistic[1], 4)), "on", x$fstatistic[2], "and", x$fstatistic[3],
-        "DF,  p-value:", format.pval(x$p.value.model), "\n")
+    cat(
+      "Multiple R-squared:",
+      format(signif(x$r.squared, 4)),
+      ",  Adjusted R-squared:",
+      format(signif(x$adj.r.squared, 4)),
+      "\n"
+    )
+    cat(
+      "F-statistic:",
+      format(signif(x$fstatistic[1], 4)),
+      "on",
+      x$fstatistic[2],
+      "and",
+      x$fstatistic[3],
+      "DF,  p-value:",
+      format.pval(x$p.value.model),
+      "\n"
+    )
   }
   invisible(x)
 }
@@ -434,10 +500,14 @@ glance.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
-augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL,
-                            se_fit = FALSE,
-                            output = c("data.frame", "mlx"),
-                            ...) {
+augment.mlxs_lm <- function(
+  x,
+  data = model.frame(x),
+  newdata = NULL,
+  se_fit = FALSE,
+  output = c("data.frame", "mlx"),
+  ...
+) {
   terms_obj <- terms(x)
   output <- match.arg(output)
   if (is.null(newdata)) {
@@ -446,7 +516,11 @@ augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL,
     residuals_vals <- x$residuals
     base_data <- data
   } else {
-    mf <- model.frame(delete.response(terms_obj), data = newdata, na.action = na.pass)
+    mf <- model.frame(
+      delete.response(terms_obj),
+      data = newdata,
+      na.action = na.pass
+    )
     mm <- model.matrix(delete.response(terms_obj), mf)
     mm_mlx <- Rmlx::as_mlx(mm)
     fitted_vals <- mm_mlx %*% x$coefficients
@@ -459,7 +533,11 @@ augment.mlxs_lm <- function(x, data = model.frame(x), newdata = NULL,
   }
 
   fitted_num <- as.numeric(fitted_vals)
-  residuals_num <- if (!is.null(residuals_vals)) as.numeric(residuals_vals) else NULL
+  residuals_num <- if (!is.null(residuals_vals)) {
+    as.numeric(residuals_vals)
+  } else {
+    NULL
+  }
 
   if (!is.null(rownames(mm))) {
     names(fitted_num) <- rownames(mm)

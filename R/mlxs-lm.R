@@ -47,7 +47,10 @@ mlxs_lm <- function(formula, data, subset, weights) {
 
   n_coef <- ncol(design)
   if (is.null(n_coef) || n_coef == 0L) {
-    stop("No coefficients to estimate; provide predictors in the formula.", call. = FALSE)
+    stop(
+      "No coefficients to estimate; provide predictors in the formula.",
+      call. = FALSE
+    )
   }
 
   weights_mlx <- NULL
@@ -59,7 +62,10 @@ mlxs_lm <- function(formula, data, subset, weights) {
     }
     weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
     if (weight_len != n_obs) {
-      stop("Length of 'weights' must match number of observations.", call. = FALSE)
+      stop(
+        "Length of 'weights' must match number of observations.",
+        call. = FALSE
+      )
     }
     if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
       stop("Weights must be non-negative and finite.", call. = FALSE)
@@ -70,9 +76,17 @@ mlxs_lm <- function(formula, data, subset, weights) {
   }
 
   design_mlx <- Rmlx::as_mlx(design)
-  response_mlx <- if (inherits(response, "mlx")) response else Rmlx::mlx_matrix(response, ncol = 1)
+  response_mlx <- if (inherits(response, "mlx")) {
+    response
+  } else {
+    Rmlx::mlx_matrix(response, ncol = 1)
+  }
 
-  fit_res <- mlxs_lm_fit(x = design_mlx, y = response_mlx, weights = weights_mlx)
+  fit_res <- mlxs_lm_fit(
+    x = design_mlx,
+    y = response_mlx,
+    weights = weights_mlx
+  )
 
   result <- list(
     coefficients = fit_res$coefficients,
@@ -133,7 +147,11 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
   x_work <- x_orig
   y_work <- y_orig
   if (!is.null(weights)) {
-    w_col <- if (inherits(weights, "mlx")) weights else Rmlx::mlx_matrix(weights, ncol = 1)
+    w_col <- if (inherits(weights, "mlx")) {
+      weights
+    } else {
+      Rmlx::mlx_matrix(weights, ncol = 1)
+    }
     w_sqrt <- sqrt(w_col)
     dims <- Rmlx::mlx_dim(x_orig)
     w_broadcast <- Rmlx::mlx_broadcast_to(w_sqrt, dims)

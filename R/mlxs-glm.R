@@ -10,7 +10,7 @@
 #'   [stats::glm.control()].
 #'
 #' @return An object of class `c("mlxs_glm", "mlxs_model")` containing elements
-#'   similar to the result of [stats::glm()]. Computations use single-precision 
+#'   similar to the result of [stats::glm()]. Computations use single-precision
 #'   MLX arrays, so results typically agree with [stats::glm()] to around 1e-6
 #'   unless a tighter tolerance is supplied via `control`.
 #' @export
@@ -18,8 +18,17 @@
 #' @examples
 #' fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
 #' coef(fit)
-mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
-                     weights, na.action, start = NULL, control = list(), ...) {
+mlxs_glm <- function(
+  formula,
+  family = mlxs_gaussian(),
+  data,
+  subset,
+  weights,
+  na.action,
+  start = NULL,
+  control = list(),
+  ...
+) {
   call <- match.call()
 
   if (is.character(family)) {
@@ -91,13 +100,15 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   mu
 }
 
-.mlxs_glm_weighted_inputs_impl <- function(X_mlx,
-                                           y_mlx,
-                                           eta_mlx,
-                                           mu_mlx,
-                                           mu_eta_mlx,
-                                           var_mu_mlx,
-                                           weights_sqrt_mlx) {
+.mlxs_glm_weighted_inputs_impl <- function(
+  X_mlx,
+  y_mlx,
+  eta_mlx,
+  mu_mlx,
+  mu_eta_mlx,
+  var_mu_mlx,
+  weights_sqrt_mlx
+) {
   z_mlx <- eta_mlx + (y_mlx - mu_mlx) / mu_eta_mlx
   w_mlx <- mu_eta_mlx / sqrt(var_mu_mlx)
   if (!is.null(weights_sqrt_mlx)) {
@@ -122,7 +133,11 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
         Rmlx::mlx_compile(.mlxs_glm_weighted_inputs_impl),
         error = function(e) {
           if (!warned) {
-            warning("Falling back to uncompiled GLM step: ", e$message, call. = FALSE)
+            warning(
+              "Falling back to uncompiled GLM step: ",
+              e$message,
+              call. = FALSE
+            )
             warned <<- TRUE
           }
           FALSE
@@ -140,19 +155,21 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   }
 })
 
-.mlxs_glm_run_irls <- function(X_mlx,
-                               y_mlx,
-                               family,
-                               weights_mlx,
-                               weights_sqrt_mlx,
-                               beta_init,
-                               eta_init,
-                               mu_init,
-                               control,
-                               eps_mlx,
-                               epsilon_target,
-                               trace = FALSE,
-                               compile_step = TRUE) {
+.mlxs_glm_run_irls <- function(
+  X_mlx,
+  y_mlx,
+  family,
+  weights_mlx,
+  weights_sqrt_mlx,
+  beta_init,
+  eta_init,
+  mu_init,
+  control,
+  eps_mlx,
+  epsilon_target,
+  trace = FALSE,
+  compile_step = TRUE
+) {
   beta_mlx <- beta_init
   eta_mlx <- eta_init
   mu_mlx <- mu_init
@@ -181,7 +198,12 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     }
 
     step_inputs <- .mlxs_glm_weighted_inputs_runner(
-      X_mlx, y_mlx, eta_mlx, mu_mlx, mu_eta_mlx, var_mu_mlx,
+      X_mlx,
+      y_mlx,
+      eta_mlx,
+      mu_mlx,
+      mu_eta_mlx,
+      var_mu_mlx,
       weights_sqrt_mlx,
       compile = compile_step
     )
@@ -207,9 +229,14 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
 
     if (trace) {
       message(
-        "Iter ", iter, ": deviance = ", format(deviance_val, digits = 6),
-        ", delta = ", format(delta_val, digits = 6),
-        ", dev_change = ", format(dev_change_val, digits = 6)
+        "Iter ",
+        iter,
+        ": deviance = ",
+        format(deviance_val, digits = 6),
+        ", delta = ",
+        format(delta_val, digits = 6),
+        ", dev_change = ",
+        format(dev_change_val, digits = 6)
       )
     }
 
@@ -220,8 +247,16 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
       iter_count <- iter
       break
     }
-    if (!is.finite(deviance_val) || (is.finite(dev_prev) && deviance_val > dev_prev && abs(deviance_val - dev_prev) > epsilon_target)) {
-      warning("Divergence detected in mlxs_glm; stopping iterations.", call. = FALSE)
+    if (
+      !is.finite(deviance_val) ||
+        (is.finite(dev_prev) &&
+          deviance_val > dev_prev &&
+          abs(deviance_val - dev_prev) > epsilon_target)
+    ) {
+      warning(
+        "Divergence detected in mlxs_glm; stopping iterations.",
+        call. = FALSE
+      )
       beta_mlx <- beta_new_mlx
       dev_prev <- deviance_val
       iter_count <- iter
@@ -248,14 +283,16 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   )
 }
 
-.mlxs_glm_fit_core <- function(design,
-                               response,
-                               weights_raw = NULL,
-                               family,
-                               control,
-                               coef_start = NULL,
-                               coef_names = NULL,
-                               has_intercept = NULL) {
+.mlxs_glm_fit_core <- function(
+  design,
+  response,
+  weights_raw = NULL,
+  family,
+  control,
+  coef_start = NULL,
+  coef_names = NULL,
+  has_intercept = NULL
+) {
   design_is_mlx <- inherits(design, "mlx")
   if (design_is_mlx) {
     X_mlx <- design
@@ -263,7 +300,10 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     n_obs <- dims[1L]
     n_coef <- dims[2L]
     if (is.null(coef_names)) {
-      stop("coef_names must be supplied when design is an mlx array.", call. = FALSE)
+      stop(
+        "coef_names must be supplied when design is an mlx array.",
+        call. = FALSE
+      )
     }
   } else {
     n_obs <- nrow(design)
@@ -288,7 +328,10 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   }
   weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
   if (weight_len != n_obs) {
-    stop("Length of 'weights' must match number of observations.", call. = FALSE)
+    stop(
+      "Length of 'weights' must match number of observations.",
+      call. = FALSE
+    )
   }
   if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
     stop("Weights must be non-negative and finite.", call. = FALSE)
@@ -297,10 +340,18 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
     stop("Weights must be non-negative and finite.", call. = FALSE)
   }
 
-  y_mlx <- if (inherits(response, "mlx")) response else Rmlx::mlx_matrix(response, ncol = 1)
+  y_mlx <- if (inherits(response, "mlx")) {
+    response
+  } else {
+    Rmlx::mlx_matrix(response, ncol = 1)
+  }
   weights_sqrt_mlx <- sqrt(weights_mlx)
 
-  beta_mlx <- if (inherits(coef_start, "mlx")) coef_start else Rmlx::mlx_matrix(coef_start, ncol = 1)
+  beta_mlx <- if (inherits(coef_start, "mlx")) {
+    coef_start
+  } else {
+    Rmlx::mlx_matrix(coef_start, ncol = 1)
+  }
   eta_mlx <- X_mlx %*% beta_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
@@ -381,7 +432,10 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
 
   fitted_values <- as.numeric(irls_state$mu)
   deviance_resid_mlx <- sign(irls_state$residual) * sqrt(irls_state$dev_resids)
-  working_weights_mlx <- Rmlx::mlx_clip(irls_state$w, min = .Machine$double.eps)^2
+  working_weights_mlx <- Rmlx::mlx_clip(
+    irls_state$w,
+    min = .Machine$double.eps
+  )^2
   working_residuals_mlx <- irls_state$residual / irls_state$mu_eta
   if (is.null(has_intercept)) {
     has_intercept <- !is.null(coef_names) && any(coef_names == "(Intercept)")
@@ -400,10 +454,21 @@ mlxs_glm <- function(formula, family = mlxs_gaussian(), data, subset,
   null_mean <- mean(response_vec)
   null_mu_mlx <- Rmlx::mlx_full(c(n_obs, 1L), null_mean)
   null_mu_mlx <- .mlxs_glm_clamp_mu(null_mu_mlx, family)
-  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(y_mlx, null_mu_mlx, weights_mlx))))
+  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(
+    y_mlx,
+    null_mu_mlx,
+    weights_mlx
+  ))))
 
   weights_for_aic <- as.numeric(weights_mlx)
-  aic <- family$aic(response_vec, weights_for_aic, fitted_values, weights_for_aic, deviance) + 2 * n_coef
+  aic <- family$aic(
+    response_vec,
+    weights_for_aic,
+    fitted_values,
+    weights_for_aic,
+    deviance
+  ) +
+    2 * n_coef
 
   list(
     coefficients = irls_state$beta,

@@ -11,7 +11,11 @@ mlxs_gaussian <- function(link = "identity") {
     identity = .mlxs_identity_link(),
     log = .mlxs_log_link(),
     inverse = .mlxs_inverse_link(),
-    stop("Unsupported link for mlxs_gaussian: ", base_family$link, call. = FALSE)
+    stop(
+      "Unsupported link for mlxs_gaussian: ",
+      base_family$link,
+      call. = FALSE
+    )
   )
 
   base_family$linkfun <- link_parts$linkfun

@@ -34,15 +34,24 @@ coef.mlxs_glm <- function(object, ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
-predict.mlxs_glm <- function(object, newdata = NULL,
-                              type = c("link", "response"),
-                              se.fit = FALSE, ...) {
+predict.mlxs_glm <- function(
+  object,
+  newdata = NULL,
+  type = c("link", "response"),
+  se.fit = FALSE,
+  ...
+) {
   type <- match.arg(type)
   if (isTRUE(se.fit)) {
-    stop("Prediction standard errors are not implemented for mlxs_glm.", call. = FALSE)
+    stop(
+      "Prediction standard errors are not implemented for mlxs_glm.",
+      call. = FALSE
+    )
   }
   if (is.null(newdata)) {
-    return(if (type == "response") object$fitted.values else object$linear.predictors)
+    return(
+      if (type == "response") object$fitted.values else object$linear.predictors
+    )
   }
 
   terms_obj <- object$terms
@@ -73,9 +82,11 @@ fitted.mlxs_glm <- function(object, ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
-residuals.mlxs_glm <- function(object,
-                               type = c("deviance", "pearson", "working", "response"),
-                               ...) {
+residuals.mlxs_glm <- function(
+  object,
+  type = c("deviance", "pearson", "working", "response"),
+  ...
+) {
   type <- match.arg(type)
   if (type == "response") {
     return(object$residuals)
@@ -115,10 +126,12 @@ print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
-summary.mlxs_glm <- function(object,
-                             bootstrap = FALSE,
-                             bootstrap_args = list(),
-                             ...) {
+summary.mlxs_glm <- function(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(),
+  ...
+) {
   default_args <- list(
     B = 200L,
     seed = NULL,
@@ -151,11 +164,16 @@ summary.mlxs_glm <- function(object,
     se_col_mlx <- bootstrap_info$se
     se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, length(coef_names)))
     diag_eye <- Rmlx::mlx_eye(length(coef_names))
-    vcov_mlx <- diag_eye * Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_dim(diag_eye))
+    vcov_mlx <- diag_eye *
+      Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_dim(diag_eye))
   }
   stat_mlx <- coef_mlx / se_col_mlx
-  stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) "t value" else "z value"
-  
+  stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) {
+    "t value"
+  } else {
+    "z value"
+  }
+
   p_mlx <- if (stat_label == "t value") {
     stat_num <- as.numeric(stat_mlx)
     p_num <- 2 * stats::pt(-abs(stat_num), df = object$df.residual)
@@ -192,7 +210,11 @@ summary.mlxs_glm <- function(object,
 
 #' @rdname mlxs_glm_methods
 #' @export
-print.summary.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
+print.summary.mlxs_glm <- function(
+  x,
+  digits = max(3, getOption("digits") - 3),
+  ...
+) {
   cat("Call:\n")
   print(x$call)
   est <- as.numeric(x$coefficients)
@@ -211,15 +233,35 @@ print.summary.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), 
   rownames(coef_table) <- x$coef_names
   cat("\nCoefficients:\n")
   printCoefmat(coef_table, digits = digits, has.Pvalue = TRUE)
-  cat("\n(Dispersion parameter for", x$family$family, "family taken to be",
-      format(signif(x$dispersion, digits)), ")\n")
-  cat("Null deviance:", format(signif(x$null.deviance, digits)),
-      "on", x$df.null, "degrees of freedom\n")
-  cat("Residual deviance:", format(signif(x$deviance, digits)),
-      "on", x$df.residual, "degrees of freedom\n")
+  cat(
+    "\n(Dispersion parameter for",
+    x$family$family,
+    "family taken to be",
+    format(signif(x$dispersion, digits)),
+    ")\n"
+  )
+  cat(
+    "Null deviance:",
+    format(signif(x$null.deviance, digits)),
+    "on",
+    x$df.null,
+    "degrees of freedom\n"
+  )
+  cat(
+    "Residual deviance:",
+    format(signif(x$deviance, digits)),
+    "on",
+    x$df.residual,
+    "degrees of freedom\n"
+  )
   cat("AIC:", format(signif(x$aic, digits)), "\n")
   if (!is.null(x$bootstrap)) {
-    cat("\nBootstrap standard errors (", x$bootstrap$B, " resamples) applied.\n", sep = "")
+    cat(
+      "\nBootstrap standard errors (",
+      x$bootstrap$B,
+      " resamples) applied.\n",
+      sep = ""
+    )
   }
   invisible(x)
 }
@@ -228,9 +270,15 @@ print.summary.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), 
 #' @export
 anova.mlxs_glm <- function(object, ...) {
   if (nargs() > 1L) {
-    stop("anova.mlxs_glm() does not yet compare multiple MLX models.", call. = FALSE)
+    stop(
+      "anova.mlxs_glm() does not yet compare multiple MLX models.",
+      call. = FALSE
+    )
   }
-  stop("anova.mlxs_glm() is not implemented without converting to base glm.", call. = FALSE)
+  stop(
+    "anova.mlxs_glm() is not implemented without converting to base glm.",
+    call. = FALSE
+  )
 }
 
 #' @rdname mlxs_glm_methods
@@ -292,12 +340,16 @@ glance.mlxs_glm <- function(x, ...) {
 
 #' @rdname mlxs_glm_methods
 #' @export
-augment.mlxs_glm <- function(x, data = x$model, newdata = NULL,
-                             type.predict = c("response", "link"),
-                             type.residuals = c("response", "deviance"),
-                             se_fit = FALSE,
-                             output = c("data.frame", "mlx"),
-                             ...) {
+augment.mlxs_glm <- function(
+  x,
+  data = x$model,
+  newdata = NULL,
+  type.predict = c("response", "link"),
+  type.residuals = c("response", "deviance"),
+  se_fit = FALSE,
+  output = c("data.frame", "mlx"),
+  ...
+) {
   type.predict <- match.arg(type.predict)
   type.residuals <- match.arg(type.residuals)
   output <- match.arg(output)
@@ -306,7 +358,11 @@ augment.mlxs_glm <- function(x, data = x$model, newdata = NULL,
   }
 
   fitted_vals <- predict(x, newdata = newdata, type = type.predict)
-  resid_vals <- if (is.null(newdata)) residuals(x, type = type.residuals) else NULL
+  resid_vals <- if (is.null(newdata)) {
+    residuals(x, type = type.residuals)
+  } else {
+    NULL
+  }
 
   if (output == "mlx") {
     return(list(.fitted = fitted_vals, .resid = resid_vals))

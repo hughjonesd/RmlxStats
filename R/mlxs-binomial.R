@@ -178,7 +178,11 @@ mlxs_binomial <- function(link = "logit") {
     linkinv = function(eta) {
       eps <- Rmlx::as_mlx(1e-6)
       eta_adj <- if (inherits(eta, "mlx")) {
-        Rmlx::mlx_where(abs(eta) < eps, Rmlx::mlx_where(eta >= 0, eps, -eps), eta)
+        Rmlx::mlx_where(
+          abs(eta) < eps,
+          Rmlx::mlx_where(eta >= 0, eps, -eps),
+          eta
+        )
       } else {
         pmax(pmin(eta, -1e-6), 1e-6)
       }
@@ -186,9 +190,11 @@ mlxs_binomial <- function(link = "logit") {
     },
     mu.eta = function(eta) {
       if (inherits(eta, "mlx")) {
-        eta_adj <- Rmlx::mlx_where(abs(eta) < Rmlx::as_mlx(1e-6),
-                                   Rmlx::mlx_where(eta >= 0, Rmlx::as_mlx(1e-6), Rmlx::as_mlx(-1e-6)),
-                                   eta)
+        eta_adj <- Rmlx::mlx_where(
+          abs(eta) < Rmlx::as_mlx(1e-6),
+          Rmlx::mlx_where(eta >= 0, Rmlx::as_mlx(1e-6), Rmlx::as_mlx(-1e-6)),
+          eta
+        )
         -1 / (eta_adj^2)
       } else {
         -1 / (pmax(pmin(eta, -1e-6), 1e-6)^2)
