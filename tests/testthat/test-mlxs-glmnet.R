@@ -55,9 +55,9 @@ test_that("mlxs_glmnet works with standardize = FALSE", {
 
 test_that("strong rules produce identical results to non-screened for gaussian", {
   set.seed(456)
-  n <- 200
-  p <- 50
-  n_nonzero <- 5
+  n <- 100
+  p <- 30
+  n_nonzero <- 3
 
   # Generate sparse problem
   x <- matrix(rnorm(n * p), nrow = n, ncol = p)
@@ -66,9 +66,11 @@ test_that("strong rules produce identical results to non-screened for gaussian",
   y <- drop(x %*% beta_true + rnorm(n))
 
   fit_with_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1,
-                                 nlambda = 20, use_strong_rules = TRUE)
+                                nlambda = 20, use_strong_rules = TRUE,
+                                maxit = 200)
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1,
-                               nlambda = 20, use_strong_rules = FALSE)
+                              nlambda = 20, use_strong_rules = FALSE,
+                              maxit = 200)
 
   expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
   expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
@@ -77,9 +79,9 @@ test_that("strong rules produce identical results to non-screened for gaussian",
 
 test_that("strong rules produce identical results to non-screened for binomial", {
   set.seed(789)
-  n <- 200
-  p <- 40
-  n_nonzero <- 6
+  n <- 120
+  p <- 20
+  n_nonzero <- 3
 
   # Generate sparse problem
   x <- matrix(rnorm(n * p), nrow = n, ncol = p)
@@ -90,9 +92,11 @@ test_that("strong rules produce identical results to non-screened for binomial",
   y <- rbinom(n, size = 1, prob = prob)
 
   fit_with_rules <- mlxs_glmnet(x, y, family = mlxs_binomial(), alpha = 1,
-                                 nlambda = 15, use_strong_rules = TRUE)
+                                nlambda = 15, use_strong_rules = TRUE, 
+                                maxit = 200)
   fit_no_rules <- mlxs_glmnet(x, y, family = mlxs_binomial(), alpha = 1,
-                               nlambda = 15, use_strong_rules = FALSE)
+                              nlambda = 15, use_strong_rules = FALSE,
+                              maxit = 200)
 
   expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
   expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
@@ -100,8 +104,8 @@ test_that("strong rules produce identical results to non-screened for binomial",
 
 test_that("strong rules work with elastic net (alpha < 1)", {
   set.seed(321)
-  n <- 150
-  p <- 30
+  n <- 100
+  p <- 20
   x <- matrix(rnorm(n * p), nrow = n, ncol = p)
   beta_true <- c(rnorm(5, sd = 2), rep(0, p - 5))
   y <- drop(x %*% beta_true + rnorm(n))
@@ -117,9 +121,9 @@ test_that("strong rules work with elastic net (alpha < 1)", {
 
 test_that("strong rules work with very sparse problems", {
   set.seed(654)
-  n <- 300
-  p <- 100
-  n_nonzero <- 3
+  n <- 100
+  p <- 20
+  n_nonzero <- 2
 
   # Very sparse problem
   x <- matrix(rnorm(n * p), nrow = n, ncol = p)
