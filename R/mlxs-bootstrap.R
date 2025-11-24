@@ -48,7 +48,7 @@ mlxs_boot <- function(
   }
 
   prepared <- lapply(data_list, .mlxs_boot_prepare_arg)
-  dims_first <- vapply(prepared, function(x) Rmlx::mlx_dim(x)[1L], integer(1))
+  dims_first <- vapply(prepared, function(x) Rmlx::mlx_shape(x)[1L], integer(1))
   n_vals <- unique(dims_first)
   if (length(n_vals) != 1L) {
     stop(
@@ -237,14 +237,14 @@ mlxs_boot <- function(
   method
 ) {
   coef_array <- Rmlx::mlx_stack(sample_list, axis = 3L)
-  se_mlx <- Rmlx::mlx_std(coef_array, axis = 3L, drop = FALSE, ddof = 1L)
+  se_mlx <- Rmlx::mlx_std(coef_array, axes = 3L, drop = FALSE, ddof = 1L)
   se_mlx <- Rmlx::mlx_reshape(se_mlx, c(length(coef_names), 1L))
   list(se = se_mlx, samples = NULL, B = B, seed = seed, method = method)
 }
 
 .mlxs_boot_prepare_arg <- function(x) {
   if (inherits(x, "mlx")) {
-    dims <- Rmlx::mlx_dim(x)
+    dims <- Rmlx::mlx_shape(x)
     if (length(dims) == 1L) {
       return(Rmlx::mlx_reshape(x, c(dims[1L], 1L)))
     }
@@ -257,7 +257,7 @@ mlxs_boot <- function(
 }
 
 .mlxs_boot_take <- function(x, idx) {
-  dims <- Rmlx::mlx_dim(x)
+  dims <- Rmlx::mlx_shape(x)
   nd <- length(dims)
   if (nd == 1L) {
     return(x[idx, drop = FALSE])

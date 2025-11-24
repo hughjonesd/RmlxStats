@@ -165,7 +165,7 @@ summary.mlxs_glm <- function(
     se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, length(coef_names)))
     diag_eye <- Rmlx::mlx_eye(length(coef_names))
     vcov_mlx <- diag_eye *
-      Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_dim(diag_eye))
+      Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_shape(diag_eye))
   }
   stat_mlx <- coef_mlx / se_col_mlx
   stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) {

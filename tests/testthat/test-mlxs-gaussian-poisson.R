@@ -1,6 +1,4 @@
 
-mlx_to_vec <- function(x) as.numeric(as.matrix(x))
-
 test_that("mlxs_gaussian reproduces gaussian helpers", {
   fam_ref <- stats::gaussian()
   fam_mlx <- mlxs_gaussian()
@@ -15,12 +13,12 @@ test_that("mlxs_gaussian reproduces gaussian helpers", {
   y_mlx <- Rmlx::as_mlx(y)
   wt_mlx <- Rmlx::as_mlx(wt)
 
-  expect_equal(mlx_to_vec(fam_mlx$linkinv(eta_mlx)), mu, tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$linkfun(mu_mlx)), fam_ref$linkfun(mu), tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$mu.eta(eta_mlx)), fam_ref$mu.eta(eta), tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$variance(mu_mlx)), fam_ref$variance(mu), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$linkinv(eta_mlx)), mu, tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$linkfun(mu_mlx)), fam_ref$linkfun(mu), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$mu.eta(eta_mlx)), fam_ref$mu.eta(eta), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$variance(mu_mlx)), fam_ref$variance(mu), tolerance = 1e-6)
   expect_equal(
-    mlx_to_vec(fam_mlx$dev.resids(y_mlx, mu_mlx, wt_mlx)),
+    as.numeric(fam_mlx$dev.resids(y_mlx, mu_mlx, wt_mlx)),
     fam_ref$dev.resids(y, mu, wt),
     tolerance = 1e-6
   )
@@ -40,12 +38,12 @@ test_that("mlxs_poisson reproduces poisson helpers", {
   y_mlx <- Rmlx::as_mlx(y)
   wt_mlx <- Rmlx::as_mlx(wt)
 
-  expect_equal(mlx_to_vec(fam_mlx$linkinv(eta_mlx)), mu, tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$linkfun(mu_mlx)), fam_ref$linkfun(mu), tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$mu.eta(eta_mlx)), fam_ref$mu.eta(eta), tolerance = 1e-6)
-  expect_equal(mlx_to_vec(fam_mlx$variance(mu_mlx)), fam_ref$variance(mu), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$linkinv(eta_mlx)), mu, tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$linkfun(mu_mlx)), fam_ref$linkfun(mu), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$mu.eta(eta_mlx)), fam_ref$mu.eta(eta), tolerance = 1e-6)
+  expect_equal(as.numeric(fam_mlx$variance(mu_mlx)), fam_ref$variance(mu), tolerance = 1e-6)
   expect_equal(
-    mlx_to_vec(fam_mlx$dev.resids(y_mlx, mu_mlx, wt_mlx)),
+    as.numeric(fam_mlx$dev.resids(y_mlx, mu_mlx, wt_mlx)),
     fam_ref$dev.resids(y, mu, wt),
     tolerance = 1e-5
   )

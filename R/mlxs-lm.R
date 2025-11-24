@@ -60,7 +60,7 @@ mlxs_lm <- function(formula, data, subset, weights) {
     } else {
       Rmlx::mlx_matrix(weights_raw, ncol = 1)
     }
-    weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
+    weight_len <- prod(Rmlx::mlx_shape(weights_mlx))
     if (weight_len != n_obs) {
       stop(
         "Length of 'weights' must match number of observations.",
@@ -153,7 +153,7 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
       Rmlx::mlx_matrix(weights, ncol = 1)
     }
     w_sqrt <- sqrt(w_col)
-    dims <- Rmlx::mlx_dim(x_orig)
+    dims <- Rmlx::mlx_shape(x_orig)
     w_broadcast <- Rmlx::mlx_broadcast_to(w_sqrt, dims)
     x_work <- x_orig * w_broadcast
     y_work <- y_orig * w_sqrt

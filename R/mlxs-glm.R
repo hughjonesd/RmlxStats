@@ -115,7 +115,7 @@ mlxs_glm <- function(
     w_mlx <- w_mlx * weights_sqrt_mlx
   }
   w_mlx <- Rmlx::mlx_clip(w_mlx, min = .Machine$double.eps)
-  dims <- Rmlx::mlx_dim(X_mlx)
+  dims <- Rmlx::mlx_shape(X_mlx)
   x_w_mlx <- Rmlx::mlx_broadcast_to(w_mlx, dims) * X_mlx
   z_w_mlx <- z_mlx * w_mlx
   list(z = z_mlx, w = w_mlx, x_w = x_w_mlx, z_w = z_w_mlx)
@@ -296,7 +296,7 @@ mlxs_glm <- function(
   design_is_mlx <- inherits(design, "mlx")
   if (design_is_mlx) {
     X_mlx <- design
-    dims <- Rmlx::mlx_dim(X_mlx)
+    dims <- Rmlx::mlx_shape(X_mlx)
     n_obs <- dims[1L]
     n_coef <- dims[2L]
     if (is.null(coef_names)) {
@@ -326,7 +326,7 @@ mlxs_glm <- function(
   } else {
     Rmlx::mlx_matrix(weights_raw, ncol = 1)
   }
-  weight_len <- prod(Rmlx::mlx_dim(weights_mlx))
+  weight_len <- prod(Rmlx::mlx_shape(weights_mlx))
   if (weight_len != n_obs) {
     stop(
       "Length of 'weights' must match number of observations.",
