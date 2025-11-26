@@ -171,7 +171,7 @@ mlxs_glmnet <- function(
 
     # Fit with KKT checking loop
     repeat {
-      active_set <- as.logical(as.array(active_mask))
+      active_set <- as.logical(active_mask)
       # Subset to active predictors (if all active, this is the full set)
       active_idx <- which(active_set)
 
@@ -374,7 +374,7 @@ mlxs_glmnet <- function(
       inactive_mask <- !active_mask
       kkt_threshold <- l1_penalty + tol
       violations_mask <- inactive_mask & (abs(grad_full) > kkt_threshold)
-      violations <- as.logical(as.array(violations_mask))
+      violations <- as.logical(violations_mask)
 
       # Handle NAs (treat as no violation to be safe)
       violations[is.na(violations)] <- FALSE
