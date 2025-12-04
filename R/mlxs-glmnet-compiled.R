@@ -1,10 +1,21 @@
 # Compiled inner loop for mlxs_glmnet
 # Separated out to enable mlx_compile() optimization
 
-.mlxs_glmnet_one_iteration <- function(x_active, beta_prev_subset, residual_mlx,
-                                       intercept_prev, eta_mlx, y_mlx, ones_mlx,
-                                       n_obs, step, lambda_val, alpha, thresh,
-                                       is_gaussian_flag) {
+.mlxs_glmnet_one_iteration <- function(
+  x_active,
+  beta_prev_subset,
+  residual_mlx,
+  intercept_prev,
+  eta_mlx,
+  y_mlx,
+  ones_mlx,
+  n_obs,
+  step,
+  lambda_val,
+  alpha,
+  thresh,
+  is_gaussian_flag
+) {
   # Gradient computation
   grad_active <- crossprod(x_active, residual_mlx) / n_obs
 
@@ -57,13 +68,20 @@
 .get_compiled_iteration <- function() {
   if (is.null(.mlxs_glmnet_cache$compiled)) {
     # Try to compile, fall back to uncompiled if it fails
-    .mlxs_glmnet_cache$compiled <- tryCatch({
-      Rmlx::mlx_compile(.mlxs_glmnet_one_iteration)
-    }, error = function(e) {
-      warning("Could not compile mlxs_glmnet inner loop: ", conditionMessage(e),
-              "\nUsing uncompiled version (slower).", call. = FALSE)
-      .mlxs_glmnet_one_iteration
-    })
+    .mlxs_glmnet_cache$compiled <- tryCatch(
+      {
+        Rmlx::mlx_compile(.mlxs_glmnet_one_iteration)
+      },
+      error = function(e) {
+        warning(
+          "Could not compile mlxs_glmnet inner loop: ",
+          conditionMessage(e),
+          "\nUsing uncompiled version (slower).",
+          call. = FALSE
+        )
+        .mlxs_glmnet_one_iteration
+      }
+    )
   }
   .mlxs_glmnet_cache$compiled
 }
