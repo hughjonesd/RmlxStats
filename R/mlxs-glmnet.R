@@ -1,12 +1,12 @@
 #' MLX-backed elastic net regression
 #'
-#' Fit lasso or elastic-net penalised regression paths using MLX tensors for
-#' the heavy linear algebra. Currently supports Gaussian and binomial families
-#' with an optional intercept and column standardisation.
+#' Fit lasso or elastic-net penalised regression paths using MLX arrays for the
+#' heavy linear algebra. Dense Gaussian and binomial paths stay on the MLX
+#' backend throughout the iterative updates.
 #'
-#' @note This function is a proof-of-concept. On large dense problems it is
-#'   typically several times slower than the highly optimised
-#'   [glmnet::glmnet()] implementation.
+#' @note This implementation uses dense MLX updates rather than `glmnet`'s
+#'   coordinate-descent Fortran kernels, so `glmnet::glmnet()` can still be
+#'   faster on smaller problems.
 #'
 #' @param x Numeric matrix of predictors (observations in rows).
 #' @param y Numeric response vector (for binomial, values must be 0/1).
@@ -19,9 +19,11 @@
 #'   `lambda_max * lambda_min_ratio`.
 #' @param nlambda Length of automatically generated lambda path.
 #' @param lambda_min_ratio Smallest lambda as a fraction of `lambda_max`.
-#' @param standardize Should columns of `x` be centred and scaled before
-#'   fitting? Coefficients are returned on the original scale regardless.
+#' @param standardize Should columns of `x` be scaled before fitting?
 #' @param intercept Should an intercept be fit?
+#' @param use_strong_rules Retained for API compatibility. The dense MLX solver
+#'   keeps all coefficients on device, so this flag currently does not change
+#'   the computation.
 #' @param maxit Maximum proximal-gradient iterations per lambda value.
 #' @param tol Convergence tolerance on the coefficient updates.
 #' @return An object of class `mlxs_glmnet` containing the fitted coefficient
@@ -36,14 +38,17 @@ mlxs_glmnet <- function(x,
                         lambda_min_ratio = 1e-4,
                         standardize = TRUE,
                         intercept = TRUE,
+                        use_strong_rules = TRUE,
                         maxit = 1000,
                         tol = 1e-6) {
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
-    stop("mlxs_glmnet() currently supports gaussian and binomial families.", call. = FALSE)
+    stop("mlxs_glmnet() currently supports gaussian and binomial families.",
+         call. = FALSE)
   }
   if (alpha <= 0) {
-    stop("alpha must be > 0 for the current MLX elastic-net implementation.", call. = FALSE)
+    stop("alpha must be > 0 for the current MLX elastic-net implementation.",
+         call. = FALSE)
   }
 
   x <- as.matrix(x)
@@ -54,165 +59,68 @@ mlxs_glmnet <- function(x,
 
   n_obs <- nrow(x)
   n_pred <- ncol(x)
+  chunk_size <- 8L
 
-  # Convert to MLX early
-  x_mlx <- Rmlx::as_mlx(x)
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1))
+  design <- .mlxs_glmnet_prepare_design(x, standardize = standardize,
+                                        intercept = intercept)
+  x_mlx <- design$x
+  x_center <- design$x_center
+  x_scale <- design$x_scale
 
-  if (standardize) {
-    x_std_mlx <- scale(x_mlx)
-    x_center <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:center"), c(n_pred, 1))
-    x_scale <- Rmlx::mlx_reshape(attr(x_std_mlx, "scaled:scale"), c(n_pred, 1))
+  if (family_name == "gaussian") {
+    fit <- .mlxs_glmnet_fit_gaussian(
+      x_mlx = x_mlx,
+      y = y,
+      alpha = alpha,
+      lambda = lambda,
+      nlambda = nlambda,
+      lambda_min_ratio = lambda_min_ratio,
+      maxit = maxit,
+      tol = tol,
+      chunk_size = chunk_size
+    )
   } else {
-    x_std_mlx <- x_mlx
-    x_center <- Rmlx::mlx_zeros(c(n_pred, 1))
-    x_scale <- Rmlx::mlx_ones(c(n_pred, 1))
+    fit <- .mlxs_glmnet_fit_binomial(
+      x_mlx = x_mlx,
+      y = y,
+      alpha = alpha,
+      lambda = lambda,
+      nlambda = nlambda,
+      lambda_min_ratio = lambda_min_ratio,
+      intercept = intercept,
+      maxit = maxit,
+      tol = tol,
+      chunk_size = chunk_size
+    )
   }
 
-  if (family_name %in% c("binomial", "quasibinomial")) {
-    if (!all(y %in% c(0, 1))) {
-      stop("Binomial family requires a 0/1 response.", call. = FALSE)
-    }
-    p_hat <- mean(y)
-    p_hat <- min(max(p_hat, 1e-6), 1 - 1e-6)
-    intercept_val <- if (intercept) log(p_hat / (1 - p_hat)) else 0
-    mu0 <- rep(p_hat, n_obs)
+  n_lambda <- length(fit$lambda)
+  beta_store_mlx <- fit$beta
+  intercept_store_mlx <- fit$intercept
+
+  beta_unscaled_mlx <- beta_store_mlx / x_scale
+  if (intercept) {
+    intercept_adjustment <- Rmlx::colSums(beta_unscaled_mlx * x_center)
+    intercept_adjustment <- Rmlx::mlx_reshape(intercept_adjustment,
+                                              c(n_lambda, 1L))
+    intercept_unscaled_mlx <- intercept_store_mlx - intercept_adjustment
   } else {
-    intercept_val <- if (intercept) mean(y) else 0
-    mu0 <- rep(intercept_val, n_obs)
+    intercept_unscaled_mlx <- intercept_store_mlx
   }
 
-  mu0_mlx <- Rmlx::as_mlx(matrix(mu0, ncol = 1))
-  residual0_mlx <- mu0_mlx - y_mlx
-  z0_mlx <- crossprod(x_std_mlx, residual0_mlx) / n_obs
-  z0 <- as.numeric(z0_mlx)
-  lambda_max <- max(abs(z0)) / max(alpha, 1e-8)
-  if (is.finite(lambda_max) && lambda_max == 0) {
-    lambda_max <- 1
-  }
-
-  if (is.null(lambda)) {
-    lambda_min <- lambda_max * lambda_min_ratio
-    lambda <- exp(seq(log(lambda_max), log(lambda_min), length.out = nlambda))
-  } else {
-    lambda <- sort(as.numeric(lambda), decreasing = TRUE)
-  }
-  n_lambda <- length(lambda)
-
-  ones_mlx <- Rmlx::as_mlx(matrix(1, nrow = n_obs, ncol = 1))
-  beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1))
-  intercept_mlx <- Rmlx::as_mlx(matrix(intercept_val, nrow = 1, ncol = 1))
-
-  # Keep stores as MLX to avoid per-lambda conversions
-  beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
-  intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1))
-  grad_prev <- z0
-  lambda_prev <- lambda[1]
-
-  col_sq_sums_mlx <- Rmlx::colSums(x_std_mlx^2)
-  col_sq_sums <- as.numeric(col_sq_sums_mlx)
-  base_lipschitz <- max(col_sq_sums) / n_obs
-  if (family_name %in% c("binomial", "quasibinomial")) {
-    base_lipschitz <- 0.25 * base_lipschitz
-  }
-
-  # Tolerance as MLX scalar for comparisons
-  tol_mlx <- Rmlx::as_mlx(matrix(tol, nrow = 1, ncol = 1))
-
-  # Get compiled iteration function (caches on first call)
-  iter_func <- .get_compiled_iteration()
-
-  # Family flag for compiled function (1 = gaussian, 0 = binomial)
-  is_gaussian_flag <- Rmlx::as_mlx(matrix(
-    if (family_name == "gaussian") 1 else 0,
-    nrow = 1, ncol = 1
-  ))
-
-  eta_mlx <- x_std_mlx %*% beta_mlx + ones_mlx * intercept_mlx
-  mu_mlx <- family$linkinv(eta_mlx)
-  residual_mlx <- mu_mlx - y_mlx
-
-  for (idx in seq_along(lambda)) {
-    lambda_val <- lambda[idx]
-    step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
-    if (!is.finite(step) || step <= 0) {
-      step <- 1e-3
-    }
-
-    if (idx == 1) {
-      active_idx <- seq_len(n_pred)
-    } else {
-      cutoff <- alpha * (2 * lambda_val - lambda_prev)
-      strong_set <- which(abs(grad_prev) > cutoff)
-      # Convert previous beta column to R only for strong rules check
-      beta_numeric <- as.numeric(beta_store_mlx[, idx - 1])
-      nonzero_set <- which(beta_numeric != 0)
-      active_idx <- sort(unique(c(strong_set, nonzero_set)))
-      if (length(active_idx) == 0) {
-        active_idx <- which.max(abs(grad_prev))
-      }
-    }
-
-    # Precompute threshold for compiled function
-    thresh <- lambda_val * alpha * step
-
-    for (iter in seq_len(maxit)) {
-      x_active <- x_std_mlx[, active_idx, drop = FALSE]
-      beta_prev_subset <- beta_mlx[active_idx, , drop = FALSE]
-
-      # Call compiled iteration function
-      result <- iter_func(
-        x_active, beta_prev_subset, residual_mlx,
-        intercept_mlx, eta_mlx, y_mlx, ones_mlx,
-        n_obs, step, lambda_val, alpha, thresh,
-        is_gaussian_flag
-      )
-
-      # Extract results
-      beta_mlx[active_idx, ] <- result$beta_new
-      intercept_mlx <- result$intercept_new
-      eta_mlx <- result$eta_new
-      residual_mlx <- result$residual_new
-
-      # Convergence check using MLX operations
-      delta_beta_max <- max(abs(result$delta_beta))
-      intercept_delta_abs <- abs(result$intercept_delta)
-      if (as.logical(delta_beta_max < tol) && as.logical(intercept_delta_abs < tol)) {
-        break
-      }
-    }
-
-    # Store in MLX - no conversion until the end
-    beta_store_mlx[, idx] <- beta_mlx
-    intercept_store_mlx[idx, ] <- intercept_mlx
-
-    grad_prev <- as.numeric(crossprod(x_std_mlx, residual_mlx) / n_obs)
-    lambda_prev <- lambda_val
-  }
-
-  if (standardize) {
-    beta_unscaled <- beta_store_mlx / x_scale
-    intercept_adjustment <- Rmlx::colSums(beta_unscaled * x_center)
-    intercept_adjustment <- Rmlx::mlx_reshape(intercept_adjustment, c(n_lambda, 1))
-    intercept_unscaled <- intercept_store_mlx - intercept_adjustment
-  } else {
-    beta_unscaled <- beta_store_mlx
-    intercept_unscaled <- intercept_store_mlx
-  }
-  
-  # Convert to R only once at the very end
-  beta_unscaled <- as.matrix(beta_unscaled)
-  intercept_unscaled <- as.numeric(intercept_unscaled)
+  beta_unscaled <- as.matrix(beta_unscaled_mlx)
+  intercept_unscaled <- as.numeric(intercept_unscaled_mlx)
 
   rownames(beta_unscaled) <- colnames(x)
   result <- list(
     a0 = intercept_unscaled,
     beta = beta_unscaled,
-    lambda = lambda,
+    lambda = fit$lambda,
     alpha = alpha,
     family = family_name,
     standardize = standardize,
     intercept = intercept,
+    use_strong_rules = use_strong_rules,
     x_center = x_center,
     x_scale = x_scale,
     call = match.call()
@@ -222,12 +130,236 @@ mlxs_glmnet <- function(x,
   result
 }
 
+.mlxs_glmnet_prepare_design <- function(x,
+                                        standardize,
+                                        intercept) {
+  x_mlx <- Rmlx::as_mlx(x)
+  n_pred <- ncol(x)
+
+  if (standardize || intercept) {
+    x_proc <- scale(x_mlx, center = intercept, scale = standardize)
+    x_center <- attr(x_proc, "scaled:center")
+    x_scale <- attr(x_proc, "scaled:scale")
+  } else {
+    x_proc <- x_mlx
+    x_center <- NULL
+    x_scale <- NULL
+  }
+
+  if (is.null(x_center)) {
+    x_center <- Rmlx::mlx_zeros(c(1L, n_pred))
+  }
+  if (is.null(x_scale)) {
+    x_scale <- Rmlx::mlx_ones(c(1L, n_pred))
+  }
+
+  list(
+    x = x_proc,
+    x_center = Rmlx::mlx_reshape(x_center, c(n_pred, 1L)),
+    x_scale = Rmlx::mlx_reshape(x_scale, c(n_pred, 1L))
+  )
+}
+
+.mlxs_glmnet_fit_gaussian <- function(x_mlx,
+                                      y,
+                                      alpha,
+                                      lambda,
+                                      nlambda,
+                                      lambda_min_ratio,
+                                      maxit,
+                                      tol,
+                                      chunk_size) {
+  n_obs <- nrow(x_mlx)
+  n_pred <- ncol(x_mlx)
+  y_mean <- mean(y)
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+
+  lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
+  lambda <- .mlxs_glmnet_lambda_path(lambda, lambda_max, nlambda,
+                                     lambda_min_ratio)
+  n_lambda <- length(lambda)
+
+  beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1L))
+  eta_mlx <- Rmlx::mlx_zeros(c(n_obs, 1L))
+  residual_mlx <- -y_mlx
+  beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
+  intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
+  y_mean_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+
+  col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
+  base_lipschitz <- max(col_sq_sums) / n_obs
+
+  for (idx in seq_along(lambda)) {
+    lambda_val <- lambda[idx]
+    step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
+    thresh <- lambda_val * alpha * step
+    ridge_penalty <- lambda_val * (1 - alpha)
+
+    remaining <- maxit
+    while (remaining > 0L) {
+      n_steps <- min(chunk_size, remaining)
+      state <- .mlxs_glmnet_gaussian_chunk(
+        x_mlx = x_mlx,
+        beta_mlx = beta_mlx,
+        eta_mlx = eta_mlx,
+        residual_mlx = residual_mlx,
+        y_mlx = y_mlx,
+        n_obs = n_obs,
+        step = step,
+        thresh = thresh,
+        ridge_penalty = ridge_penalty,
+        n_steps = n_steps
+      )
+
+      beta_mlx <- state$beta
+      eta_mlx <- state$eta
+      residual_mlx <- state$residual
+      remaining <- remaining - n_steps
+
+      if (as.logical(state$delta_max < tol)) {
+        break
+      }
+    }
+
+    beta_store_mlx <- Rmlx::mlx_slice_update(
+      beta_store_mlx,
+      beta_mlx,
+      start = c(1L, idx),
+      stop = c(n_pred, idx)
+    )
+    intercept_store_mlx <- Rmlx::mlx_slice_update(
+      intercept_store_mlx,
+      y_mean_mlx,
+      start = c(idx, 1L),
+      stop = c(idx, 1L)
+    )
+  }
+
+  list(
+    beta = beta_store_mlx,
+    intercept = intercept_store_mlx,
+    lambda = lambda
+  )
+}
+
+.mlxs_glmnet_fit_binomial <- function(x_mlx,
+                                      y,
+                                      alpha,
+                                      lambda,
+                                      nlambda,
+                                      lambda_min_ratio,
+                                      intercept,
+                                      maxit,
+                                      tol,
+                                      chunk_size) {
+  if (!all(y %in% c(0, 1))) {
+    stop("Binomial family requires a 0/1 response.", call. = FALSE)
+  }
+
+  n_obs <- nrow(x_mlx)
+  n_pred <- ncol(x_mlx)
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
+  ones_mlx <- Rmlx::mlx_ones(c(n_obs, 1L))
+
+  p_hat <- mean(y)
+  p_hat <- min(max(p_hat, 1e-6), 1 - 1e-6)
+  intercept_val <- if (intercept) log(p_hat / (1 - p_hat)) else 0
+  intercept_mlx <- Rmlx::mlx_matrix(intercept_val, nrow = 1L, ncol = 1L)
+  beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1L))
+  eta_mlx <- if (intercept) ones_mlx * intercept_mlx else {
+    Rmlx::mlx_zeros(c(n_obs, 1L))
+  }
+  residual_mlx <- (1 / (1 + exp(-eta_mlx))) - y_mlx
+
+  lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, residual_mlx, n_obs, alpha)
+  lambda <- .mlxs_glmnet_lambda_path(lambda, lambda_max, nlambda,
+                                     lambda_min_ratio)
+  n_lambda <- length(lambda)
+
+  beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
+  intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
+  col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
+  base_lipschitz <- 0.25 * max(col_sq_sums) / n_obs
+
+  for (idx in seq_along(lambda)) {
+    lambda_val <- lambda[idx]
+    step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
+    thresh <- lambda_val * alpha * step
+    ridge_penalty <- lambda_val * (1 - alpha)
+
+    remaining <- maxit
+    while (remaining > 0L) {
+      n_steps <- min(chunk_size, remaining)
+      state <- .mlxs_glmnet_binomial_chunk(
+        x_mlx = x_mlx,
+        beta_mlx = beta_mlx,
+        intercept_mlx = intercept_mlx,
+        eta_mlx = eta_mlx,
+        residual_mlx = residual_mlx,
+        y_mlx = y_mlx,
+        ones_mlx = ones_mlx,
+        n_obs = n_obs,
+        step = step,
+        thresh = thresh,
+        ridge_penalty = ridge_penalty,
+        n_steps = n_steps,
+        fit_intercept = intercept
+      )
+
+      beta_mlx <- state$beta
+      intercept_mlx <- state$intercept
+      eta_mlx <- state$eta
+      residual_mlx <- state$residual
+      remaining <- remaining - n_steps
+
+      if (as.logical(state$delta_max < tol) &&
+          as.logical(state$intercept_delta_max < tol)) {
+        break
+      }
+    }
+
+    beta_store_mlx <- Rmlx::mlx_slice_update(
+      beta_store_mlx,
+      beta_mlx,
+      start = c(1L, idx),
+      stop = c(n_pred, idx)
+    )
+    intercept_store_mlx <- Rmlx::mlx_slice_update(
+      intercept_store_mlx,
+      intercept_mlx,
+      start = c(idx, 1L),
+      stop = c(idx, 1L)
+    )
+  }
+
+  list(
+    beta = beta_store_mlx,
+    intercept = intercept_store_mlx,
+    lambda = lambda
+  )
+}
+
+.mlxs_glmnet_lambda_max <- function(x_mlx, residual_mlx, n_obs, alpha) {
+  z0_mlx <- crossprod(x_mlx, residual_mlx) / n_obs
+  lambda_max <- max(abs(as.numeric(z0_mlx))) / max(alpha, 1e-8)
+  if (is.finite(lambda_max) && lambda_max == 0) {
+    lambda_max <- 1
+  }
+  lambda_max
+}
+
+.mlxs_glmnet_lambda_path <- function(lambda,
+                                     lambda_max,
+                                     nlambda,
+                                     lambda_min_ratio) {
+  if (is.null(lambda)) {
+    lambda_min <- lambda_max * lambda_min_ratio
+    exp(seq(log(lambda_max), log(lambda_min), length.out = nlambda))
+  } else {
+    sort(as.numeric(lambda), decreasing = TRUE)
+  }
+}
+
 .mlxs_soft_threshold <- function(z, thresh) {
-  # Soft threshold: sign(z) * max(|z| - thresh, 0)
-  # Simplified to reduce temporary allocations
-  abs_z <- abs(z)
-  magnitude <- Rmlx::mlx_maximum(abs_z - thresh, 0)
-  # Compute sign as z / |z|, with small epsilon to avoid division by zero
-  sign_z <- z / (abs_z + 1e-10)
-  magnitude * sign_z
+  sign(z) * Rmlx::mlx_maximum(abs(z) - thresh, 0)
 }
