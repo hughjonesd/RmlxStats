@@ -6,7 +6,9 @@
 #'
 #' @note This implementation uses dense MLX updates rather than `glmnet`'s
 #'   coordinate-descent Fortran kernels, so `glmnet::glmnet()` can still be
-#'   faster on smaller problems.
+#'   faster on smaller problems. For very tall Gaussian problems, the fitter
+#'   switches to a covariance-space MLX solver to reduce repeated `X'X`
+#'   products along the path.
 #'
 #' @param x Numeric matrix of predictors (observations in rows).
 #' @param y Numeric response vector (for binomial, values must be 0/1).
@@ -75,6 +77,7 @@ mlxs_glmnet <- function(x,
       lambda = lambda,
       nlambda = nlambda,
       lambda_min_ratio = lambda_min_ratio,
+      intercept = intercept,
       maxit = maxit,
       tol = tol,
       chunk_size = chunk_size
@@ -166,12 +169,62 @@ mlxs_glmnet <- function(x,
                                       lambda,
                                       nlambda,
                                       lambda_min_ratio,
+                                      intercept,
                                       maxit,
                                       tol,
                                       chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mean <- mean(y)
+  n_lambda <- if (is.null(lambda)) nlambda else length(lambda)
+
+  solver <- .mlxs_glmnet_choose_gaussian_solver(
+    n_obs = n_obs,
+    n_pred = n_pred,
+    n_lambda = n_lambda
+  )
+
+  if (identical(solver, "gram")) {
+    return(.mlxs_glmnet_fit_gaussian_gram(
+      x_mlx = x_mlx,
+      y = y,
+      alpha = alpha,
+      lambda = lambda,
+      nlambda = nlambda,
+      lambda_min_ratio = lambda_min_ratio,
+      intercept = intercept,
+      maxit = maxit,
+      tol = tol,
+      chunk_size = chunk_size
+    ))
+  }
+
+  .mlxs_glmnet_fit_gaussian_dense(
+    x_mlx = x_mlx,
+    y = y,
+    alpha = alpha,
+    lambda = lambda,
+    nlambda = nlambda,
+    lambda_min_ratio = lambda_min_ratio,
+    intercept = intercept,
+    maxit = maxit,
+    tol = tol,
+    chunk_size = chunk_size
+  )
+}
+
+.mlxs_glmnet_fit_gaussian_dense <- function(x_mlx,
+                                            y,
+                                            alpha,
+                                            lambda,
+                                            nlambda,
+                                            lambda_min_ratio,
+                                            intercept,
+                                            maxit,
+                                            tol,
+                                            chunk_size) {
+  n_obs <- nrow(x_mlx)
+  n_pred <- ncol(x_mlx)
+  y_mean <- if (intercept) mean(y) else 0
   y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
@@ -184,7 +237,7 @@ mlxs_glmnet <- function(x,
   residual_mlx <- -y_mlx
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
-  y_mean_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
 
   col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
   base_lipschitz <- max(col_sq_sums) / n_obs
@@ -229,7 +282,97 @@ mlxs_glmnet <- function(x,
     )
     intercept_store_mlx <- Rmlx::mlx_slice_update(
       intercept_store_mlx,
-      y_mean_mlx,
+      intercept_mlx,
+      start = c(idx, 1L),
+      stop = c(idx, 1L)
+    )
+  }
+
+  list(
+    beta = beta_store_mlx,
+    intercept = intercept_store_mlx,
+    lambda = lambda
+  )
+}
+
+.mlxs_glmnet_fit_gaussian_gram <- function(x_mlx,
+                                           y,
+                                           alpha,
+                                           lambda,
+                                           nlambda,
+                                           lambda_min_ratio,
+                                           intercept,
+                                           maxit,
+                                           tol,
+                                           chunk_size) {
+  n_obs <- nrow(x_mlx)
+  n_pred <- ncol(x_mlx)
+  y_mean <- if (intercept) mean(y) else 0
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+
+  gram_mlx <- crossprod(x_mlx) / n_obs
+  xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
+
+  lambda_max <- max(abs(as.numeric(xy_mlx))) / max(alpha, 1e-8)
+  if (is.finite(lambda_max) && lambda_max == 0) {
+    lambda_max <- 1
+  }
+  lambda <- .mlxs_glmnet_lambda_path(lambda, lambda_max, nlambda,
+                                     lambda_min_ratio)
+  n_lambda <- length(lambda)
+
+  beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1L))
+  z_mlx <- beta_mlx
+  t_prev <- 1
+  beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
+  intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
+  intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  gram_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
+  effective_maxit <- min(maxit, 200L)
+
+  for (idx in seq_along(lambda)) {
+    lambda_val <- lambda[idx]
+    ridge_penalty <- lambda_val * (1 - alpha)
+    step <- 1 / (gram_lipschitz + ridge_penalty)
+    thresh <- lambda_val * alpha * step
+
+    remaining <- effective_maxit
+    z_mlx <- beta_mlx
+    t_prev <- 1
+
+    while (remaining > 0L) {
+      n_steps <- min(chunk_size, remaining)
+      state <- .mlxs_glmnet_gaussian_gram_chunk(
+        gram_mlx = gram_mlx,
+        xy_mlx = xy_mlx,
+        beta_mlx = beta_mlx,
+        z_mlx = z_mlx,
+        t_prev = t_prev,
+        step = step,
+        thresh = thresh,
+        ridge_penalty = ridge_penalty,
+        n_steps = n_steps
+      )
+
+      beta_mlx <- state$beta
+      z_mlx <- state$z
+      t_prev <- state$t_prev
+      remaining <- remaining - n_steps
+
+      if (as.logical(state$delta_max < tol)) {
+        break
+      }
+    }
+
+    beta_store_mlx <- Rmlx::mlx_slice_update(
+      beta_store_mlx,
+      beta_mlx,
+      start = c(1L, idx),
+      stop = c(n_pred, idx)
+    )
+    intercept_store_mlx <- Rmlx::mlx_slice_update(
+      intercept_store_mlx,
+      intercept_mlx,
       start = c(idx, 1L),
       stop = c(idx, 1L)
     )
@@ -357,6 +500,14 @@ mlxs_glmnet <- function(x,
     exp(seq(log(lambda_max), log(lambda_min), length.out = nlambda))
   } else {
     sort(as.numeric(lambda), decreasing = TRUE)
+  }
+}
+
+.mlxs_glmnet_choose_gaussian_solver <- function(n_obs, n_pred, n_lambda) {
+  if (n_lambda >= 10L && n_pred <= 1024L && n_obs >= 50L * n_pred) {
+    "gram"
+  } else {
+    "dense"
   }
 }
 

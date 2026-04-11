@@ -62,5 +62,7 @@ backend throughout the iterative updates.
 \note{
 This implementation uses dense MLX updates rather than \code{glmnet}'s
 coordinate-descent Fortran kernels, so \code{glmnet::glmnet()} can still be
-faster on smaller problems.
+faster on smaller problems. For very tall Gaussian problems, the fitter
+switches to a covariance-space MLX solver to reduce repeated \verb{X'X}
+products along the path.
 }
