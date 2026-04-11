@@ -2,7 +2,8 @@
 #'
 #' Fit lasso or elastic-net penalised regression paths using MLX arrays for the
 #' heavy linear algebra. Dense Gaussian and binomial paths stay on the MLX
-#' backend throughout the iterative updates.
+#' backend throughout the iterative updates, with repeated chunk updates traced
+#' through [Rmlx::mlx_compile()] to reduce host overhead.
 #'
 #' @note This implementation uses dense MLX updates rather than `glmnet`'s
 #'   coordinate-descent Fortran kernels, so `glmnet::glmnet()` can still be
@@ -241,27 +242,32 @@ mlxs_glmnet <- function(x,
 
   col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
   base_lipschitz <- max(col_sq_sums) / n_obs
+  n_obs_mlx <- Rmlx::as_mlx(n_obs)
+  zero_mlx <- Rmlx::as_mlx(0)
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
     step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
     thresh <- lambda_val * alpha * step
     ridge_penalty <- lambda_val * (1 - alpha)
+    step_mlx <- Rmlx::as_mlx(step)
+    thresh_mlx <- Rmlx::as_mlx(thresh)
+    ridge_penalty_mlx <- Rmlx::as_mlx(ridge_penalty)
 
     remaining <- maxit
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_gaussian_chunk(
-        x_mlx = x_mlx,
-        beta_mlx = beta_mlx,
-        eta_mlx = eta_mlx,
-        residual_mlx = residual_mlx,
-        y_mlx = y_mlx,
-        n_obs = n_obs,
-        step = step,
-        thresh = thresh,
-        ridge_penalty = ridge_penalty,
-        n_steps = n_steps
+      state <- .mlxs_glmnet_get_compiled_chunk("gaussian", n_steps)(
+        x_mlx,
+        beta_mlx,
+        eta_mlx,
+        residual_mlx,
+        y_mlx,
+        n_obs_mlx,
+        step_mlx,
+        thresh_mlx,
+        ridge_penalty_mlx,
+        zero_mlx
       )
 
       beta_mlx <- state$beta
@@ -329,34 +335,42 @@ mlxs_glmnet <- function(x,
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
   gram_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
   effective_maxit <- min(maxit, 200L)
+  zero_mlx <- Rmlx::as_mlx(0)
+  one_mlx <- Rmlx::as_mlx(1)
+  four_mlx <- Rmlx::as_mlx(4)
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
     ridge_penalty <- lambda_val * (1 - alpha)
     step <- 1 / (gram_lipschitz + ridge_penalty)
     thresh <- lambda_val * alpha * step
+    step_mlx <- Rmlx::as_mlx(step)
+    thresh_mlx <- Rmlx::as_mlx(thresh)
+    ridge_penalty_mlx <- Rmlx::as_mlx(ridge_penalty)
 
     remaining <- effective_maxit
     z_mlx <- beta_mlx
-    t_prev <- 1
+    t_prev_mlx <- one_mlx
 
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_gaussian_gram_chunk(
-        gram_mlx = gram_mlx,
-        xy_mlx = xy_mlx,
-        beta_mlx = beta_mlx,
-        z_mlx = z_mlx,
-        t_prev = t_prev,
-        step = step,
-        thresh = thresh,
-        ridge_penalty = ridge_penalty,
-        n_steps = n_steps
+      state <- .mlxs_glmnet_get_compiled_chunk("gaussian_gram", n_steps)(
+        gram_mlx,
+        xy_mlx,
+        beta_mlx,
+        z_mlx,
+        t_prev_mlx,
+        step_mlx,
+        thresh_mlx,
+        ridge_penalty_mlx,
+        zero_mlx,
+        one_mlx,
+        four_mlx
       )
 
       beta_mlx <- state$beta
       z_mlx <- state$z
-      t_prev <- state$t_prev
+      t_prev_mlx <- state$t_prev
       remaining <- remaining - n_steps
 
       if (as.logical(state$delta_max < tol)) {
@@ -423,30 +437,38 @@ mlxs_glmnet <- function(x,
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
   col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
   base_lipschitz <- 0.25 * max(col_sq_sums) / n_obs
+  n_obs_mlx <- Rmlx::as_mlx(n_obs)
+  zero_mlx <- Rmlx::as_mlx(0)
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
     step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
     thresh <- lambda_val * alpha * step
     ridge_penalty <- lambda_val * (1 - alpha)
+    step_mlx <- Rmlx::as_mlx(step)
+    thresh_mlx <- Rmlx::as_mlx(thresh)
+    ridge_penalty_mlx <- Rmlx::as_mlx(ridge_penalty)
 
     remaining <- maxit
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_binomial_chunk(
-        x_mlx = x_mlx,
-        beta_mlx = beta_mlx,
-        intercept_mlx = intercept_mlx,
-        eta_mlx = eta_mlx,
-        residual_mlx = residual_mlx,
-        y_mlx = y_mlx,
-        ones_mlx = ones_mlx,
-        n_obs = n_obs,
-        step = step,
-        thresh = thresh,
-        ridge_penalty = ridge_penalty,
-        n_steps = n_steps,
+      state <- .mlxs_glmnet_get_compiled_chunk(
+        "binomial",
+        n_steps,
         fit_intercept = intercept
+      )(
+        x_mlx,
+        beta_mlx,
+        intercept_mlx,
+        eta_mlx,
+        residual_mlx,
+        y_mlx,
+        ones_mlx,
+        n_obs_mlx,
+        step_mlx,
+        thresh_mlx,
+        ridge_penalty_mlx,
+        zero_mlx
       )
 
       beta_mlx <- state$beta

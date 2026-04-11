@@ -57,7 +57,8 @@ path, intercepts, lambda sequence, and scaling information.
 \description{
 Fit lasso or elastic-net penalised regression paths using MLX arrays for the
 heavy linear algebra. Dense Gaussian and binomial paths stay on the MLX
-backend throughout the iterative updates.
+backend throughout the iterative updates, with repeated chunk updates traced
+through \code{\link[Rmlx:mlx_compile]{Rmlx::mlx_compile()}} to reduce host overhead.
 }
 \note{
 This implementation uses dense MLX updates rather than \code{glmnet}'s
