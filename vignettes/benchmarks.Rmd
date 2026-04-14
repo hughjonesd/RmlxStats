@@ -14,6 +14,10 @@ params:
 ---
 
 ```{r setup, include=FALSE, message=FALSE}
+
+# To update this (and the pkgdown website) run
+# pkgdown::deploy_to_branch()
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
@@ -37,7 +41,7 @@ library(huxtable)
 We benchmark RmlxStats against base R and specialized fast fitting packages,
 across varying numbers of cases (`n`) and predictors (`p`).
 
-Benchmarking was run on an M1 Macbook Air.
+Benchmarking was run on an M2 Macbook Air.
 
 ## Data Generation
 
@@ -52,6 +56,12 @@ colnames(X) <- paste0("x", seq_len(p_max))
 
 beta_true <- rnorm(p_max, mean = 0, sd = 0.5)
 y_continuous <- drop(X %*% beta_true + rnorm(n_max, sd = 2))
+
+# only 1 in 10 predictors matter:
+X_sparse <- X[, seq(10, p_max, 10)]
+beta_true_sparse <- beta_true[seq(1, p_max, 10)]
+y_sparse <- drop(X_sparse %*% beta_true_sparse + rnorm(n_max, sd = 2))
+
 linpred <- drop(X %*% beta_true) / 5  
 prob <- 1 / (1 + exp(-linpred))
 y_binary <- rbinom(n_max, size = 1, prob = prob)
@@ -59,6 +69,7 @@ y_binary <- rbinom(n_max, size = 1, prob = prob)
 full_data <- data.frame(
   y_cont = y_continuous,
   y_bin = y_binary,
+  y_sparse = y_sparse,
   X
 )
 
@@ -81,7 +92,7 @@ bench_grid <- bench_grid[bench_grid$n > bench_grid$p, ]
 
 ```
 
-## Linear Model Benchmarks
+## `lm` Benchmarks
 
 ```{r lm-benchmarks}
 lm_results <- list()
@@ -110,14 +121,14 @@ for (i in seq_len(nrow(bench_grid))) {
 
   bm$n <- n
   bm$p <- p
-  bm$model_type <- "LM"
+  bm$model_type <- "lm"
   lm_results[[i]] <- bm
 }
 
 lm_df <- do.call(rbind, lm_results)
 ```
 
-## GLM Benchmarks
+## `glm` Benchmarks
 
 ```{r glm-benchmarks}
 glm_results <- list()
@@ -149,11 +160,42 @@ for (i in seq_len(nrow(bench_grid))) {
 
   bm$n <- n
   bm$p <- p
-  bm$model_type <- "GLM"
+  bm$model_type <- "glm"
   glm_results[[i]] <- bm
 }
 
 glm_df <- do.call(rbind, glm_results)
+```
+
+## `glmnet` Benchmarks
+
+
+```{r glmnet-benchmarks}
+glmnet_results <- list()
+
+for (i in seq_len(nrow(bench_grid))) {
+  n <- bench_grid$n[i]
+  p <- bench_grid$p[i]
+
+  xvars <- paste0("x", 1:p)
+  x <- full_data[1:n, xvars]
+  y <- full_data[1:n, "y_sparse"]
+
+  bm <- mark(
+    "glmnet::glmnet" = glmnet::glmnet(x, y, lambda = 1/1:50),
+    "RmlxStats::mlxs_glmnet" = mlxs_glmnet(x, y, lambda = 1/1:50),
+    iterations = 3,
+    check = FALSE,
+    filter_gc = FALSE
+  )
+
+  bm$n <- n
+  bm$p <- p
+  bm$model_type <- "glmnet"
+  glmnet_results[[i]] <- bm
+}
+
+glmnet_df <- do.call(rbind, glmnet_results)
 ```
 
 ## Bootstrap Benchmarks
@@ -223,7 +265,7 @@ boot_df <- do.call(rbind, boot_results)
 
 
 ```{r prepare-viz-data, include = FALSE}
-all_results <- rbind(lm_df, glm_df, boot_df)
+all_results <- rbind(lm_df, glm_df, glmnet_df, boot_df)
 
 all_results$method <- as.character(all_results$expression)
 all_results$median_sec <- as.numeric(all_results$median, units = "s")
@@ -261,6 +303,8 @@ lm_mlxs <- "RmlxStats::mlxs_lm"
 lm_base <- "stats::lm"
 glm_mlxs <- "RmlxStats::mlxs_glm"
 glm_base <- "stats::glm"
+glmnet_mlxs <- "RmlxStats::mlxs_glmnet"
+glmnet_base <- "glmnet::glmnet"
 boot_case_mlxs <- "mlxs_case"
 boot_case_base <- "boot_case"
 boot_resid_mlxs <- "mlxs_resid"
@@ -268,8 +312,9 @@ boot_resid_base <- "lmboot_resid"
 
 # Process each model type
 models <- list(
-  list(name = "lm", mlxs = lm_mlxs, base = lm_base, type = "LM"),
-  list(name = "glm", mlxs = glm_mlxs, base = glm_base, type = "GLM"),
+  list(name = "lm", mlxs = lm_mlxs, base = lm_base, type = "lm"),
+  list(name = "glm", mlxs = glm_mlxs, base = glm_base, type = "glm"),
+  list(name = "glmnet", mlxs = glmnet_mlxs, base = glmnet_base, type = "glmnet"),
   list(name = "boot_case", mlxs = boot_case_mlxs, base = boot_case_base, type = "Bootstrap"),
   list(name = "boot_resid", mlxs = boot_resid_mlxs, base = boot_resid_base, type = "Bootstrap")
 )
@@ -346,6 +391,7 @@ colnames(fastest_table) <- gsub("speedup\\.", "", colnames(fastest_table))
 rownames(base_table) <- c(
   "lm" = "Linear Model",
   "glm" = "Logistic Regression",
+  "glmnet" = "Elastic Net",
   "boot_case" = "Bootstrap (Case)",
   "boot_resid" = "Bootstrap (Residual)"
 )[rownames(base_table)]
@@ -353,6 +399,7 @@ rownames(base_table) <- c(
 rownames(fastest_table) <- c(
   "lm" = "Linear Model",
   "glm" = "Logistic Regression",
+  "glmnet" = "Elastic Net",
   "boot_case" = "Bootstrap (Case)",
   "boot_resid" = "Bootstrap (Residual)"
 )[rownames(fastest_table)]
@@ -412,18 +459,25 @@ plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary
 }
 ```
 
-## Linear Models
+## `lm` Models
 
 ```{r plot-lm, echo = FALSE}
-lm_data <- subset(summary_results, model_type == "LM")
+lm_data <- subset(summary_results, model_type == "lm")
 plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
-## GLM Models
+## `glm` Models
 
 ```{r plot-glm, echo = FALSE}
-glm_data <- subset(summary_results, model_type == "GLM")
+glm_data <- subset(summary_results, model_type == "glm")
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
+```
+
+## `glmnet` Models
+
+```{r plot-glmnet, echo = FALSE}
+lm_data <- subset(summary_results, model_type == "glmnet")
+plot_benchmark(lm_data, "Elastic Net Benchmark: Time by Dataset Size")
 ```
 
 ## Bootstraps
