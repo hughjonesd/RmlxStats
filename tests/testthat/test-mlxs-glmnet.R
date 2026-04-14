@@ -53,6 +53,38 @@ test_that("mlxs_glmnet works with standardize = FALSE", {
   expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
 })
 
+test_that("mlxs_glmnet matches glmnet for gaussian without intercept", {
+  set.seed(124)
+  n <- 120
+  p <- 12
+  x <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  beta_true <- c(runif(4, -1, 1), rep(0, p - 4))
+  y <- drop(x %*% beta_true + rnorm(n, sd = 0.5))
+  lambda <- 0.15
+
+  ref <- glmnet::glmnet(
+    x, y,
+    family = "gaussian",
+    alpha = 1,
+    lambda = lambda,
+    standardize = TRUE,
+    intercept = FALSE
+  )
+  fit <- mlxs_glmnet(
+    x, y,
+    family = mlxs_gaussian(),
+    alpha = 1,
+    lambda = lambda,
+    standardize = TRUE,
+    intercept = FALSE,
+    maxit = 3000,
+    tol = 1e-6
+  )
+
+  expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
+})
+
 test_that("strong rules produce identical results to non-screened for gaussian", {
   set.seed(456)
   n <- 100
