@@ -6,3 +6,23 @@ reference:
     contents:
       - mlxs_lm
       - mlxs_lm_fit
+      - mlxs_lm_methods
+  - title: Generalized Linear Models
+    contents:
+      - mlxs_glm
+      - mlxs_glm_methods
+  - title: Elastic Net Models
+    contents:
+      - mlxs_glmnet
+  - title: Bootstrapping
+    contents:
+      - mlxs_boot
+  - title: Family Functions
+    contents:
+      - mlxs_gaussian
+      - mlxs_binomial
+      - mlxs_poisson
+      - mlxs_quasibinomial
+      - mlxs_quasipoisson
+      - generics-reexports
+      

@@ -14,10 +14,9 @@ mlxs_glmnet(
   lambda_min_ratio = 1e-04,
   standardize = TRUE,
   intercept = TRUE,
-  maxit = 1000,
-  tol = 1e-06,
   use_strong_rules = TRUE,
-  block_size = 16L
+  maxit = 1000,
+  tol = 1e-06
 )
 }
 \arguments{
@@ -39,35 +38,32 @@ a sequence of length \code{nlambda} is generated from \code{lambda_max} down to
 
 \item{lambda_min_ratio}{Smallest lambda as a fraction of \code{lambda_max}.}
 
-\item{standardize}{Should columns of \code{x} be centred and scaled before
-fitting? Coefficients are returned on the original scale regardless.}
+\item{standardize}{Should columns of \code{x} be scaled before fitting?}
 
 \item{intercept}{Should an intercept be fit?}
+
+\item{use_strong_rules}{Retained for API compatibility. The dense MLX solver
+keeps all coefficients on device, so this flag currently does not change
+the computation.}
 
 \item{maxit}{Maximum proximal-gradient iterations per lambda value.}
 
 \item{tol}{Convergence tolerance on the coefficient updates.}
-
-\item{use_strong_rules}{Should strong rules be used to screen out inactive
-predictors? This can speed up fitting for sparse problems.}
-
-\item{block_size}{Number of coefficients to update per gradient evaluation.
-Set to 1 for classic coordinate descent; larger values (e.g., 16-64) batch
-updates for speed at the cost of a slightly more conservative step size.}
 }
 \value{
-An object of class \code{mlxs_glmnet} containing MLX arrays for the
-coefficient path (\code{beta}), intercepts (\code{a0}), and lambda sequence
-(\code{lambda}). Use \code{as.matrix()} / \code{as.numeric()} or the provided print
-method to materialise these on the host when needed.
+An object of class \code{mlxs_glmnet} containing the fitted coefficient
+path, intercepts, lambda sequence, and scaling information.
 }
 \description{
-Fit lasso or elastic-net penalised regression paths using MLX tensors for
-the heavy linear algebra. Currently supports Gaussian and binomial families
-with an optional intercept and column standardisation.
+Fit lasso or elastic-net penalised regression paths using MLX arrays for the
+heavy linear algebra. Dense Gaussian and binomial paths stay on the MLX
+backend throughout the iterative updates, with repeated chunk updates traced
+through \code{\link[Rmlx:mlx_compile]{Rmlx::mlx_compile()}} to reduce host overhead.
 }
 \note{
-This function is early work. It is currently only faster than
-\code{\link[glmnet:glmnet]{glmnet::glmnet()}} for very large data: roughly 100,000 observations
-and 1000 predictors.
+This implementation uses dense MLX updates rather than \code{glmnet}'s
+coordinate-descent Fortran kernels, so \code{glmnet::glmnet()} can still be
+faster on smaller problems. For very tall Gaussian problems, the fitter
+switches to a covariance-space MLX solver to reduce repeated \verb{X'X}
+products along the path.
 }
