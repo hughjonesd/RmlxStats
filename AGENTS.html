@@ -38,36 +38,36 @@
 
 <div id="repository-guidelines" class="section level1">
 
-<p>This project builds on the <code>Rmlx</code> GPU math package to expose statistical workflows. Many conventions mirror the upstream repository; deviations and RmlxStats-specific guidance are called out below.</p>
+<p>This project builds on the <code>Rmlx</code> GPU math package to expose statistical workflows.</p>
 <div class="section level2">
 <h2 id="project-structure--module-organization">Project Structure &amp; Module Organization<a class="anchor" aria-label="anchor" href="#project-structure--module-organization"></a></h2>
 <ul><li>
-<code>R/</code> holds exported R wrappers, S3 methods, and roxygen docs. Mirror upstream layout like <code>mlxs-lm.R</code> when adding public APIs (use the <code>mlxs_</code> prefix).</li>
+<code>R/</code> holds R code and roxygen docs. Use the <code>mlxs_</code> prefix for public functions.</li>
 <li>
 <code>tests/testthat/</code> groups unit specs by domain (<code>test-mlxs-lm.R</code>, <code>test-pca.R</code>); add new files as <code>test-feature.R</code>.</li>
-<li>Vignettes (planned) will live in <code>vignettes/</code>; update when user-facing features land.</li>
-<li>
-<code>DESCRIPTION</code>, <code>NAMESPACE</code>, and <code>AGENTS.md</code> manage package metadata and coordination docs.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="build-test-and-development-commands">Build, Test, and Development Commands<a class="anchor" aria-label="anchor" href="#build-test-and-development-commands"></a></h2>
 <ul><li>
 <code>R -q -e 'devtools::document()'</code> rebuilds NAMESPACE and Rd files from roxygen comments.</li>
 <li>
-<code>R -q -e 'devtools::build()'</code> creates a source tarball; <code>R -q -e 'devtools::check()'</code> runs formal package checks.</li>
+<code>R -q -e 'devtools::build()'</code> creates a source tarball;</li>
 <li>
-<code>R -q -e 'devtools::test()'</code> runs the testthat suite; use <code>R -q -e 'devtools::load_all()'</code> for rapid iteration.</li>
+<code>R -q -e 'devtools::check()'</code> runs formal package checks. Use <code>vignette = FALSE</code> to avoid building slow vignettes in the check.</li>
+<li>
+<code>R -q -e 'devtools::test()'</code> runs tests.</li>
+<li>Use <code>R -q -e 'devtools::load_all()'</code> for rapid iteration.</li>
 <li>When Rcpp glue is added, also run <code>R -q -e 'Rcpp::compileAttributes()'</code> to regenerate <code>RcppExports</code>.</li>
 </ul></div>
 <div class="section level2">
-<h2 id="coding-style--naming-conventions">Coding Style &amp; Naming Conventions<a class="anchor" aria-label="anchor" href="#coding-style--naming-conventions"></a></h2>
-<ul><li>Use two-space indents in R; keep lines under 100 characters to match upstream style.</li>
-<li>Public functions use the <code>mlxs_</code> prefix (<code>mlxs_lm</code>, <code>mlxs_glm</code>). S3 methods follow <code>generic.class</code> (<code>print.mlxs_lm</code>).</li>
-<li>Document R functions with roxygen <code>#'</code> blocks; let <code>@export</code> drive NAMESPACE entries.</li>
-<li>Prefer snake_case for internal helpers (<code>as_model_matrix</code>).</li>
+<h2 id="development-and-coding">Development and Coding<a class="anchor" aria-label="anchor" href="#development-and-coding"></a></h2>
+<ul><li>Use two-space indents in R; keep lines under 80 characters.</li>
+<li>Document R functions with roxygen <code>#'</code> blocks; let <code>@export</code> drive NAMESPACE entries. Use markdown formatting in roxygen.</li>
+<li>Prefer snake_case.</li>
+<li>After adding a function, document it with roxygen; add it to <code>_pkgdown.yml</code>; and add a line to <code>NEWS.md</code>.</li>
 </ul></div>
 <div class="section level2">
-<h2 id="testing-guidelines">Testing Guidelines<a class="anchor" aria-label="anchor" href="#testing-guidelines"></a></h2>
+<h2 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h2>
 <ul><li>Write tests with testthat in <code>tests/testthat</code>; keep scenarios focused and readable.</li>
 <li>Use CPU-friendly fixtures (small matrices) so GPU and CPU paths run quickly.</li>
 <li>Run <code>R -q -e 'devtools::test()'</code> locally; on other machines failures are acceptable when MLX is absent, but prefer explicit skips with informative messages if GPU is required.</li>
@@ -78,42 +78,14 @@
 <ul><li>
 <strong>KEEP IT SIMPLE.</strong> Prefer the most direct expression of an idea over elaborate helper stacks. If a single call (e.g., <code>as_mlx()</code>) communicates intent, use it instead of wrapping the same logic in multiple conditionals.</li>
 <li>
-<strong>READ THE MLX AND LOCAL CODEBASE.</strong> Before changing behaviour, scan the existing MLX helpers and this repo to stay aligned with current conventions—assume the answer probably already exists somewhere nearby.</li>
+<strong>READ THE Rmlx AND LOCAL CODEBASE.</strong> Before changing behaviour, scan the existing MLX helpers and this repo to stay aligned with current conventions—assume the answer probably already exists somewhere nearby. <code>Rmlx</code> is in <code>../Rmlx</code>. You should read <code>AGENTS.md</code> there too. If you find an issue in Rmlx, you can fix it yourself, or file a github issue using the <code>gh</code> command line tool.</li>
+<li>
+<strong>CHECK YOUR CODE BEFORE THEORIZING.</strong> When debugging performance issues, verify the implementation is correct before building theories about algorithmic trade-offs or architectural constraints. Profile to find bottlenecks, then inspect the actual code at those hot spots. Be empirical and modest about your capabilities.</li>
+<li>
+<strong>KEEP VARIABLES IN MLX</strong>. The package exists to test the <code>Rmlx</code> package. Any speedups can only be gained by using Rmlx data structures. Any data-dependent variables (broadly, anything on the scale of “n” or “p”, including e.g. regression coefficients) should be mlx variables. Mlx variables should be accepted as inputs (use <code>as_mlx()</code>). Computations should be done using Rmlx including mlx-specific methods for base generics (see <code>help("mlx-methods")</code>). If you have to convert to R, that is a failure: ask for help or rethink. Familiarize yourself with <code>mlx_matrix()</code>, <code>mlx_vector()</code> and <code>as_mlx()</code> for conversion; look at <code>ls(package="Rmlx")</code> for mlx functions.</li>
 </ul></div>
 <div class="section level2">
-<h2 id="commit--pull-request-guidelines">Commit &amp; Pull Request Guidelines<a class="anchor" aria-label="anchor" href="#commit--pull-request-guidelines"></a></h2>
-<ul><li>Follow imperative, capitalized commit messages (e.g., <code>Add mlxs_lm interface</code>).</li>
-<li>Document API changes and summarize GPU/CPU paths covered in PR descriptions.</li>
-<li>Before opening a PR, run <code>document()</code>, <code>test()</code>, and <code>check()</code>; include notable performance notes if GPU speedups are claimed.</li>
-</ul></div>
-<div class="section level2">
-<h2 id="current-agent-notes-2025-10-31">Current Agent Notes (2025-10-31)<a class="anchor" aria-label="anchor" href="#current-agent-notes-2025-10-31"></a></h2>
-<ul><li>MLX tensor creation and Metal-backed work only succeeds with a permissive sandbox (e.g., <code>danger-full-access</code>). Restricted sandboxes may block Metal device initialisation and <code>processx</code>/<code>callr</code> usage.</li>
-<li>Under restricted modes you can still run <code>document()</code>, <code>test()</code> (CPU paths), and <code>check()</code>, but GPU calls may throw <code>c++ exception (unknown reason)</code>.</li>
-<li>Keep the workspace tidy after checks: remove temporary <code>*.tar.gz</code> artifacts or <code>.Rcheck/</code> directories created during manual workflows.</li>
-</ul></div>
-<div class="section level2">
-<h2 id="additional-guidance">Additional Guidance<a class="anchor" aria-label="anchor" href="#additional-guidance"></a></h2>
-<div class="section level3">
-<h3 id="mlx-first-data-handling">MLX-first Data Handling<a class="anchor" aria-label="anchor" href="#mlx-first-data-handling"></a></h3>
-<ul><li>This package exists to validate an <em>mlx</em>-based statistics workflow. Move inputs into MLX arrays immediately and keep them there as long as feasible; prefer MLX outputs for anything that could feed other computations.</li>
-<li>Base R representations are acceptable only for user-facing summaries (printing, glance/tidy outputs, etc.) or when required by R generics.</li>
-<li>When constructing MLX data from raw R vectors/scalars, favor explicit constructors such as <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_scalar.html" class="external-link">Rmlx::mlx_scalar()</a></code> / <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_vector.html" class="external-link">Rmlx::mlx_vector()</a></code> / <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_array.html" class="external-link">Rmlx::mlx_array()</a></code> rather than <code>as_mlx()</code> so future readers can see intent at the call site.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="issue-tracking">Issue Tracking<a class="anchor" aria-label="anchor" href="#issue-tracking"></a></h3>
-<ul><li>Log backlog ideas directly as GitHub issues (use <code>gh issue create ...</code>) instead of keeping a local <code>docs/github-issues.md</code> scratchpad. Include the issue number in PR summaries for traceability.</li>
-<li>Residual bootstraps for <code>mlxs_glm</code> are only supported for (quasi)gaussian families—fail fast if anything else is requested rather than silently downgrading to case resampling.</li>
-<li>Keep bootstrap implementations MLX-native end-to-end: gather samples via MLX subsetting, refit with <code>mlxs_lm_fit</code> / <code>.mlxs_glm_fit_core</code>, and return MLX standard-error columns (no intermediate <code><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix()</a></code>/<code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">stats::sd</a></code> hops).</li>
-<li>When mutating MLX arrays via <code>[&lt;-</code>, convert the update to a base matrix first if needed to avoid <code>as.vector.mlx</code> warnings (e.g., large active-set updates in <code>mlxs_glmnet</code>).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="integration-with-rmlx">Integration with Rmlx<a class="anchor" aria-label="anchor" href="#integration-with-rmlx"></a></h3>
-<ul><li>Always import Rmlx helpers (<code>as_mlx</code>, <code>mlx_matmul</code>, <code>qr.mlx</code>, etc.) via the qualified namespace (<code>Rmlx::</code>). Update <code>DESCRIPTION</code> Imports/Remotes as needed.</li>
-<li>Confirm function names against the latest pkgdown docs: <a href="https://hughjonesd.github.io/Rmlx/reference/index.html" class="external-link uri">https://hughjonesd.github.io/Rmlx/reference/index.html</a>.</li>
-<li>R arrays are column-major while MLX tensors are row-major; double-check axis handling if reductions behave unexpectedly.</li>
-<li>Use explicit <code><a href="https://hughjonesd.github.io/Rmlx/reference/colMeans.html" class="external-link">Rmlx::colMeans()</a></code> and <code><a href="https://hughjonesd.github.io/Rmlx/reference/colSums.html" class="external-link">Rmlx::colSums()</a></code> rather than unqualified calls to avoid namespace confusion between base R and Rmlx methods.</li>
-</ul></div>
+<h2 id="other-notes">Other Notes<a class="anchor" aria-label="anchor" href="#other-notes"></a></h2>
 <div class="section level3">
 <h3 id="testing-notes">Testing Notes<a class="anchor" aria-label="anchor" href="#testing-notes"></a></h3>
 <ul><li>Tests should compare MLX-backed results to base-R equivalents (e.g., <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm</a></code>).</li>
@@ -121,83 +93,16 @@
 <li>To iterate on a single spec: <code>R -q -e 'devtools::test_file("tests/testthat/test-mlxs-lm.R")'</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-workflow">Documentation Workflow<a class="anchor" aria-label="anchor" href="#documentation-workflow"></a></h3>
-<ul><li>Roxygen comments power <code>man/</code> docs; regenerate with <code><a href="https://devtools.r-lib.org/reference/document.html" class="external-link">devtools::document()</a></code> after editing.</li>
-<li>Favor markdown lists/tables in roxygen over <code>\item</code>.</li>
-<li>Update the pkgdown site configuration (future work) so new exports appear in the reference index.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="mlx-performance-characteristics-learned-from-mlxs_glmnet-optimization">MLX Performance Characteristics (Learned from mlxs_glmnet optimization)<a class="anchor" aria-label="anchor" href="#mlx-performance-characteristics-learned-from-mlxs_glmnet-optimization"></a></h3>
-<div class="section level4">
-<h4 id="what-mlx-does-well">What MLX Does Well<a class="anchor" aria-label="anchor" href="#what-mlx-does-well"></a></h4>
-<ul><li>
-<strong>Parallel matrix operations</strong>: Large matrix multiplications, crossprod, etc.</li>
-<li>
-<strong>Batch processing</strong>: Operating on multiple data elements simultaneously</li>
-<li>
-<strong>Staying on device</strong>: Keeping data in MLX throughout a computation pipeline</li>
-<li>
-<strong>Vectorized operations</strong>: Element-wise operations on large arrays</li>
-</ul></div>
-<div class="section level4">
-<h4 id="what-mlx-does-poorly-vs-fortranc">What MLX Does Poorly (vs Fortran/C++)<a class="anchor" aria-label="anchor" href="#what-mlx-does-poorly-vs-fortranc"></a></h4>
-<ul><li>
-<strong>Small sequential operations</strong>: Building computation graphs has overhead</li>
-<li>
-<strong>Frequent MLX↔︎R conversions</strong>: Each conversion triggers evaluation</li>
-<li>
-<strong>Branching logic</strong>: Conditionals and early exits in tight loops</li>
-<li>
-<strong>Single-element comparisons</strong>: <code>as.logical(x &gt; tol)</code> for scalars has overhead</li>
-</ul></div>
-<div class="section level4">
-<h4 id="conversion-overhead-is-usually-small">Conversion Overhead Is Usually Small<a class="anchor" aria-label="anchor" href="#conversion-overhead-is-usually-small"></a></h4>
-<p>Investigation of <code>mlxs_glmnet</code> revealed: - Eliminated ~20,000-50,000 conversions per run - Performance impact: ~0% (within measurement noise) - <strong>Algorithm choice matters far more than conversion count</strong></p>
-</div>
-<div class="section level4">
-<h4 id="when-to-convert-to-mlx">When to Convert to MLX<a class="anchor" aria-label="anchor" href="#when-to-convert-to-mlx"></a></h4>
-<ul><li>
-<strong>Early conversion wins</strong>: Convert inputs to MLX immediately after validation</li>
-<li>
-<strong>Late conversion to R</strong>: Only convert final results back to R</li>
-<li>
-<strong>Keep intermediate results in MLX</strong>: Even if you need one value in R, keep the MLX version around for subsequent computations</li>
-</ul></div>
-<div class="section level4">
-<h4 id="mlx-axis-handling">MLX Axis Handling<a class="anchor" aria-label="anchor" href="#mlx-axis-handling"></a></h4>
-<ul><li>MLX uses C-style axis numbering in underlying C++, but Rmlx adapts to R conventions</li>
-<li>Test axis operations carefully; sometimes best to compute in R then convert result</li>
-</ul></div>
-<div class="section level4">
-<h4 id="comparison-operators-in-conditionals">Comparison Operators in Conditionals<a class="anchor" aria-label="anchor" href="#comparison-operators-in-conditionals"></a></h4>
+<h3 id="comparison-operators-in-conditionals">Comparison Operators in Conditionals<a class="anchor" aria-label="anchor" href="#comparison-operators-in-conditionals"></a></h3>
 <ul><li>MLX comparison returns MLX array: <code>x &gt; tol</code> returns mlx object</li>
 <li>Cannot use directly in <code>if()</code>: must convert with <code><a href="https://rdrr.io/r/base/logical.html" class="external-link">as.logical()</a></code> or <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>
 </li>
 <li>Example: <code>if (as.logical(delta &lt; tol))</code> works; <code>if (delta &lt; tol)</code> errors</li>
+<li>
+<code><a href="https://rdrr.io/r/base/any.html" class="external-link">any()</a></code> and <code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code> return R logical vectors as normal</li>
 </ul></div>
-<div class="section level4">
-<h4 id="mlx_compile-capabilities-and-limitations">mlx_compile() Capabilities and Limitations<a class="anchor" aria-label="anchor" href="#mlx_compile-capabilities-and-limitations"></a></h4>
-<p><strong>What CAN be compiled:</strong> - Pure MLX operations: matrix multiply, element-wise ops, reductions - Conditional logic using <code>mlx_where()</code> instead of <code>if/else</code> - Simple mathematical expressions (<code>1/(1 + exp(-x))</code>, etc.) - Functions returning a single MLX array</p>
-<p><strong>Measured speedups:</strong> - Simple iteration logic: 1.5-1.6x speedup - Complex compiled functions: potentially higher - Worth implementing for hot paths</p>
-<p><strong>When to use:</strong> - Inner loops executing 100s-1000s of times - Pure computational logic without side effects - When profiling shows the function is a bottleneck</p>
-<p><strong>Example pattern:</strong></p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">inner_core</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">params</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="co"># Pure MLX computation</span></span>
-<span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="va">...</span> <span class="co"># expensive operations</span></span>
-<span>  <span class="va">result</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="va">inner_compiled</span> <span class="op">&lt;-</span> <span class="fu">mlx_compile</span><span class="op">(</span><span class="va">inner_core</span><span class="op">)</span></span>
-<span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">iter</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="va">max_iter</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">inner_compiled</span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">params</span><span class="op">)</span></span>
-<span>  <span class="co"># Convergence check in R</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu">converged</span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span> <span class="kw">break</span></span>
-<span><span class="op">}</span></span></code></pre></div>
-</div>
-<div class="section level4">
-<h4 id="algorithm-design-for-gpu">Algorithm Design for GPU<a class="anchor" aria-label="anchor" href="#algorithm-design-for-gpu"></a></h4>
+<div class="section level3">
+<h3 id="algorithm-design-for-gpu">Algorithm Design for GPU<a class="anchor" aria-label="anchor" href="#algorithm-design-for-gpu"></a></h3>
 <ul><li>
 <strong>Think parallel</strong>: Can multiple coordinates/lambdas be processed simultaneously?</li>
 <li>
@@ -207,20 +112,6 @@
 <li>
 <strong>Example</strong>: Coordinate descent naturally parallelizes across coordinates; proximal gradient is inherently sequential</li>
 </ul></div>
-<div class="section level4">
-<h4 id="storage-in-mlx">Storage in MLX<a class="anchor" aria-label="anchor" href="#storage-in-mlx"></a></h4>
-<ul><li>Keep result storage arrays (<code>beta_store</code>, <code>intercept_store</code>) as MLX</li>
-<li>Assign directly to MLX arrays: <code>beta_store_mlx[, idx] &lt;- beta_mlx</code>
-</li>
-<li>Only convert entire result array at the end</li>
-<li>Eliminates per-iteration conversion overhead (though often small)</li>
-</ul></div>
-<div class="section level4">
-<h4 id="when-gpu-wont-help">When GPU Won’t Help<a class="anchor" aria-label="anchor" href="#when-gpu-wont-help"></a></h4>
-<p>The <code>mlxs_glmnet</code> optimization showed GPU provides no speedup when: 1. Algorithm is inherently sequential (e.g., proximal gradient descent) 2. Operations are small and frequent (graph-building overhead dominates) 3. No opportunity for parallel processing 4. Highly optimized CPU code exists (e.g., Fortran glmnet)</p>
-<p>In such cases, focus on algorithmic improvements over GPU utilization.</p>
-</div>
-</div>
 <div class="section level3">
 <h3 id="handy-tips">Handy Tips<a class="anchor" aria-label="anchor" href="#handy-tips"></a></h3>
 <ul><li>
@@ -229,8 +120,13 @@
 <li>Discover available helpers with <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library(help = "Rmlx")</a></code> or <code>ls(envir = asNamespace("Rmlx"), all.names = TRUE)</code>.</li>
 <li>In user-facing docs, prefer the term <em>array</em> over <em>tensor</em> to match R conventions.</li>
 <li>Add concise internal comments for non-obvious helper logic; keep the codebase self-explanatory.</li>
-<li>Use <code>mlx_zeros()</code> to pre-allocate result arrays rather than converting from R</li>
-<li>Profile before optimizing: conversion overhead is often smaller than expected</li>
+</ul></div>
+<div class="section level3">
+<h3 id="mlx-ops-cheat-sheet">MLX Ops Cheat Sheet<a class="anchor" aria-label="anchor" href="#mlx-ops-cheat-sheet"></a></h3>
+<ul><li>Base-R logical/comparison generics (<code>|</code>, <code>&amp;</code>, <code>!</code>, <code><a href="https://rdrr.io/r/base/any.html" class="external-link">any()</a></code>, <code><a href="https://rdrr.io/r/base/all.html" class="external-link">all()</a></code>, <code><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum()</a></code>, <code><a href="https://rdrr.io/r/base/length.html" class="external-link">length()</a></code>, comparisons, etc.) already dispatch through MLX, so they operate entirely on-device until you explicitly call <code><a href="https://rdrr.io/r/base/logical.html" class="external-link">as.logical()</a></code>/<code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric()</a></code>.</li>
+<li>Indexing accepts MLX masks or integer arrays directly: both <code>x[mlx_boolean_mask, ]</code> and <code>x[as_mlx(int_idx), ]</code> work without intermediate host copies.</li>
+<li>Sequence helpers don’t need R vectors first—use <code>seq.int(length(dim(x)))</code> or <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_arange.html" class="external-link">Rmlx::mlx_arange()</a></code> to build MLX index ranges.</li>
+<li>Keep gradients, active-set masks, and other n/p-sized vectors as MLX arrays; drop to R only once when you truly need an integer index (e.g., <code><a href="https://rdrr.io/r/base/which.html" class="external-link">which()</a></code>).</li>
 </ul></div>
 </div>
 </div>
@@ -244,7 +140,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
