@@ -18,7 +18,6 @@
 #' @param output Character string; return format ("data.frame" or "mlx").
 #' @param row.names Optional row names for data frame conversion.
 #' @param optional Logical; passed to `as.data.frame`.
-#' @param digits Number of significant digits for printing.
 #'
 #' @name mlxs-lm-methods
 #' @importFrom stats model.frame model.matrix model.response delete.response terms

@@ -13,6 +13,9 @@ glance(x, ...)
 
 augment(x, ...)
 }
+\arguments{
+\item{x, ...}{Passed to the generic.}
+}
 \description{
 These generics are re-exported from the generics package for convenience.
 }

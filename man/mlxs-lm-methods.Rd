@@ -105,8 +105,6 @@ See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
 \item{se_fit}{Logical; should standard errors of fit be included?}
 
 \item{output}{Character string; return format ("data.frame" or "mlx").}
-
-\item{digits}{Number of significant digits for printing.}
 }
 \description{
 These helpers provide the familiar S3 surface for \code{mlxs_lm} fits.

@@ -3,6 +3,7 @@
 #' These generics are re-exported from the generics package for convenience.
 #'
 #' @name generics-reexports
+#' @param x,... Passed to the generic.
 NULL
 
 #' @importFrom generics tidy
