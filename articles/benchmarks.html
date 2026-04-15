@@ -75,8 +75,10 @@ predictors (<code>p</code>).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">20251111</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">n_max</span> <span class="op">&lt;-</span> <span class="fl">50000</span></span>
-<span><span class="va">p_max</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
+<span><span class="va">n_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10000</span>, <span class="fl">50000</span>, <span class="fl">250000</span><span class="op">)</span></span>
+<span><span class="va">p_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">100</span>, <span class="fl">200</span>, <span class="fl">400</span>, <span class="fl">800</span><span class="op">)</span></span>
+<span><span class="va">n_max</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">n_sizes</span><span class="op">)</span></span>
+<span><span class="va">p_max</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">p_sizes</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n_max</span> <span class="op">*</span> <span class="va">p_max</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="va">n_max</span>, ncol <span class="op">=</span> <span class="va">p_max</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">p_max</span><span class="op">)</span><span class="op">)</span></span>
@@ -100,12 +102,10 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">X</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">n_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2000</span>, <span class="fl">10000</span>, <span class="fl">50000</span><span class="op">)</span></span>
-<span><span class="va">p_sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">25</span>, <span class="fl">50</span>, <span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># for fast debugging</span></span>
 <span><span class="kw">if</span> <span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">develop</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">p_sizes</span> <span class="op">&lt;-</span> <span class="va">p_sizes</span><span class="op">/</span><span class="fl">10</span></span>
+<span>  <span class="va">p_sizes</span> <span class="op">&lt;-</span> <span class="va">p_sizes</span><span class="op">/</span><span class="fl">5</span></span>
 <span>  <span class="va">n_sizes</span> <span class="op">&lt;-</span> <span class="va">n_sizes</span><span class="op">/</span><span class="fl">10</span></span>
 <span><span class="op">}</span></span>
 <span></span>
@@ -115,7 +115,9 @@ predictors (<code>p</code>).</p>
 <span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">bench_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">[</span><span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span> <span class="op">&gt;</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span>, <span class="op">]</span></span></code></pre></div>
+<span><span class="va">bench_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">[</span><span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span> <span class="op">&gt;</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span>, <span class="op">]</span></span>
+<span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="lm-benchmarks">
@@ -123,10 +125,11 @@ predictors (<code>p</code>).</p>
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lm_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">lm_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">[</span><span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span> <span class="op">&lt;=</span> <span class="fl">50000</span> <span class="op">&amp;</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;=</span> <span class="fl">200</span>, <span class="op">]</span></span>
 <span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bench_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">lm_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">lm_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">lm_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
 <span></span>
 <span>  <span class="va">subset_data</span> <span class="op">&lt;-</span> <span class="va">full_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"y_cont"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
 <span>  <span class="va">formula_str</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"y_cont ~"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">" + "</span><span class="op">)</span><span class="op">)</span></span>
@@ -152,7 +155,8 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">lm_results</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">bm</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">lm_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">lm_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">lm_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">lm_results</span><span class="op">)</span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">all_results</span>, <span class="va">lm_df</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="glm-benchmarks">
@@ -160,10 +164,11 @@ predictors (<code>p</code>).</p>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glm_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">glm_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">[</span><span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span> <span class="op">&lt;=</span> <span class="fl">50000</span> <span class="op">&amp;</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;=</span> <span class="fl">200</span>, <span class="op">]</span></span>
 <span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bench_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">glm_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">glm_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">glm_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
 <span></span>
 <span>  <span class="va">subset_data</span> <span class="op">&lt;-</span> <span class="va">full_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"y_bin"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span><span class="op">)</span><span class="op">]</span></span>
 <span>  <span class="va">formula_str</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"y_bin ~"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">" + "</span><span class="op">)</span><span class="op">)</span></span>
@@ -192,7 +197,8 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">glm_results</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">bm</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">glm_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">glm_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">glm_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">glm_results</span><span class="op">)</span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">all_results</span>, <span class="va">glm_df</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="glmnet-benchmarks">
@@ -200,10 +206,11 @@ predictors (<code>p</code>).</p>
 </h2>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">glmnet_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">glmnet_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span></span>
 <span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">bench_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
-<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">glmnet_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">glmnet_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
+<span>  <span class="va">p</span> <span class="op">&lt;-</span> <span class="va">glmnet_grid</span><span class="op">$</span><span class="va">p</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
 <span></span>
 <span>  <span class="va">xvars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">p</span><span class="op">)</span></span>
 <span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="va">full_data</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="va">n</span>, <span class="va">xvars</span><span class="op">]</span></span>
@@ -223,7 +230,8 @@ predictors (<code>p</code>).</p>
 <span>  <span class="va">glmnet_results</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">bm</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">glmnet_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">glmnet_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">glmnet_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">glmnet_results</span><span class="op">)</span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">all_results</span>, <span class="va">glmnet_df</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="bootstrap-benchmarks">Bootstrap Benchmarks<a class="anchor" aria-label="anchor" href="#bootstrap-benchmarks"></a>
@@ -231,13 +239,8 @@ predictors (<code>p</code>).</p>
 <p>For bootstrap, we use only the smaller datasets due to computational
 cost.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">boot_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/expand.grid.html" class="external-link">expand.grid</a></span><span class="op">(</span></span>
-<span>  n <span class="op">=</span> <span class="va">n_sizes</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span>,</span>
-<span>  p <span class="op">=</span> <span class="va">p_sizes</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">boot_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">boot_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">boot_grid</span> <span class="op">&lt;-</span> <span class="va">bench_grid</span><span class="op">[</span><span class="va">bench_grid</span><span class="op">$</span><span class="va">n</span> <span class="op">&lt;=</span> <span class="fl">10000</span> <span class="op">&amp;</span> <span class="va">bench_grid</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;=</span> <span class="fl">100</span>, <span class="op">]</span></span>
 <span></span>
 <span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">boot_grid</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">n</span> <span class="op">&lt;-</span> <span class="va">boot_grid</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span>
@@ -288,273 +291,646 @@ cost.</p>
 <span>  <span class="va">boot_results</span><span class="op">[[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">bm</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">boot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">boot_results</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">boot_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">boot_results</span><span class="op">)</span></span>
+<span><span class="va">all_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">all_results</span>, <span class="va">boot_df</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="summary-tables">Summary Tables<a class="anchor" aria-label="anchor" href="#summary-tables"></a>
 </h2>
-<p>We compare RmlxStats functions both against base R, and against the
-fastest alternative tested. Numbers show
-<code>RmlxStats time/alternative time</code>.</p>
-<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:summary-tables">
-<caption style="caption-side: top; text-align: center;">RmlxStats time vs base R (%). Below 100% → RmlxStats is faster</caption>
-<col>
-<col>
-<col>
-<col>
-<col>
-<col>
-<col>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=50</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=50</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=50</th>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Linear Model</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(17, 203, 9);">87.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(14, 203, 8);">72.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(11, 204, 6);">57.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(13, 203, 7);">65.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">44.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(6, 204, 3);">36.9</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Logistic Regression</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(31, 200, 20);">201.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(13, 203, 7);">67.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(6, 204, 3);">34.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(18, 203, 10);">95.2</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(6, 204, 3);">36.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(3, 205, 2);">22.7</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Elastic Net</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(205, 0, 0);">7637.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(96, 136, 84);">2549.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(53, 191, 38);">542.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(114, 99, 95);">4132.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(79, 169, 62);">1344.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(38, 197, 26);">287.3</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Case)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 11);">105.2</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">42.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(10, 204, 5);">51.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">27.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;">  </td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Residual)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(60, 186, 44);">710.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(31, 200, 20);">202.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(41, 196, 28);">325.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 12);">106.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=200</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=200</th>
-<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=200</th>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Linear Model</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(7, 204, 4);">41.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">25.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(3, 205, 2);">22.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">26.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(1, 205, 1);">15.4</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(0, 205, 0);">12.1</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Logistic Regression</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">43.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(2, 205, 1);">20.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(1, 205, 0);">12.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(2, 205, 1);">18.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(0, 205, 0);">12.1</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(0, 205, 0);">10.1</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Elastic Net</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(91, 150, 76);">2055.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(59, 187, 44);">689.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(25, 201, 15);">143.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(66, 182, 49);">857.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(40, 197, 27);">317.4</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 12);">106.5</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Case)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">28.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(2, 205, 1);">17.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Residual)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(22, 202, 13);">123.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(6, 204, 3);">36.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></td>
-</tr>
-</table>
-<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:summary-tables">
-<caption style="caption-side: top; text-align: center;">RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is faster</caption>
-<col>
-<col>
-<col>
-<col>
-<col>
-<col>
-<col>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=25</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=50</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=50</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=50</th>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Linear Model</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 12);">110.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(18, 203, 10);">97.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(14, 203, 7);">72.2</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 12);">109.2</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(14, 203, 7);">72.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(11, 204, 6);">60.3</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Logistic Regression</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(35, 198, 24);">256.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(18, 203, 10);">96.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">47.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(21, 202, 13);">119.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">47.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">29.5</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Elastic Net</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(205, 0, 0);">7637.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(96, 136, 84);">2549.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(53, 191, 38);">542.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(114, 99, 95);">4132.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(79, 169, 62);">1344.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(38, 198, 26);">287.3</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Case)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(23, 202, 14);">133.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(7, 204, 4);">42.5</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(9, 204, 5);">51.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">27.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;         font-size: 11pt;">  </td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Residual)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(60, 186, 44);">710.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(31, 200, 20);">202.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(40, 196, 28);">325.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 11);">106.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=100</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=2000, p=200</th>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=10000, p=200</th>
-<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">n=50000, p=200</th>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Linear Model</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(15, 203, 8);">81.1</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(10, 204, 5);">55.9</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(8, 204, 4);">45.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(12, 204, 6);">64.2</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(5, 204, 3);">34.5</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(3, 205, 2);">26.7</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Logistic Regression</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(9, 204, 5);">50.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(3, 205, 2);">25.3</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(1, 205, 1);">16.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(2, 205, 1);">19.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(1, 205, 0);">14.5</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(0, 205, 0);">12.3</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Elastic Net</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(91, 150, 76);">2055.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(59, 187, 43);">689.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(24, 201, 15);">143.6</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(65, 182, 49);">857.0</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(40, 197, 27);">317.4</span></td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(20, 202, 11);">106.5</span></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Case)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(4, 205, 2);">28.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(1, 205, 1);">17.4</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></td>
-</tr>
-<tr>
-<th class="huxtable-cell huxtable-header" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">Bootstrap (Residual)</th>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(22, 202, 13);">123.8</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"><span style="color: rgb(6, 204, 3);">36.7</span></td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;">  </td>
-<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;         font-size: 11pt;"></td>
-</tr>
-</table>
+<p>We compare functions both against base R implementation, and against
+the fastest alternative tested.</p>
 </div>
 <div class="section level2">
 <h2 id="lm-models">
 <code>lm</code> Models<a class="anchor" aria-label="anchor" href="#lm-models"></a>
 </h2>
-<p><img src="benchmarks_files/figure-html/plot-lm-1.png" class="r-plt" width="768"></p>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:display-lm">
+<col>
+<col>
+<col>
+<col>
+<tr>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Method</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Median seconds</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to base</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to best</th>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.024  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">93.2%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">212.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.015  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">58.5%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">133.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.022  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">85.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">194.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.026  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">227.6%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.011  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">43.9%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.11   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">88.9%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">222.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.079  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">64.8%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">161.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.10   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">85.5%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">213.7%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.12   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">249.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.049  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">40.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.081  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">97.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">346.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.038  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">46.1%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">164.5%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.071  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">85.6%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">305.6%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.083  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">356.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.023  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">28.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.39   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">93.3%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">402.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.21   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">50.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">217.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.35   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">82.6%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">355.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.42   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">431.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.098  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">23.2%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.31   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">101.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">663.5%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.13   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">41.7%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">273.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.27   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">87.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">571.8%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.30   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">657.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.046  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">15.2%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">fixest::feols</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.5    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">96.5%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">701.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">RcppEigen::fastLm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.62   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">40.9%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">297.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedlm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.3    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">83.1%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">603.8%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::lm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.5    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">726.3%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_lm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.21   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">13.8%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><td class="huxtable-cell" colspan="4" style="border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;">Base is base R implementation in 'stats' or 'boot' packages.</td></tr>
+</table>
+<p><img src="benchmarks_files/figure-html/display-lm-1.png" class="r-plt" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="glm-models">
 <code>glm</code> Models<a class="anchor" aria-label="anchor" href="#glm-models"></a>
 </h2>
-<p><img src="benchmarks_files/figure-html/plot-glm-1.png" class="r-plt" width="768"></p>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:display-glm">
+<col>
+<col>
+<col>
+<col>
+<tr>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Method</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Median seconds</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to base</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to best</th>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.079  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">78.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">211.3%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.10   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">269.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.037  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">37.1%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.40   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">78.8%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">310.3%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.50   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">393.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.13   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">25.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.27   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">81.3%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">416.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.33   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">511.6%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.064  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">19.5%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.4    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">82.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">536.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.6    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">650.7%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.25   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">15.4%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.0    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">84.1%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">785.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.2    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">933.2%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.13   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">10.7%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">speedglm::speedglm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  5.2    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">83.9%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">945.7%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">stats::glm</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  6.2    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.0%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">1127.6%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glm</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.55   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">8.9%</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><td class="huxtable-cell" colspan="4" style="border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;">Base is base R implementation in 'stats' or 'boot' packages.</td></tr>
+</table>
+<p><img src="benchmarks_files/figure-html/display-glm-1.png" class="r-plt" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="glmnet-models">
 <code>glmnet</code> Models<a class="anchor" aria-label="anchor" href="#glmnet-models"></a>
 </h2>
-<p><img src="benchmarks_files/figure-html/plot-glmnet-1.png" class="r-plt" width="768"></p>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:display-glmnet">
+<col>
+<col>
+<col>
+<col>
+<tr>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Method</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Median seconds</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to base</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to best</th>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.0066 </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.079  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">1212.3%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.031  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">0.075  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">239.2%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 250000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.13   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">100.8%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.13   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.018  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.11   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">596.7%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.091  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.11   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">125.5%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 250000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.50   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">191.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.26   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.060  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.16   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">267.2%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.24   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">158.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.15   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 250000, p = 200</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.2    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">187.7%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.62   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 400</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.20   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.42   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">205.5%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 400</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.97   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">394.3%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.25   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 250000, p = 400</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  2.6    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">277.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.93   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 800</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.25   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.69   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">275.1%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 50000, p = 800</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  1.1    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">184.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.58   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 250000, p = 800</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">glmnet::glmnet</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  7.6    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">236.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">RmlxStats::mlxs_glmnet</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">  3.2    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><td class="huxtable-cell" colspan="4" style="border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;">Base is base R implementation in 'stats' or 'boot' packages.</td></tr>
+</table>
+<p><img src="benchmarks_files/figure-html/display-glmnet-1.png" class="r-plt" width="768"></p>
 </div>
 <div class="section level2">
 <h2 id="bootstraps">Bootstraps<a class="anchor" aria-label="anchor" href="#bootstraps"></a>
 </h2>
-<p><img src="benchmarks_files/figure-html/plot-bootstrap-1.png" class="r-plt" width="768"></p>
+<table class="table huxtable" data-quarto-disable-processing="true" style="margin-left: auto; margin-right: auto;" id="tab:display-bootstrap">
+<col>
+<col>
+<col>
+<col>
+<tr>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Method</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Median seconds</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to base</th>
+<th class="huxtable-cell huxtable-header" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;      font-weight: normal;">Relative to best</th>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 50</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">boot_case</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  2.0    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">2023.5%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">lmboot_case</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  2.6    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">2632.5%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">lmboot_resid</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.11   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">111.9%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">mlxs_case</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.51   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">519.0%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">mlxs_resid</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">0.098  </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><th class="huxtable-cell huxtable-header" colspan="4" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 16pt 6pt 4pt 6pt;   font-style: italic;  font-size: 14pt;">n = 10000, p = 100</th></tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">boot_case</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  4.8    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">4512.4%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">lmboot_case</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">  7.7    </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">7247.8%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">lmboot_resid</td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.30   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">283.8%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"><span style="color: rgb(255, 165, 0);">mlxs_case</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;"> 0.81   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 1pt 6pt 1pt 6pt;     font-size: 11pt;">765.1%</td>
+</tr>
+<tr>
+<td class="huxtable-cell" style="border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"><span style="color: rgb(255, 165, 0);">mlxs_resid</span></td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;"> 0.11   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">   </td>
+<td class="huxtable-cell" style="text-align: right;  border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 1pt 6pt 1pt 6pt;  font-weight: bold;   font-size: 11pt;">100.0%</td>
+</tr>
+<tr><td class="huxtable-cell" colspan="4" style="border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;">Base is base R implementation in 'stats' or 'boot' packages.</td></tr>
+</table>
+<p><img src="benchmarks_files/figure-html/display-bootstrap-1.png" class="r-plt" width="768"></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -10,8 +10,10 @@ Benchmarking was run on an M2 Macbook Air.
 ``` r
 set.seed(20251111)
 
-n_max <- 50000
-p_max <- 200
+n_sizes <- c(10000, 50000, 250000)
+p_sizes <- c(50, 100, 200, 400, 800)
+n_max <- max(n_sizes)
+p_max <- max(p_sizes)
 
 X <- matrix(rnorm(n_max * p_max), nrow = n_max, ncol = p_max)
 colnames(X) <- paste0("x", seq_len(p_max))
@@ -35,12 +37,10 @@ full_data <- data.frame(
   X
 )
 
-n_sizes <- c(2000, 10000, 50000)
-p_sizes <- c(25, 50, 100, 200)
 
 # for fast debugging
 if (params$develop) {
-  p_sizes <- p_sizes/10
+  p_sizes <- p_sizes/5
   n_sizes <- n_sizes/10
 }
 
@@ -51,16 +51,19 @@ bench_grid <- expand.grid(
 )
 
 bench_grid <- bench_grid[bench_grid$n > bench_grid$p, ]
+
+all_results <- data.frame()
 ```
 
 ## `lm` Benchmarks
 
 ``` r
 lm_results <- list()
+lm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(lm_grid))) {
+  n <- lm_grid$n[i]
+  p <- lm_grid$p[i]
 
   subset_data <- full_data[1:n, c("y_cont", paste0("x", 1:p))]
   formula_str <- paste("y_cont ~", paste(paste0("x", 1:p), collapse = " + "))
@@ -87,16 +90,18 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 lm_df <- do.call(rbind, lm_results)
+all_results <- rbind(all_results, lm_df)
 ```
 
 ## `glm` Benchmarks
 
 ``` r
 glm_results <- list()
+glm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(glm_grid))) {
+  n <- glm_grid$n[i]
+  p <- glm_grid$p[i]
 
   subset_data <- full_data[1:n, c("y_bin", paste0("x", 1:p))]
   formula_str <- paste("y_bin ~", paste(paste0("x", 1:p), collapse = " + "))
@@ -126,16 +131,18 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 glm_df <- do.call(rbind, glm_results)
+all_results <- rbind(all_results, glm_df)
 ```
 
 ## `glmnet` Benchmarks
 
 ``` r
 glmnet_results <- list()
+glmnet_grid <- bench_grid
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(glmnet_grid))) {
+  n <- glmnet_grid$n[i]
+  p <- glmnet_grid$p[i]
 
   xvars <- paste0("x", 1:p)
   x <- full_data[1:n, xvars]
@@ -156,6 +163,7 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 glmnet_df <- do.call(rbind, glmnet_results)
+all_results <- rbind(all_results, glmnet_df)
 ```
 
 ## Bootstrap Benchmarks
@@ -164,13 +172,8 @@ For bootstrap, we use only the smaller datasets due to computational
 cost.
 
 ``` r
-boot_grid <- expand.grid(
-  n = n_sizes[1:2],
-  p = p_sizes[1:3],
-  stringsAsFactors = FALSE
-)
-
 boot_results <- list()
+boot_grid <- bench_grid[bench_grid$n <= 10000 & bench_grid$p <= 100, ]
 
 for (i in seq_len(nrow(boot_grid))) {
   n <- boot_grid$n[i]
@@ -222,60 +225,34 @@ for (i in seq_len(nrow(boot_grid))) {
 }
 
 boot_df <- do.call(rbind, boot_results)
+all_results <- rbind(all_results, boot_df)
 ```
 
 ## Summary Tables
 
-We compare RmlxStats functions both against base R, and against the
-fastest alternative tested. Numbers show
-`RmlxStats time/alternative time`.
-
-|  | n=2000, p=25 | n=10000, p=25 | n=50000, p=25 | n=2000, p=50 | n=10000, p=50 | n=50000, p=50 |
-|---:|---:|---:|---:|---:|---:|---:|
-| Linear Model | 87.3 | 72.0 | 57.3 | 65.5 | 44.3 | 36.9 |
-| Logistic Regression | 201.9 | 67.7 | 34.1 | 95.2 | 36.7 | 22.7 |
-| Elastic Net | 7637.9 | 2549.7 | 542.3 | 4132.5 | 1344.6 | 287.3 |
-| Bootstrap (Case) | 105.2 | 42.5 |    | 51.7 | 27.7 |    |
-| Bootstrap (Residual) | 710.8 | 202.0 |    | 325.0 | 106.7 |    |
-|  | n=2000, p=100 | n=10000, p=100 | n=50000, p=100 | n=2000, p=200 | n=10000, p=200 | n=50000, p=200 |
-| Linear Model | 41.4 | 25.6 | 22.9 | 26.6 | 15.4 | 12.1 |
-| Logistic Regression | 43.5 | 20.4 | 12.9 | 18.4 | 12.1 | 10.1 |
-| Elastic Net | 2055.4 | 689.7 | 143.6 | 857.0 | 317.4 | 106.5 |
-| Bootstrap (Case) | 28.4 | 17.4 |    |    |    |  |
-| Bootstrap (Residual) | 123.8 | 36.7 |    |    |    |  |
-
-RmlxStats time vs base R (%). Below 100% → RmlxStats is faster
-{#tab:summary-tables}
-
-|  | n=2000, p=25 | n=10000, p=25 | n=50000, p=25 | n=2000, p=50 | n=10000, p=50 | n=50000, p=50 |
-|---:|---:|---:|---:|---:|---:|---:|
-| Linear Model | 110.0 | 97.1 | 72.2 | 109.2 | 72.4 | 60.3 |
-| Logistic Regression | 256.1 | 96.7 | 47.8 | 119.8 | 47.1 | 29.5 |
-| Elastic Net | 7637.9 | 2549.7 | 542.3 | 4132.5 | 1344.6 | 287.3 |
-| Bootstrap (Case) | 133.1 | 42.5 |    | 51.7 | 27.7 |    |
-| Bootstrap (Residual) | 710.8 | 202.0 |    | 325.0 | 106.7 |    |
-|  | n=2000, p=100 | n=10000, p=100 | n=50000, p=100 | n=2000, p=200 | n=10000, p=200 | n=50000, p=200 |
-| Linear Model | 81.1 | 55.9 | 45.4 | 64.2 | 34.5 | 26.7 |
-| Logistic Regression | 50.3 | 25.3 | 16.6 | 19.8 | 14.5 | 12.3 |
-| Elastic Net | 2055.4 | 689.7 | 143.6 | 857.0 | 317.4 | 106.5 |
-| Bootstrap (Case) | 28.4 | 17.4 |    |    |    |  |
-| Bootstrap (Residual) | 123.8 | 36.7 |    |    |    |  |
-
-RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is
-faster {#tab:summary-tables}
+We compare functions both against base R implementation, and against the
+fastest alternative tested.
 
 ## `lm` Models
 
-![](benchmarks_files/figure-html/plot-lm-1.png)
+[TABLE]
+
+![](benchmarks_files/figure-html/display-lm-1.png)
 
 ## `glm` Models
 
-![](benchmarks_files/figure-html/plot-glm-1.png)
+[TABLE]
+
+![](benchmarks_files/figure-html/display-glm-1.png)
 
 ## `glmnet` Models
 
-![](benchmarks_files/figure-html/plot-glmnet-1.png)
+[TABLE]
+
+![](benchmarks_files/figure-html/display-glmnet-1.png)
 
 ## Bootstraps
 
-![](benchmarks_files/figure-html/plot-bootstrap-1.png)
+[TABLE]
+
+![](benchmarks_files/figure-html/display-bootstrap-1.png)
