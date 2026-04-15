@@ -7,12 +7,15 @@ NULL
 
 #' @importFrom generics tidy
 #' @export
+#' @rdname generics-reexports
 generics::tidy
 
 #' @importFrom generics glance
 #' @export
+#' @rdname generics-reexports
 generics::glance
 
 #' @importFrom generics augment
 #' @export
+#' @rdname generics-reexports
 generics::augment

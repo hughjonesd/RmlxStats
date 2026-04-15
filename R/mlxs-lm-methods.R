@@ -9,7 +9,8 @@
 #' @param parm Parameter specification for confidence intervals.
 #' @param level Confidence level for intervals.
 #' @param bootstrap Logical; should bootstrap standard errors be computed?
-#' @param bootstrap_args List of bootstrap configuration options.
+#' @param bootstrap_args List of bootstrap configuration options. 
+#'   See [mlxs_boot()].
 #' @param evaluate Logical; evaluate the updated call?
 #' @param formula An `mlxs_lm` object used in place of formula for `model.frame`.
 #' @param data Optional data frame for `augment`.
@@ -19,7 +20,7 @@
 #' @param optional Logical; passed to `as.data.frame`.
 #' @param digits Number of significant digits for printing.
 #'
-#' @name mlxs_lm_methods
+#' @name mlxs-lm-methods
 #' @importFrom stats model.frame model.matrix model.response delete.response terms
 #' @importFrom stats update.default predict fitted residuals nobs lm anova confint
 #' @importFrom stats qt pf pt coef complete.cases na.pass quantile printCoefmat
@@ -29,6 +30,7 @@ NULL
 
 # Helper to refit as base lm for operations that expect an lm object
 #' @export
+#' @rdname mlxs-lm-methods
 coef.mlxs_lm <- function(object, ...) {
   coef_mlx <- object$coefficients
   attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
@@ -36,6 +38,7 @@ coef.mlxs_lm <- function(object, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 predict.mlxs_lm <- function(object, newdata = NULL, ...) {
   if (is.null(newdata)) {
     return(object$fitted.values)
@@ -54,16 +57,19 @@ predict.mlxs_lm <- function(object, newdata = NULL, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 fitted.mlxs_lm <- function(object, ...) {
   object$fitted.values
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 residuals.mlxs_lm <- function(object, ...) {
   object$residuals
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 vcov.mlxs_lm <- function(object, ...) {
   qr_fit <- object$qr
   n_coef <- length(.mlxs_coef_names(object))
@@ -73,6 +79,7 @@ vcov.mlxs_lm <- function(object, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
   cf <- coef(object)
   cf_num <- as.numeric(cf)
@@ -100,6 +107,7 @@ confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 anova.mlxs_lm <- function(object, ...) {
   others <- list(...)
   if (length(others) > 0L) {
@@ -223,6 +231,7 @@ anova.mlxs_lm <- function(object, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 as.data.frame.mlxs_anova <- function(
   x,
   row.names = NULL,
@@ -263,6 +272,7 @@ as.data.frame.mlxs_anova <- function(
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 print.mlxs_anova <- function(x, ...) {
   df <- as.data.frame(x)
   print(df, ...)
@@ -270,6 +280,7 @@ print.mlxs_anova <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 tidy.mlxs_anova <- function(x, ...) {
   df <- as.data.frame(x)
   data.frame(
@@ -285,6 +296,7 @@ tidy.mlxs_anova <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 summary.mlxs_lm <- function(
   object,
   bootstrap = FALSE,
@@ -375,6 +387,7 @@ summary.mlxs_lm <- function(
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 print.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   print.summary.mlxs_lm(sum_obj, ...)
@@ -382,6 +395,7 @@ print.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 print.summary.mlxs_lm <- function(x, ...) {
   cat("Call:\n")
   print(x$call)
@@ -430,11 +444,13 @@ print.summary.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 update.mlxs_lm <- function(object, ..., evaluate = TRUE) {
   update.default(object, ..., evaluate = evaluate)
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 model.frame.mlxs_lm <- function(formula, ...) {
   object <- formula
   mf <- object$model
@@ -445,21 +461,25 @@ model.frame.mlxs_lm <- function(formula, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 model.matrix.mlxs_lm <- function(object, ...) {
   model.matrix(object$terms, model.frame(object), ...)
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 terms.mlxs_lm <- function(x, ...) {
   x$terms
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 nobs.mlxs_lm <- function(object, ...) {
   nrow(model.frame(object))
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 tidy.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   data.frame(
@@ -473,6 +493,7 @@ tidy.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 glance.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   n <- nobs(x)
@@ -500,6 +521,7 @@ glance.mlxs_lm <- function(x, ...) {
 }
 
 #' @export
+#' @rdname mlxs-lm-methods
 augment.mlxs_lm <- function(
   x,
   data = model.frame(x),

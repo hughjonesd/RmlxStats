@@ -2,7 +2,17 @@
 % Please edit documentation in R/reexports.R
 \name{generics-reexports}
 \alias{generics-reexports}
+\alias{tidy}
+\alias{glance}
+\alias{augment}
 \title{Re-export generics}
+\usage{
+tidy(x, ...)
+
+glance(x, ...)
+
+augment(x, ...)
+}
 \description{
 These generics are re-exported from the generics package for convenience.
 }

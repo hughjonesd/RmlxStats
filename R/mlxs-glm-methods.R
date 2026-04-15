@@ -19,12 +19,13 @@
 #' @param se_fit Logical; standard-error analogue for `augment`.
 #' @param bootstrap Logical; should bootstrap standard errors be computed?
 #' @param bootstrap_args List of bootstrap configuration options.
+#'   See [mlxs_boot()].
 #' @param output Character string; return format ("data.frame" or "mlx").
 #'
-#' @name mlxs_glm_methods
+#' @name mlxs-glm-methods
 NULL
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 coef.mlxs_glm <- function(object, ...) {
   coef_mlx <- object$coefficients
@@ -32,7 +33,7 @@ coef.mlxs_glm <- function(object, ...) {
   coef_mlx
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 predict.mlxs_glm <- function(
   object,
@@ -74,13 +75,13 @@ predict.mlxs_glm <- function(
   eta
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 fitted.mlxs_glm <- function(object, ...) {
   object$fitted.values
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 residuals.mlxs_glm <- function(
   object,
@@ -108,7 +109,7 @@ residuals.mlxs_glm <- function(
   pearson
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 vcov.mlxs_glm <- function(object, ...) {
   qr_fit <- object$qr
@@ -116,7 +117,7 @@ vcov.mlxs_glm <- function(object, ...) {
   .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = object$dispersion)
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
   sum_obj <- summary(x, ...)
@@ -124,7 +125,7 @@ print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
   invisible(x)
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 summary.mlxs_glm <- function(
   object,
@@ -208,7 +209,7 @@ summary.mlxs_glm <- function(
   sum_list
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 print.summary.mlxs_glm <- function(
   x,
@@ -266,7 +267,7 @@ print.summary.mlxs_glm <- function(
   invisible(x)
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 anova.mlxs_glm <- function(object, ...) {
   if (nargs() > 1L) {
@@ -281,31 +282,31 @@ anova.mlxs_glm <- function(object, ...) {
   )
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 model.frame.mlxs_glm <- function(formula, ...) {
   formula$model
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 model.matrix.mlxs_glm <- function(object, ...) {
   stats::model.matrix(object$terms, object$model, ...)
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 terms.mlxs_glm <- function(x, ...) {
   x$terms
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 nobs.mlxs_glm <- function(object, ...) {
   nrow(model.frame(object))
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 tidy.mlxs_glm <- function(x, ...) {
   sum_obj <- summary(x, ...)
@@ -319,7 +320,7 @@ tidy.mlxs_glm <- function(x, ...) {
   )
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 glance.mlxs_glm <- function(x, ...) {
   k <- x$rank
@@ -338,7 +339,7 @@ glance.mlxs_glm <- function(x, ...) {
   )
 }
 
-#' @rdname mlxs_glm_methods
+#' @rdname mlxs-glm-methods
 #' @export
 augment.mlxs_glm <- function(
   x,
