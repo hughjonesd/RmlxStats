@@ -1,12 +1,7 @@
 ---
 title: "Benchmarks"
 output:
-  rmarkdown::html_vignette:
-    code_folding: hide
-vignette: >
-  %\VignetteIndexEntry{Benchmarks}
-  %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+  rmarkdown::html_document
 editor_options:
   chunk_output_type: console
 params:
