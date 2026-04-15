@@ -5,11 +5,9 @@
 #' backend throughout the iterative updates, with repeated chunk updates traced
 #' through [Rmlx::mlx_compile()] to reduce host overhead.
 #'
-#' @note This implementation uses dense MLX updates rather than `glmnet`'s
-#'   coordinate-descent Fortran kernels, so `glmnet::glmnet()` can still be
-#'   faster on smaller problems. For very tall Gaussian problems, the fitter
-#'   switches to a covariance-space MLX solver to reduce repeated `X'X`
-#'   products along the path.
+#' @note `glmnet::glmnet()` is faster on smaller problems. Very roughly
+#'  as of April 2026, `mlxs_glmnet()` gets competitive at n x p = 5,000,000 
+#'  or greater.
 #'
 #' @param x Numeric matrix of predictors (observations in rows).
 #' @param y Numeric response vector (for binomial, values must be 0/1).

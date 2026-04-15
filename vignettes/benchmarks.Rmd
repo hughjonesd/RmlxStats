@@ -61,7 +61,7 @@ y_continuous <- drop(X %*% beta_true + rnorm(n_max, sd = 2))
 
 # only 1 in 10 predictors matter:
 X_sparse <- X[, seq(10, p_max, 10)]
-beta_true_sparse <- beta_true[seq(1, p_max, 10)]
+beta_true_sparse <- beta_true[seq(10, p_max, 10)]
 y_sparse <- drop(X_sparse %*% beta_true_sparse + rnorm(n_max, sd = 2))
 
 linpred <- drop(X %*% beta_true) / 5  
@@ -185,11 +185,11 @@ for (i in seq_len(nrow(glmnet_grid))) {
 
   xvars <- paste0("x", 1:p)
   x <- full_data[1:n, xvars]
-  y <- full_data[1:n, "y_sparse"]
+  y_sparse <- full_data[1:n, "y_sparse"]
 
   bm <- mark(
-    "glmnet::glmnet" = glmnet::glmnet(x, y, lambda = 1/1:50),
-    "RmlxStats::mlxs_glmnet" = mlxs_glmnet(x, y, lambda = 1/1:50),
+    "glmnet::glmnet" = glmnet::glmnet(x, y_sparse, lambda = 1/1:50),
+    "RmlxStats::mlxs_glmnet" = mlxs_glmnet(x, y_sparse, lambda = 1/1:50),
     iterations = 3,
     check = FALSE,
     filter_gc = FALSE

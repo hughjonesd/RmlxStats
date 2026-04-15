@@ -61,9 +61,7 @@ backend throughout the iterative updates, with repeated chunk updates traced
 through \code{\link[Rmlx:mlx_compile]{Rmlx::mlx_compile()}} to reduce host overhead.
 }
 \note{
-This implementation uses dense MLX updates rather than \code{glmnet}'s
-coordinate-descent Fortran kernels, so \code{glmnet::glmnet()} can still be
-faster on smaller problems. For very tall Gaussian problems, the fitter
-switches to a covariance-space MLX solver to reduce repeated \verb{X'X}
-products along the path.
+\code{glmnet::glmnet()} is faster on smaller problems. Very roughly
+as of April 2026, \code{mlxs_glmnet()} gets competitive at n x p = 5,000,000
+or greater.
 }
