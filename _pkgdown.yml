@@ -14,6 +14,7 @@ reference:
   - title: Elastic Net Models
     contents:
       - mlxs_glmnet
+      - mlxs_cv_glmnet
   - title: Bootstrapping
     contents:
       - mlxs_boot

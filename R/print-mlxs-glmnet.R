@@ -14,7 +14,7 @@ print.mlxs_glmnet <- function(
     sep = ""
   )
 
-  lambda_vals <- x$lambda_numeric
+  lambda_vals <- x$lambda
   if (length(lambda_vals)) {
     k <- min(n_lambda, length(lambda_vals))
     idx <- seq_len(k)
