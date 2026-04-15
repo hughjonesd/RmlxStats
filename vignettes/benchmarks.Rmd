@@ -15,7 +15,7 @@ params:
 
 ```{r setup, include=FALSE, message=FALSE}
 
-# To update this (and the pkgdown website) run
+# To update this vignette (and the pkgdown website) run
 # pkgdown::deploy_to_branch()
 
 knitr::opts_chunk$set(
@@ -48,8 +48,10 @@ Benchmarking was run on an M2 Macbook Air.
 ```{r data-generation}
 set.seed(20251111)
 
-n_max <- 50000
-p_max <- 200
+n_sizes <- c(10000, 50000, 250000)
+p_sizes <- c(50, 100, 200, 400, 800)
+n_max <- max(n_sizes)
+p_max <- max(p_sizes)
 
 X <- matrix(rnorm(n_max * p_max), nrow = n_max, ncol = p_max)
 colnames(X) <- paste0("x", seq_len(p_max))
@@ -73,12 +75,10 @@ full_data <- data.frame(
   X
 )
 
-n_sizes <- c(2000, 10000, 50000)
-p_sizes <- c(25, 50, 100, 200)
 
 # for fast debugging
 if (params$develop) {
-  p_sizes <- p_sizes/10
+  p_sizes <- p_sizes/5
   n_sizes <- n_sizes/10
 }
 
@@ -90,16 +90,18 @@ bench_grid <- expand.grid(
 
 bench_grid <- bench_grid[bench_grid$n > bench_grid$p, ]
 
+all_results <- data.frame()
 ```
 
 ## `lm` Benchmarks
 
 ```{r lm-benchmarks}
 lm_results <- list()
+lm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(lm_grid))) {
+  n <- lm_grid$n[i]
+  p <- lm_grid$p[i]
 
   subset_data <- full_data[1:n, c("y_cont", paste0("x", 1:p))]
   formula_str <- paste("y_cont ~", paste(paste0("x", 1:p), collapse = " + "))
@@ -126,16 +128,18 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 lm_df <- do.call(rbind, lm_results)
+all_results <- rbind(all_results, lm_df)
 ```
 
 ## `glm` Benchmarks
 
 ```{r glm-benchmarks}
 glm_results <- list()
+glm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(glm_grid))) {
+  n <- glm_grid$n[i]
+  p <- glm_grid$p[i]
 
   subset_data <- full_data[1:n, c("y_bin", paste0("x", 1:p))]
   formula_str <- paste("y_bin ~", paste(paste0("x", 1:p), collapse = " + "))
@@ -165,6 +169,7 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 glm_df <- do.call(rbind, glm_results)
+all_results <- rbind(all_results, glm_df)
 ```
 
 ## `glmnet` Benchmarks
@@ -172,10 +177,11 @@ glm_df <- do.call(rbind, glm_results)
 
 ```{r glmnet-benchmarks}
 glmnet_results <- list()
+glmnet_grid <- bench_grid
 
-for (i in seq_len(nrow(bench_grid))) {
-  n <- bench_grid$n[i]
-  p <- bench_grid$p[i]
+for (i in seq_len(nrow(glmnet_grid))) {
+  n <- glmnet_grid$n[i]
+  p <- glmnet_grid$p[i]
 
   xvars <- paste0("x", 1:p)
   x <- full_data[1:n, xvars]
@@ -196,6 +202,7 @@ for (i in seq_len(nrow(bench_grid))) {
 }
 
 glmnet_df <- do.call(rbind, glmnet_results)
+all_results <- rbind(all_results, glmnet_df)
 ```
 
 ## Bootstrap Benchmarks
@@ -203,13 +210,8 @@ glmnet_df <- do.call(rbind, glmnet_results)
 For bootstrap, we use only the smaller datasets due to computational cost.
 
 ```{r bootstrap-benchmarks, warning=FALSE}
-boot_grid <- expand.grid(
-  n = n_sizes[1:2],
-  p = p_sizes[1:3],
-  stringsAsFactors = FALSE
-)
-
 boot_results <- list()
+boot_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
 
 for (i in seq_len(nrow(boot_grid))) {
   n <- boot_grid$n[i]
@@ -261,11 +263,11 @@ for (i in seq_len(nrow(boot_grid))) {
 }
 
 boot_df <- do.call(rbind, boot_results)
+all_results <- rbind(all_results, boot_df)
 ```
 
 
 ```{r prepare-viz-data, include = FALSE}
-all_results <- rbind(lm_df, glm_df, glmnet_df, boot_df)
 
 all_results$method <- as.character(all_results$expression)
 all_results$median_sec <- as.numeric(all_results$median, units = "s")
@@ -278,169 +280,54 @@ summary_results <- aggregate(
   data = all_results_clean,
   FUN = median
 )
+
+calculate_relative_stats <- function (data) {
+  is_base <- grepl("^stats::", data$method) | grepl("^boot::", data$method) 
+  data$rel_base <- if (any(is_base)) data$median_sec/data$median_sec[is_base] else NA
+  data$rel_best <- data$median_sec/min(data$median_sec)
+  data
+}
+
+expanded_results <- by(summary_results, ~ n + p + model_type, FUN = calculate_relative_stats)
+expanded_results <- do.call(rbind, expanded_results)
 ```
 
 ## Summary Tables
 
-We compare RmlxStats functions both against base R, and against the fastest
-alternative tested. Numbers show `RmlxStats time/alternative time`. 
+We compare functions both against base R implementation, and against the fastest
+alternative tested.
 
-```{r summary-tables, echo = FALSE}
 
-comparison_data <- data.frame(
-  model = character(),
-  n = numeric(),
-  p = numeric(),
-  mlxs_time = numeric(),
-  base_time = numeric(),
-  fastest_time = numeric(),
-  fastest_method = character(),
-  stringsAsFactors = FALSE
-)
+```{r display-functions, echo = FALSE}
 
-# Map methods to model types
-lm_mlxs <- "RmlxStats::mlxs_lm"
-lm_base <- "stats::lm"
-glm_mlxs <- "RmlxStats::mlxs_glm"
-glm_base <- "stats::glm"
-glmnet_mlxs <- "RmlxStats::mlxs_glmnet"
-glmnet_base <- "glmnet::glmnet"
-boot_case_mlxs <- "mlxs_case"
-boot_case_base <- "boot_case"
-boot_resid_mlxs <- "mlxs_resid"
-boot_resid_base <- "lmboot_resid"
+table_benchmark <- function(data, caption) {
+  data$np <- sprintf("n = %s, p = %s", data$n, data$p)
 
-# Process each model type
-models <- list(
-  list(name = "lm", mlxs = lm_mlxs, base = lm_base, type = "lm"),
-  list(name = "glm", mlxs = glm_mlxs, base = glm_base, type = "glm"),
-  list(name = "glmnet", mlxs = glmnet_mlxs, base = glmnet_base, type = "glmnet"),
-  list(name = "boot_case", mlxs = boot_case_mlxs, base = boot_case_base, type = "Bootstrap"),
-  list(name = "boot_resid", mlxs = boot_resid_mlxs, base = boot_resid_base, type = "Bootstrap")
-)
-
-for (model_info in models) {
-  model_data <- subset(summary_results, model_type == model_info$type)
-  if (model_info$type == "Bootstrap") {
-    pattern <- if(model_info$name == "boot_case") "case" else "resid"
-    model_data <- subset(model_data, grepl(pattern, method))
-  }
-  # Get unique n/p combinations
-  configs <- unique(model_data[, c("n", "p")])
-
-  for (i in seq_len(nrow(configs))) {
-    n_val <- configs$n[i]
-    p_val <- configs$p[i]
-
-    config_data <- subset(model_data, n == n_val & p == p_val)
-
-    mlxs_time <- config_data$median_sec[config_data$method == model_info$mlxs]
-    base_time <- config_data$median_sec[config_data$method == model_info$base]
-
-    if (length(mlxs_time) > 0 && length(base_time) > 0) {
-      # Find fastest non-mlxs method
-      non_mlxs <- subset(config_data, !is_mlxs)
-      if (nrow(non_mlxs) > 0) {
-        fastest_idx <- which.min(non_mlxs$median_sec)
-        fastest_time <- non_mlxs$median_sec[fastest_idx]
-        fastest_method <- non_mlxs$method[fastest_idx]
-      } else {
-        fastest_time <- base_time
-        fastest_method <- model_info$base
-      }
-
-      comparison_data <- rbind(comparison_data, data.frame(
-        model = model_info$name,
-        n = n_val,
-        p = p_val,
-        mlxs_time = mlxs_time,
-        base_time = base_time,
-        fastest_time = fastest_time,
-        fastest_method = fastest_method,
-        stringsAsFactors = FALSE
-      ))
-    }
-  }
+  data[, c("np", "method", "median_sec", "rel_base", "rel_best")] |> 
+    setNames(c("np", "Method", "Median seconds", "Relative to base", "Relative to best")) |> 
+    as_huxtable(add_colnames = FALSE) |> 
+    set_caption(caption) |> 
+    set_text_color(data$is_mlxs, "Method", "orange") |> 
+    set_bold(data$rel_best == 1, everywhere) |> 
+    set_tb_padding(1) |> 
+    set_font_size(11) |> 
+    column_to_header("np", bold = TRUE, italic = TRUE, top_padding = 16, bottom_padding = 4,
+                     font_size = 14) |> 
+    set_number_format(everywhere, 1, "%s") |> 
+    set_number_format(everywhere, "Median seconds", "%#5.2g") |> 
+    set_number_format(everywhere, c("Relative to base", "Relative to best"), fmt_percent()) |> 
+    set_align(everywhere, -1, ".") |> 
+    set_align(everywhere, 1, "left") |> 
+    add_colnames() |> 
+    add_footnote("Base is base R implementation in 'stats' or 'boot' packages.")
 }
-
-# Table 1: mlxs vs base R
-base_comparison <- comparison_data
-base_comparison$speedup <- 100 *
-  base_comparison$mlxs_time/base_comparison$base_time
-base_comparison$config <- paste0("n=", base_comparison$n, ", p=", base_comparison$p)
-
-base_table <- reshape(base_comparison[, c("model", "config", "speedup")],
-                      idvar = "model", timevar = "config", direction = "wide")
-rownames(base_table) <- base_table$model
-base_table$model <- NULL
-colnames(base_table) <- gsub("speedup\\.", "", colnames(base_table))
-
-# Table 2: mlxs vs fastest alternative
-fastest_comparison <- comparison_data
-fastest_comparison$speedup <- 100 *
-  fastest_comparison$mlxs_time/fastest_comparison$fastest_time
-fastest_comparison$config <- paste0("n=", fastest_comparison$n, ", p=", fastest_comparison$p)
-
-fastest_table <- reshape(fastest_comparison[, c("model", "config", "speedup")],
-                         idvar = "model", timevar = "config", direction = "wide")
-rownames(fastest_table) <- fastest_table$model
-fastest_table$model <- NULL
-colnames(fastest_table) <- gsub("speedup\\.", "", colnames(fastest_table))
-
-# Format and display tables with human-readable row names
-rownames(base_table) <- c(
-  "lm" = "Linear Model",
-  "glm" = "Logistic Regression",
-  "glmnet" = "Elastic Net",
-  "boot_case" = "Bootstrap (Case)",
-  "boot_resid" = "Bootstrap (Residual)"
-)[rownames(base_table)]
-
-rownames(fastest_table) <- c(
-  "lm" = "Linear Model",
-  "glm" = "Logistic Regression",
-  "glmnet" = "Elastic Net",
-  "boot_case" = "Bootstrap (Case)",
-  "boot_resid" = "Bootstrap (Residual)"
-)[rownames(fastest_table)]
-
-# Display NA as blank cells
-options(knitr.kable.NA = '')
-
-huxtable::as_hux(base_table, add_rownames = "") |> 
-  huxtable::set_number_format(-1, -1, 1) |> 
-  huxtable::set_font_size(11) |> 
-  huxtable::set_caption(
-    "RmlxStats time vs base R (%). Below 100% → RmlxStats is faster")|> 
-  huxtable::set_header_cols(1, TRUE) |> 
-  huxtable::style_headers(bold = TRUE) |> 
-  huxtable::map_text_color(-1, -1,
-                                 huxtable::by_colorspace("green3", "grey40", "red3")) |> 
-  huxtable::restack_down(cols = 7) |> 
-  huxtable::set_bottom_border(5, -1)
-
-huxtable::as_hux(fastest_table, add_rownames = "") |> 
-  huxtable::set_font_size(11) |> 
-  huxtable::set_number_format(-1, -1, 1) |> 
-  huxtable::set_caption(
-    "RmlxStats time vs fastest alternative (%). Below 100% → RmlxStats is faster") |> 
-  huxtable::set_header_cols(1, TRUE) |> 
-  huxtable::style_headers(bold = TRUE)|> 
-  huxtable::map_text_color(-1, -1, 
-                                 huxtable::by_colorspace("green3", "grey40", "red3")) |> 
-  huxtable::restack_down(cols = 7) |> 
-  huxtable::set_bottom_border(5, -1)
-```
-
-
-```{r plot-function, echo = FALSE}
 
 plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary across columns") {
   ggplot(data, aes(x = median_sec, y = method, fill = is_mlxs)) +
     geom_col() +
     facet_grid(p ~ n, scales = "free", labeller = "label_both") +
     scale_fill_manual(
-      values = c("TRUE" = "yellow3", "FALSE" = "grey40"),
+      values = c("TRUE" = "orange", "FALSE" = "grey40"),
       labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
       name = ""
     ) +
@@ -461,34 +348,37 @@ plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary
 
 ## `lm` Models
 
-```{r plot-lm, echo = FALSE}
-lm_data <- subset(summary_results, model_type == "lm")
+```{r display-lm, echo = FALSE}
+lm_data <- subset(expanded_results, model_type == "lm")
+table_benchmark(lm_data, "Linear Models")
 plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
 ## `glm` Models
 
-```{r plot-glm, echo = FALSE}
-glm_data <- subset(summary_results, model_type == "glm")
+```{r display-glm, echo = FALSE}
+glm_data <- subset(expanded_results, model_type == "glm")
+table_benchmark(glm_data, "General Linear Models")
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
 ## `glmnet` Models
 
-```{r plot-glmnet, echo = FALSE}
-lm_data <- subset(summary_results, model_type == "glmnet")
-plot_benchmark(lm_data, "Elastic Net Benchmark: Time by Dataset Size")
+```{r display-glmnet, echo = FALSE}
+glmnet_data <- subset(expanded_results, model_type == "glmnet")
+table_benchmark(glmnet_data, "Elastic Net Models")
+plot_benchmark(glmnet_data, "Elastic Net Benchmark: Time by Dataset Size")
 ```
 
 ## Bootstraps
 
-```{r plot-bootstrap, echo = FALSE}
-boot_data <- subset(summary_results, model_type == "Bootstrap")
+```{r display-bootstrap, echo = FALSE}
+boot_data <- subset(expanded_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
                            levels = c("lmboot_resid", "mlxs_resid",
                                       "lmboot_case", "boot_case", "mlxs_case"))
-
+table_benchmark(boot_data, "Bootstrap Models")
 plot_benchmark(
   boot_data,
   "Bootstrap Benchmark: Time by Dataset Size"
