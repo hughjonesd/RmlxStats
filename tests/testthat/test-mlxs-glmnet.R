@@ -13,8 +13,8 @@ test_that("mlxs_glmnet matches glmnet for gaussian lasso", {
   fit <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1, lambda = lambda,
                      standardize = TRUE, maxit = 3000, tol = 1e-6)
 
-  expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$beta), as.numeric(ref$beta), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("mlxs_glmnet matches glmnet for binomial lasso", {
@@ -32,8 +32,8 @@ test_that("mlxs_glmnet matches glmnet for binomial lasso", {
   fit <- mlxs_glmnet(x, y, family = mlxs_binomial(), alpha = 1, lambda = lambda,
                      standardize = TRUE, maxit = 4000, tol = 1e-6)
 
-  expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$beta), as.numeric(ref$beta), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("mlxs_glmnet works with standardize = FALSE", {
@@ -49,8 +49,8 @@ test_that("mlxs_glmnet works with standardize = FALSE", {
   fit <- mlxs_glmnet(x, y, family = mlxs_gaussian(), alpha = 1, lambda = lambda,
                      standardize = FALSE, maxit = 3000, tol = 1e-6)
 
-  expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$beta), as.numeric(ref$beta), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("mlxs_glmnet matches glmnet for gaussian without intercept", {
@@ -81,8 +81,8 @@ test_that("mlxs_glmnet matches glmnet for gaussian without intercept", {
     tol = 1e-6
   )
 
-  expect_equal(as.matrix(fit$beta)[, 1], as.numeric(ref$beta), tolerance = 5e-2)
-  expect_equal(as.numeric(fit$a0)[1], as.numeric(ref$a0), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$beta), as.numeric(ref$beta), tolerance = 5e-2)
+  expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 5e-2)
 })
 
 test_that("strong rules produce identical results to non-screened for gaussian", {
