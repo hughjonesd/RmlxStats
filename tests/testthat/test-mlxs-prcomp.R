@@ -8,6 +8,25 @@ align_pca_columns <- function(estimate, reference) {
   sweep(estimate, 2L, signs, `*`)
 }
 
+make_known_pca_fixture <- function(n, p, sdev) {
+  k <- length(sdev)
+
+  scores_raw <- qr.Q(qr(matrix(rnorm(n * k), nrow = n, ncol = k)))
+  scores_raw <- scale(scores_raw, center = TRUE, scale = FALSE)
+  scores_basis <- qr.Q(qr(scores_raw))
+  rotation <- qr.Q(qr(matrix(rnorm(p * k), nrow = p, ncol = k)))
+
+  singular_values <- sdev * sqrt(n - 1)
+  x <- scores_basis %*% diag(singular_values, nrow = k) %*% t(rotation)
+
+  list(
+    x = x,
+    rotation = rotation,
+    scores = scores_basis %*% diag(singular_values, nrow = k),
+    sdev = sdev
+  )
+}
+
 test_that("mlxs_prcomp matches stats::prcomp on tall data", {
   set.seed(1)
   x <- matrix(rnorm(60), nrow = 15, ncol = 4)
@@ -74,6 +93,32 @@ test_that("mlxs_prcomp randomized path approximates leading components", {
   expect_equal(unname(rotation), unname(ref$rotation), tolerance = 1e-5)
   expect_equal(unname(scores), unname(ref$x), tolerance = 1e-5)
   expect_identical(fit$method, "randomized")
+})
+
+test_that("mlxs_prcomp randomized path recovers known large low-rank structure", {
+  set.seed(8)
+  fixture <- make_known_pca_fixture(
+    n = 400,
+    p = 120,
+    sdev = c(6, 4.5, 3, 2, 1.25, 0.6)
+  )
+
+  fit <- mlxs_prcomp(
+    fixture$x,
+    center = TRUE,
+    scale. = FALSE,
+    rank. = length(fixture$sdev),
+    oversample = 10,
+    n_iter = 2,
+    seed = 11
+  )
+
+  rotation <- align_pca_columns(as.matrix(fit$rotation), fixture$rotation)
+  scores <- align_pca_columns(as.matrix(fit$x), fixture$scores)
+
+  expect_equal(as.numeric(fit$sdev), fixture$sdev, tolerance = 1e-6)
+  expect_equal(unname(rotation), unname(fixture$rotation), tolerance = 1e-6)
+  expect_equal(unname(scores), unname(fixture$scores), tolerance = 1e-5)
 })
 
 test_that("mlxs_prcomp honours tol and rank.", {
