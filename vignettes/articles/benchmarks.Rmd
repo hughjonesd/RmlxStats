@@ -8,6 +8,8 @@ params:
   develop: FALSE
 ---
 
+<details>
+<summary>Setup code</summary>
 ```{r setup, include=FALSE, message=FALSE}
 
 # To update this vignette (and the pkgdown website) run
@@ -26,12 +28,16 @@ library(bench)
 library(fixest)
 library(RcppEigen)
 library(speedglm)
+library(irlba)
+library(rsvd)
+library(bigstatsr)
 library(boot)
 library(lmboot)
 library(ggplot2)
 library(huxtable)
 
 ```
+</details>
 
 We benchmark RmlxStats against base R and specialized fast fitting packages,
 across varying numbers of cases (`n`) and predictors (`p`).
@@ -39,7 +45,8 @@ across varying numbers of cases (`n`) and predictors (`p`).
 Benchmarking was run on an M2 Macbook Air.
 
 ## Data Generation
-
+<details>
+<summary>Code</summary>
 ```{r data-generation}
 set.seed(20251111)
 
@@ -87,12 +94,15 @@ bench_grid <- bench_grid[bench_grid$n > bench_grid$p, ]
 
 all_results <- data.frame()
 ```
+</code>
 
 ## `lm` Benchmarks
 
+<details>
+<summary>Code</summary>
 ```{r lm-benchmarks}
 lm_results <- list()
-lm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
+lm_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[3], ]
 
 for (i in seq_len(nrow(lm_grid))) {
   n <- lm_grid$n[i]
@@ -125,12 +135,15 @@ for (i in seq_len(nrow(lm_grid))) {
 lm_df <- do.call(rbind, lm_results)
 all_results <- rbind(all_results, lm_df)
 ```
+</details>
 
 ## `glm` Benchmarks
 
+<details>
+<summary>Code</summary>
 ```{r glm-benchmarks}
 glm_results <- list()
-glm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
+glm_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[3], ]
 
 for (i in seq_len(nrow(glm_grid))) {
   n <- glm_grid$n[i]
@@ -166,10 +179,12 @@ for (i in seq_len(nrow(glm_grid))) {
 glm_df <- do.call(rbind, glm_results)
 all_results <- rbind(all_results, glm_df)
 ```
+</details>
 
 ## `glmnet` Benchmarks
 
-
+<details>
+<summary>Code</summary>
 ```{r glmnet-benchmarks}
 glmnet_results <- list()
 glmnet_grid <- bench_grid
@@ -199,23 +214,23 @@ for (i in seq_len(nrow(glmnet_grid))) {
 glmnet_df <- do.call(rbind, glmnet_results)
 all_results <- rbind(all_results, glmnet_df)
 ```
+</details>
 
 ## PCA Benchmarks
 
-We compare truncated PCA against `stats::prcomp()`, asking both methods for the
-leading 10 components. This keeps the benchmark focused on the regime where the
-MLX-backed randomized path is intended to help.
-
+<details>
+<summary>Code</summary>
 ```{r pca-benchmarks}
 pca_results <- list()
-pca_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 400, ]
+pca_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[4], ]
 
 for (i in seq_len(nrow(pca_grid))) {
   n <- pca_grid$n[i]
   p <- pca_grid$p[i]
 
   x <- full_data[1:n, paste0("x", 1:p), drop = FALSE]
-  rank_k <- min(10L, p)
+  rank_k <- min(10L, max(2L, floor(min(n, p) / 4)))
+  x_big <- bigstatsr::FBM(nrow = n, ncol = p, init = as.matrix(x))
 
   bm <- mark(
     "stats::prcomp" = prcomp(
@@ -223,6 +238,23 @@ for (i in seq_len(nrow(pca_grid))) {
       center = TRUE,
       scale. = FALSE,
       rank. = rank_k
+    ),
+    "irlba::prcomp_irlba" = irlba::prcomp_irlba(
+      x,
+      n = rank_k,
+      center = TRUE,
+      scale. = FALSE
+    ),
+    "rsvd::rpca" = rsvd::rpca(
+      x,
+      k = rank_k,
+      center = TRUE,
+      scale = FALSE
+    ),
+    "bigstatsr::big_randomSVD" = bigstatsr::big_randomSVD(
+      x_big,
+      fun.scaling = bigstatsr::big_scale(center = TRUE, scale = FALSE),
+      k = rank_k
     ),
     "RmlxStats::mlxs_prcomp" = {
       fit <- mlxs_prcomp(
@@ -251,14 +283,17 @@ for (i in seq_len(nrow(pca_grid))) {
 pca_df <- do.call(rbind, pca_results)
 all_results <- rbind(all_results, pca_df)
 ```
+</details>
 
 ## Bootstrap Benchmarks
 
 For bootstrap, we use only the smaller datasets due to computational cost.
 
+<details>
+<summary>Code</summary>
 ```{r bootstrap-benchmarks, warning=FALSE}
 boot_results <- list()
-boot_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
+boot_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[2], ]
 
 for (i in seq_len(nrow(boot_grid))) {
   n <- boot_grid$n[i]
@@ -312,9 +347,18 @@ for (i in seq_len(nrow(boot_grid))) {
 boot_df <- do.call(rbind, boot_results)
 all_results <- rbind(all_results, boot_df)
 ```
+</details>
 
 
-```{r prepare-viz-data, include = FALSE}
+## Results
+
+We compare functions both against base R implementation, and against the fastest
+alternative tested.
+
+<details>
+<summary>Display code</summary>
+```{r display-functions, echo = FALSE}
+
 
 all_results$method <- as.character(all_results$expression)
 all_results$median_sec <- as.numeric(all_results$median, units = "s")
@@ -337,21 +381,12 @@ calculate_relative_stats <- function (data) {
 
 expanded_results <- by(summary_results, ~ n + p + model_type, FUN = calculate_relative_stats)
 expanded_results <- do.call(rbind, expanded_results)
-```
-
-## Summary Tables
-
-We compare functions both against base R implementation, and against the fastest
-alternative tested.
-
-
-```{r display-functions, echo = FALSE}
 
 table_benchmark <- function(data, caption) {
   data$np <- sprintf("n = %s, p = %s", data$n, data$p)
 
   data[, c("np", "method", "median_sec", "rel_base", "rel_best")] |> 
-    setNames(c("np", "Method", "Median seconds", "Relative to base", "Relative to best")) |> 
+    setNames(c("np", "Method", "Median seconds", "Rel. to base", "Rel. to best")) |> 
     as_huxtable(add_colnames = FALSE) |> 
     set_caption(caption) |> 
     set_text_color(data$is_mlxs, "Method", "orange") |> 
@@ -362,17 +397,20 @@ table_benchmark <- function(data, caption) {
                      font_size = 14) |> 
     set_number_format(everywhere, 1, "%s") |> 
     set_number_format(everywhere, "Median seconds", "%#5.2g") |> 
-    set_number_format(everywhere, c("Relative to base", "Relative to best"), fmt_percent()) |> 
+    set_number_format(everywhere, c("Rel. to base", "Rel. to best"), 
+                      fmt_percent()) |> 
     set_align(everywhere, -1, ".") |> 
     set_align(everywhere, 1, "left") |> 
     add_colnames() |> 
+    set_align(1, everywhere, "left") |> 
     add_footnote("Base is base R implementation in 'stats' or 'boot' packages.")
 }
 
 plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary across columns") {
+  data$method <- reorder(data$method, grepl("Rmlx", data$method))
   ggplot(data, aes(x = median_sec, y = method, fill = is_mlxs)) +
     geom_col() +
-    facet_grid(p ~ n, scales = "free", labeller = "label_both") +
+    facet_grid(n ~ p, scales = "free", labeller = "label_both") +
     scale_fill_manual(
       values = c("TRUE" = "orange", "FALSE" = "grey40"),
       labels = c("TRUE" = "RmlxStats", "FALSE" = "Other"),
@@ -392,52 +430,91 @@ plot_benchmark <- function(data, title, subtitle = "Lower is better. Scales vary
     )
 }
 ```
+</details>
 
 ## `lm` Models
 
-```{r display-lm, echo = FALSE}
+<details>
+<summary>Data table</summary>
+
+```{r display-lm-table, echo = FALSE}
 lm_data <- subset(expanded_results, model_type == "lm")
 table_benchmark(lm_data, "Linear Models")
+```
+
+</details>
+
+```{r display-lm-plot, echo = FALSE}
 plot_benchmark(lm_data, "Linear Model Benchmark: Time by Dataset Size")
 ```
 
 ## `glm` Models
 
-```{r display-glm, echo = FALSE}
+<details>
+<summary>Data table</summary>
+
+```{r display-glm-table, echo = FALSE}
 glm_data <- subset(expanded_results, model_type == "glm")
 table_benchmark(glm_data, "General Linear Models")
+```
+
+</details>
+
+```{r display-glm-plot, echo = FALSE}
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
 ## `glmnet` Models
 
-```{r display-glmnet, echo = FALSE}
+<details>
+<summary>Data table</summary>
+
+```{r display-glmnet-table, echo = FALSE}
 glmnet_data <- subset(expanded_results, model_type == "glmnet")
 table_benchmark(glmnet_data, "Elastic Net Models")
+```
+
+</details>
+
+```{r display-glmnet-plot, echo = FALSE}
 plot_benchmark(glmnet_data, "Elastic Net Benchmark: Time by Dataset Size")
 ```
 
 ## PCA Models
 
-```{r display-pca, echo = FALSE}
+<details>
+<summary>Data table</summary>
+
+```{r display-pca-table, echo = FALSE}
 pca_data <- subset(expanded_results, model_type == "pca")
 table_benchmark(pca_data, "Principal Components Models")
+```
+
+</details>
+
+```{r display-pca-plot, echo = FALSE}
 plot_benchmark(pca_data, "PCA Benchmark: Time by Dataset Size")
 ```
 
 ## Bootstraps
 
-```{r display-bootstrap, echo = FALSE}
+<details>
+<summary>Data table</summary>
+
+```{r display-bootstrap-table, echo = FALSE}
 boot_data <- subset(expanded_results, model_type == "Bootstrap")
 
 boot_data$method <- factor(boot_data$method, 
                            levels = c("lmboot_resid", "mlxs_resid",
                                       "lmboot_case", "boot_case", "mlxs_case"))
 table_benchmark(boot_data, "Bootstrap Models")
+```
+
+</details>
+
+```{r display-bootstrap-plot, echo = FALSE}
 plot_benchmark(
   boot_data,
   "Bootstrap Benchmark: Time by Dataset Size"
 )
 ```
-
-
