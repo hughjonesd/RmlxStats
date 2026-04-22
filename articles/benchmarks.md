@@ -1,11 +1,15 @@
 # Benchmarks
 
+Setup code
+
 We benchmark RmlxStats against base R and specialized fast fitting
 packages, across varying numbers of cases (`n`) and predictors (`p`).
 
 Benchmarking was run on an M2 Macbook Air.
 
 ## Data Generation
+
+Code
 
 ``` r
 set.seed(20251111)
@@ -23,7 +27,7 @@ y_continuous <- drop(X %*% beta_true + rnorm(n_max, sd = 2))
 
 # only 1 in 10 predictors matter:
 X_sparse <- X[, seq(10, p_max, 10)]
-beta_true_sparse <- beta_true[seq(1, p_max, 10)]
+beta_true_sparse <- beta_true[seq(10, p_max, 10)]
 y_sparse <- drop(X_sparse %*% beta_true_sparse + rnorm(n_max, sd = 2))
 
 linpred <- drop(X %*% beta_true) / 5  
@@ -57,9 +61,11 @@ all_results <- data.frame()
 
 ## `lm` Benchmarks
 
+Code
+
 ``` r
 lm_results <- list()
-lm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
+lm_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[3], ]
 
 for (i in seq_len(nrow(lm_grid))) {
   n <- lm_grid$n[i]
@@ -95,9 +101,11 @@ all_results <- rbind(all_results, lm_df)
 
 ## `glm` Benchmarks
 
+Code
+
 ``` r
 glm_results <- list()
-glm_grid <- bench_grid[bench_grid$n <= 50000 & bench_grid$p <= 200, ]
+glm_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[3], ]
 
 for (i in seq_len(nrow(glm_grid))) {
   n <- glm_grid$n[i]
@@ -136,6 +144,8 @@ all_results <- rbind(all_results, glm_df)
 
 ## `glmnet` Benchmarks
 
+Code
+
 ``` r
 glmnet_results <- list()
 glmnet_grid <- bench_grid
@@ -146,11 +156,11 @@ for (i in seq_len(nrow(glmnet_grid))) {
 
   xvars <- paste0("x", 1:p)
   x <- full_data[1:n, xvars]
-  y <- full_data[1:n, "y_sparse"]
+  y_sparse <- full_data[1:n, "y_sparse"]
 
   bm <- mark(
-    "glmnet::glmnet" = glmnet::glmnet(x, y, lambda = 1/1:50),
-    "RmlxStats::mlxs_glmnet" = mlxs_glmnet(x, y, lambda = 1/1:50),
+    "glmnet::glmnet" = glmnet::glmnet(x, y_sparse, lambda = 1/1:50),
+    "RmlxStats::mlxs_glmnet" = mlxs_glmnet(x, y_sparse, lambda = 1/1:50),
     iterations = 3,
     check = FALSE,
     filter_gc = FALSE
@@ -166,14 +176,84 @@ glmnet_df <- do.call(rbind, glmnet_results)
 all_results <- rbind(all_results, glmnet_df)
 ```
 
+## PCA Benchmarks
+
+Code
+
+``` r
+pca_results <- list()
+pca_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[4], ]
+
+for (i in seq_len(nrow(pca_grid))) {
+  n <- pca_grid$n[i]
+  p <- pca_grid$p[i]
+
+  x <- full_data[1:n, paste0("x", 1:p), drop = FALSE]
+  rank_k <- min(10L, max(2L, floor(min(n, p) / 4)))
+  x_big <- bigstatsr::FBM(nrow = n, ncol = p, init = as.matrix(x))
+
+  bm <- mark(
+    "stats::prcomp" = prcomp(
+      x,
+      center = TRUE,
+      scale. = FALSE,
+      rank. = rank_k
+    ),
+    "irlba::prcomp_irlba" = irlba::prcomp_irlba(
+      x,
+      n = rank_k,
+      center = TRUE,
+      scale. = FALSE
+    ),
+    "rsvd::rpca" = rsvd::rpca(
+      x,
+      k = rank_k,
+      center = TRUE,
+      scale = FALSE
+    ),
+    "bigstatsr::big_randomSVD" = bigstatsr::big_randomSVD(
+      x_big,
+      fun.scaling = bigstatsr::big_scale(center = TRUE, scale = FALSE),
+      k = rank_k
+    ),
+    "RmlxStats::mlxs_prcomp" = {
+      fit <- mlxs_prcomp(
+        x,
+        center = TRUE,
+        scale. = FALSE,
+        rank. = rank_k,
+        seed = 1
+      )
+      Rmlx::mlx_eval(fit$rotation)
+      if (!is.null(fit$x)) {
+        Rmlx::mlx_eval(fit$x)
+      }
+    },
+    iterations = 3,
+    check = FALSE,
+    filter_gc = FALSE
+  )
+
+  bm$n <- n
+  bm$p <- p
+  bm$model_type <- "pca"
+  pca_results[[i]] <- bm
+}
+
+pca_df <- do.call(rbind, pca_results)
+all_results <- rbind(all_results, pca_df)
+```
+
 ## Bootstrap Benchmarks
 
 For bootstrap, we use only the smaller datasets due to computational
 cost.
 
+Code
+
 ``` r
 boot_results <- list()
-boot_grid <- bench_grid[bench_grid$n <= 10000 & bench_grid$p <= 100, ]
+boot_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[2], ]
 
 for (i in seq_len(nrow(boot_grid))) {
   n <- boot_grid$n[i]
@@ -228,31 +308,49 @@ boot_df <- do.call(rbind, boot_results)
 all_results <- rbind(all_results, boot_df)
 ```
 
-## Summary Tables
+## Results
 
 We compare functions both against base R implementation, and against the
 fastest alternative tested.
 
+Display code
+
 ## `lm` Models
+
+Data table
 
 [TABLE]
 
-![](benchmarks_files/figure-html/display-lm-1.png)
+![](benchmarks_files/figure-html/display-lm-plot-1.png)
 
 ## `glm` Models
 
+Data table
+
 [TABLE]
 
-![](benchmarks_files/figure-html/display-glm-1.png)
+![](benchmarks_files/figure-html/display-glm-plot-1.png)
 
 ## `glmnet` Models
 
+Data table
+
 [TABLE]
 
-![](benchmarks_files/figure-html/display-glmnet-1.png)
+![](benchmarks_files/figure-html/display-glmnet-plot-1.png)
+
+## PCA Models
+
+Data table
+
+[TABLE]
+
+![](benchmarks_files/figure-html/display-pca-plot-1.png)
 
 ## Bootstraps
 
+Data table
+
 [TABLE]
 
-![](benchmarks_files/figure-html/display-bootstrap-1.png)
+![](benchmarks_files/figure-html/display-bootstrap-plot-1.png)

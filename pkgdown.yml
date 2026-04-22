@@ -2,8 +2,8 @@ pandoc: 3.7.0.2
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  benchmarks: benchmarks.html
-last_built: 2026-04-15T12:24Z
+  articles/benchmarks: benchmarks.html
+last_built: 2026-04-22T07:54Z
 urls:
   reference: https://hughjonesd.github.io/RmlxStats/reference
   article: https://hughjonesd.github.io/RmlxStats/articles

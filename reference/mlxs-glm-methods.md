@@ -107,7 +107,8 @@ augment(
 
 - bootstrap_args:
 
-  List of bootstrap configuration options.
+  List of bootstrap configuration options. See
+  [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
 
 - formula, data:
 

@@ -91,9 +91,6 @@ intercepts, lambda sequence, and scaling information.
 
 ## Note
 
-This implementation uses dense MLX updates rather than `glmnet`'s
-coordinate-descent Fortran kernels, so
 [`glmnet::glmnet()`](https://glmnet.stanford.edu/reference/glmnet.html)
-can still be faster on smaller problems. For very tall Gaussian
-problems, the fitter switches to a covariance-space MLX solver to reduce
-repeated `X'X` products along the path.
+is faster on smaller problems. Very roughly as of April 2026,
+`mlxs_glmnet()` gets competitive at n x p = 5,000,000 or greater.
