@@ -130,6 +130,116 @@ test_that("mlxs_cv_glmnet tracks manual fold losses", {
   expect_equal(fit$cvm, manual_cvm, tolerance = 1e-6)
 })
 
+test_that("mlxs_cv_glmnet is close to cv.glmnet for gaussian", {
+  set.seed(1006)
+  n <- 80
+  p <- 10
+  x <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  beta_true <- c(1, -0.8, 0.5, rep(0, p - 3))
+  y <- drop(x %*% beta_true + rnorm(n))
+  foldid <- sample(rep(1:5, length.out = n))
+
+  # Share the lambda grid so cross-validation differences reflect the fit,
+  # not path generation.
+  path_ref <- glmnet::glmnet(
+    x, y,
+    family = "gaussian",
+    alpha = 1,
+    nlambda = 12,
+    standardize = TRUE
+  )
+  lambda <- path_ref$lambda
+
+  ref <- glmnet::cv.glmnet(
+    x, y,
+    family = "gaussian",
+    alpha = 1,
+    lambda = lambda,
+    foldid = foldid,
+    keep = TRUE,
+    standardize = TRUE
+  )
+  fit <- mlxs_cv_glmnet(
+    x, y,
+    family = mlxs_gaussian(),
+    alpha = 1,
+    lambda = lambda,
+    foldid = foldid,
+    keep = TRUE,
+    standardize = TRUE,
+    maxit = 800,
+    tol = 1e-6
+  )
+
+  expect_equal(fit$cvm, ref$cvm, tolerance = 1e-2)
+  expect_equal(fit$cvsd, ref$cvsd, tolerance = 1e-3)
+  expect_equal(fit$index["min", 1], ref$index["min", 1])
+  expect_equal(fit$index["1se", 1], ref$index["1se", 1])
+  expect_equal(fit$fit.preval, ref$fit.preval, tolerance = 2.5e-2)
+  expect_true(isTRUE(all.equal(
+    as.numeric(coef(fit, s = "lambda.min")),
+    as.numeric(coef(ref, s = "lambda.min")),
+    tolerance = 2e-3,
+    scale = 1
+  )))
+})
+
+test_that("mlxs_cv_glmnet is close to cv.glmnet for binomial", {
+  set.seed(1007)
+  n <- 100
+  p <- 10
+  x <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  eta <- 1.1 * x[, 1] - 0.7 * x[, 2]
+  prob <- 1 / (1 + exp(-eta))
+  y <- rbinom(n, size = 1, prob = prob)
+  foldid <- sample(rep(1:5, length.out = n))
+
+  path_ref <- glmnet::glmnet(
+    x, y,
+    family = "binomial",
+    alpha = 1,
+    nlambda = 10,
+    standardize = TRUE
+  )
+  lambda <- path_ref$lambda
+
+  ref <- glmnet::cv.glmnet(
+    x, y,
+    family = "binomial",
+    alpha = 1,
+    lambda = lambda,
+    foldid = foldid,
+    keep = TRUE,
+    type.measure = "deviance",
+    standardize = TRUE
+  )
+  fit <- mlxs_cv_glmnet(
+    x, y,
+    family = mlxs_binomial(),
+    alpha = 1,
+    lambda = lambda,
+    foldid = foldid,
+    keep = TRUE,
+    type.measure = "deviance",
+    standardize = TRUE,
+    maxit = 1200,
+    tol = 1e-6
+  )
+
+  expect_equal(fit$cvm, ref$cvm, tolerance = 2e-3)
+  expect_equal(fit$cvsd, ref$cvsd, tolerance = 2e-3)
+  expect_equal(fit$index["min", 1], ref$index["min", 1])
+  expect_equal(fit$index["1se", 1], ref$index["1se", 1])
+  expect_equal(fit$fit.preval, plogis(ref$fit.preval), tolerance = 5e-3)
+  expect_lt(
+    max(abs(
+      as.numeric(coef(fit, s = "lambda.min")) -
+      as.numeric(coef(ref, s = "lambda.min"))
+    )),
+    2e-3
+  )
+})
+
 test_that("mlxs_cv_glmnet rejects unsupported arguments", {
   set.seed(1005)
   x <- matrix(rnorm(80), nrow = 20, ncol = 4)

@@ -15,6 +15,10 @@ reference:
     contents:
       - mlxs_glmnet
       - mlxs_cv_glmnet
+  - title: Dimensionality Reduction
+    contents:
+      - mlxs_prcomp
+      - mlxs-prcomp-methods
   - title: Bootstrapping
     contents:
       - mlxs_boot

@@ -1,5 +1,7 @@
 # RmlxStats 0.2.0
 
+* Added `mlxs_prcomp()`, a `prcomp()`-style PCA interface with exact and
+  randomized truncated MLX-backed decomposition paths.
 * Reworked `mlxs_glmnet()` to use dense on-device MLX updates, removing the
   active-set slicing/scatter hotspot from the Gaussian and binomial paths.
 * Added a Gaussian covariance-space path for very tall problems, so

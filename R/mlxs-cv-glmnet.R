@@ -127,6 +127,10 @@ mlxs_cv_glmnet <- function(x,
   cvraw <- matrix(NA_real_, nrow = nfolds, ncol = n_lambda)
   if (keep) {
     fit_preval <- matrix(NA_real_, nrow = n_obs, ncol = n_lambda)
+    dimnames(fit_preval) <- list(
+      rownames(x),
+      paste0("s", seq_len(n_lambda) - 1L)
+    )
   } else {
     fit_preval <- NULL
   }
@@ -194,6 +198,10 @@ mlxs_cv_glmnet <- function(x,
     cvraw = cvraw,
     fit.preval = fit_preval
   )
+
+  if (!is.null(fit_preval) && family_name %in% c("binomial", "quasibinomial")) {
+    attr(result$fit.preval, "classnames") <- sort(unique(as.character(y)))
+  }
 
   class(result) <- "mlxs_cv_glmnet"
   result
@@ -328,6 +336,7 @@ mlxs_cv_glmnet <- function(x,
     ))
   }
 
+  s_names <- names(s)
   s <- as.numeric(s)
   if (anyNA(s)) {
     stop("s cannot contain NA values.", call. = FALSE)
@@ -372,7 +381,7 @@ mlxs_cv_glmnet <- function(x,
     a0_out[j] <- a0[left] * weight_left + a0[right] * weight_right
   }
 
-  list(beta = beta_out, a0 = a0_out, lambda = s, names = names(s))
+  list(beta = beta_out, a0 = a0_out, lambda = s, names = s_names)
 }
 
 #' @export

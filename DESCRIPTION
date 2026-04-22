@@ -25,7 +25,9 @@ Imports:
 Remotes: 
     hughjonesd/Rmlx
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    glmnet,
+    knitr
 Config/testthat/edition: 3
 Config/Needs/website:
     knitr,
@@ -34,11 +36,13 @@ Config/Needs/website:
     nycflights13,
     bench,
     boot,
+    bigstatsr,
     car,
     fixest,
+    irlba,
     RcppEigen,
+    rsvd,
     speedglm,
-    glmnet,
     fastglm,
     lmboot,
     huxtable
