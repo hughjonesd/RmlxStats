@@ -7,6 +7,21 @@
 #' decomposition. When `rank.` is supplied and smaller than `min(nrow(x),
 #' ncol(x))`, a randomized truncated PCA path is used instead.
 #'
+#' The randomized path first sketches a slightly larger subspace than the
+#' requested rank, then compresses back down to the requested components. The
+#' `oversample` parameter controls how much extra space is used in that sketch:
+#' larger values make it less likely that the random sketch misses part of the
+#' leading principal subspace. The `n_iter` parameter applies additional power
+#' iterations, which improve accuracy when the singular values decay slowly but
+#' require extra passes over the matrix.
+#'
+#' By default, `oversample` is chosen as
+#' `min(rank., max(10, ceiling(rank. / 2)))`, which keeps the usual
+#' constant-size oversampling for small target ranks while allowing more slack
+#' for larger truncated fits. This follows common randomized SVD guidance to
+#' start with modest oversampling, often around 5 to 10, and to increase
+#' oversampling before increasing the number of power iterations.
+#'
 #' @param x Numeric matrix-like object or MLX array with observations in rows.
 #' @param retx Should the rotated scores be returned?
 #' @param center,scale. Passed to [base::scale()]. User-supplied vectors are
@@ -16,12 +31,21 @@
 #' @param rank. Optional maximal rank. If smaller than `min(n, p)`, the fit
 #'   uses the randomized truncated PCA path.
 #' @param oversample Oversampling added to the randomized subspace dimension.
-#'   Ignored for exact fits.
+#'   If `NULL`, randomized fits use
+#'   `min(rank., max(10, ceiling(rank. / 2)))`. Ignored for exact fits.
 #' @param n_iter Number of randomized power iterations. Ignored for exact fits.
 #' @param seed Seed used for the randomized projection basis. Ignored for exact
 #'   fits.
 #' @param ... Additional arguments are rejected for compatibility with
 #'   [stats::prcomp()].
+#'
+#' @references
+#' Halko, N., Martinsson, P.-G., and Tropp, J. A. (2011). Finding Structure
+#' with Randomness: Probabilistic Algorithms for Constructing Approximate Matrix
+#' Decompositions. *SIAM Review*, 53(2), 217-288.
+#'
+#' Musco, C. and Musco, C. (2015). Randomized Block Krylov Methods for Stronger
+#' and Faster Approximate Singular Value Decomposition. *NeurIPS 2015*.
 #' @return An object of class `c("mlxs_prcomp", "prcomp")`.
 #' @export
 mlxs_prcomp <- function(x,
@@ -30,7 +54,7 @@ mlxs_prcomp <- function(x,
                         scale. = FALSE,
                         tol = NULL,
                         rank. = NULL,
-                        oversample = 10L,
+                        oversample = NULL,
                         n_iter = 2L,
                         seed = 1L,
                         ...) {
@@ -52,7 +76,7 @@ mlxs_prcomp <- function(x,
   n_pred <- ncol(x_mlx)
   rank_limit <- .mlxs_prcomp_rank_limit(rank., n_obs, n_pred)
   tol <- .mlxs_prcomp_validate_tol(tol)
-  oversample <- .mlxs_prcomp_validate_count(oversample, "oversample")
+  oversample <- .mlxs_prcomp_validate_oversample(oversample, rank_limit)
   n_iter <- .mlxs_prcomp_validate_count(n_iter, "n_iter")
   seed <- .mlxs_prcomp_validate_seed(seed)
 
@@ -396,6 +420,14 @@ mlxs_prcomp <- function(x,
     stop(name, " must be a single non-negative integer.", call. = FALSE)
   }
   as.integer(value)
+}
+
+.mlxs_prcomp_validate_oversample <- function(oversample, rank_limit) {
+  if (is.null(oversample)) {
+    return(as.integer(min(rank_limit, max(10L, ceiling(rank_limit / 2)))))
+  }
+
+  .mlxs_prcomp_validate_count(oversample, "oversample")
 }
 
 .mlxs_prcomp_validate_seed <- function(seed) {

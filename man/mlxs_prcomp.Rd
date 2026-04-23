@@ -11,7 +11,7 @@ mlxs_prcomp(
   scale. = FALSE,
   tol = NULL,
   rank. = NULL,
-  oversample = 10L,
+  oversample = NULL,
   n_iter = 2L,
   seed = 1L,
   ...
@@ -32,7 +32,8 @@ deviations, relative to the leading component.}
 uses the randomized truncated PCA path.}
 
 \item{oversample}{Oversampling added to the randomized subspace dimension.
-Ignored for exact fits.}
+If \code{NULL}, randomized fits use
+\code{min(rank., max(10, ceiling(rank. / 2)))}. Ignored for exact fits.}
 
 \item{n_iter}{Number of randomized power iterations. Ignored for exact fits.}
 
@@ -52,4 +53,27 @@ and scaled data on device throughout the decomposition.
 \details{
 The interface follows \code{\link[stats:prcomp]{stats::prcomp()}} closely. Full-rank fits use an exact
 decomposition. When \code{rank.} is supplied and smaller than \code{min(nrow(x), ncol(x))}, a randomized truncated PCA path is used instead.
+
+The randomized path first sketches a slightly larger subspace than the
+requested rank, then compresses back down to the requested components. The
+\code{oversample} parameter controls how much extra space is used in that sketch:
+larger values make it less likely that the random sketch misses part of the
+leading principal subspace. The \code{n_iter} parameter applies additional power
+iterations, which improve accuracy when the singular values decay slowly but
+require extra passes over the matrix.
+
+By default, \code{oversample} is chosen as
+\code{min(rank., max(10, ceiling(rank. / 2)))}, which keeps the usual
+constant-size oversampling for small target ranks while allowing more slack
+for larger truncated fits. This follows common randomized SVD guidance to
+start with modest oversampling, often around 5 to 10, and to increase
+oversampling before increasing the number of power iterations.
+}
+\references{
+Halko, N., Martinsson, P.-G., and Tropp, J. A. (2011). Finding Structure
+with Randomness: Probabilistic Algorithms for Constructing Approximate Matrix
+Decompositions. \emph{SIAM Review}, 53(2), 217-288.
+
+Musco, C. and Musco, C. (2015). Randomized Block Krylov Methods for Stronger
+and Faster Approximate Singular Value Decomposition. \emph{NeurIPS 2015}.
 }
