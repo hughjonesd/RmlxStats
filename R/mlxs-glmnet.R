@@ -238,8 +238,8 @@ mlxs_glmnet <- function(x,
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
 
-  col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
-  base_lipschitz <- max(col_sq_sums) / n_obs
+  gram_mlx <- crossprod(x_mlx) / n_obs
+  base_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
   n_obs_mlx <- Rmlx::as_mlx(n_obs)
   zero_mlx <- Rmlx::as_mlx(0)
 

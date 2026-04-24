@@ -195,3 +195,24 @@ test_that("strong rules work with dense problems", {
   expect_equal(as.matrix(fit_with_rules$beta), as.matrix(fit_no_rules$beta), tolerance = 1e-5)
   expect_equal(as.numeric(fit_with_rules$a0), as.numeric(fit_no_rules$a0), tolerance = 1e-5)
 })
+
+test_that("mlxs_glmnet stays finite on correlated gaussian designs", {
+  set.seed(20251111)
+  n <- 1000
+  p <- 100
+  rho <- 0.3
+
+  x <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  for (j in 2:p) {
+    x[, j] <- rho * x[, j - 1] + sqrt(1 - rho^2) * x[, j]
+  }
+
+  beta_true <- rep(0, p)
+  beta_true[seq(10, p, 10)] <- rnorm(length(seq(10, p, 10)), sd = 0.35)
+  y <- drop(x %*% beta_true + rnorm(n, sd = 5))
+
+  fit <- mlxs_glmnet(x, y, lambda = 1 / (1:50))
+  beta_hat <- as.matrix(coef(fit))
+
+  expect_true(all(is.finite(beta_hat)))
+})
