@@ -29,8 +29,18 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(fitted(mlx_fit))), fitted(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(residuals(mlx_fit))), residuals(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
-  expect_equal(as.matrix(vcov(mlx_fit)), vcov(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
-  expect_equal(confint(mlx_fit), confint(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(
+    as.matrix(vcov(mlx_fit)),
+    vcov(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
+  expect_equal(
+    confint(mlx_fit),
+    confint(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
   expect_equal(nobs(mlx_fit), nobs(base_fit))
 
   newdata <- head(mtcars, 5)
@@ -119,6 +129,8 @@ test_that("mlxs_lm handles weights like stats::lm", {
   expect_equal(drop(as.matrix(mlx_fit$coefficients)), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(mlx_fit$fitted.values)), fitted(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(mlx_fit$residuals)), residuals(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(as.matrix(vcov(mlx_fit)), vcov(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(confint(mlx_fit), confint(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   anova_weighted <- as.data.frame(anova(mlx_fit))
   base_weighted <- anova(base_fit)
   expect_equal(anova_weighted[["Sum Sq"]], base_weighted[["Sum Sq"]], tolerance = 1e-6)

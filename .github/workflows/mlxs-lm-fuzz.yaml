@@ -1,0 +1,94 @@
+name: mlxs-lm fuzz
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+    - cron: "43 4 * * 0"
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Fuzz tier to run"
+        required: true
+        default: "lm-fast"
+        type: choice
+        options:
+          - lm-fast
+          - lm-long
+
+permissions:
+  contents: write
+
+jobs:
+  fuzz:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select fuzz tier
+        id: tier
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tier="${{ inputs.tier }}"
+          elif [[ "${{ github.event.schedule }}" == "43 4 * * 0" ]]; then
+            tier="lm-long"
+          else
+            tier="lm-fast"
+          fi
+          echo "tier=${tier}" >> "${GITHUB_OUTPUT}"
+          csv="tests/testthat/fuzz-results/mlxs-lm-${tier}.csv"
+          echo "csv=${csv}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check whether fuzz results need updating
+        id: changes
+        shell: bash
+        run: |
+          csv="${{ steps.tier.outputs.csv }}"
+          last_commit="$(git log -1 --format=%H -- "${csv}" || true)"
+          head_commit="$(git rev-parse HEAD)"
+          if [[ -n "${last_commit}" ]] &&
+             [[ "${last_commit}" == "${head_commit}" ]]; then
+            echo "run=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "run=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Install MLX C++ library
+        if: steps.changes.outputs.run == 'true'
+        run: |
+          brew update
+          brew install mlx
+
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.changes.outputs.run == 'true'
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.changes.outputs.run == 'true'
+        with:
+          extra-packages: local::., any::devtools
+          needs: test
+
+      - name: Run mlxs_lm fuzz tests
+        if: steps.changes.outputs.run == 'true'
+        env:
+          RMLXSTATS_RUN_FUZZ: ${{ steps.tier.outputs.tier }}
+        run: R -q -e 'devtools::test(filter = "mlxs-lm-fuzz")'
+
+      - name: Commit updated fuzz results
+        if: steps.changes.outputs.run == 'true'
+        shell: bash
+        run: |
+          csv="${{ steps.tier.outputs.csv }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${csv}"
+          if git diff --cached --quiet; then
+            echo "No fuzz result changes to commit."
+          else
+            git commit -m "Update ${{ steps.tier.outputs.tier }} fuzz results"
+            git push
+          fi

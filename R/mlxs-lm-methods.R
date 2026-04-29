@@ -72,7 +72,10 @@ residuals.mlxs_lm <- function(object, ...) {
 vcov.mlxs_lm <- function(object, ...) {
   qr_fit <- object$qr
   n_coef <- length(.mlxs_coef_names(object))
-  rss <- as.numeric(Rmlx::mlx_sum(object$residuals * object$residuals))
+  rss <- as.numeric(.mlxs_weighted_sum_of_squares(
+    object$residuals,
+    object$weights
+  ))
   sigma2 <- rss / object$df.residual
   .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = sigma2)
 }
