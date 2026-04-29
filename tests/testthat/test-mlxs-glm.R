@@ -68,6 +68,43 @@ test_that("mlxs_glm respects observation weights", {
   )
 })
 
+test_that("mlxs_glm rejects rank-deficient model matrices", {
+  gaussian_data <- mtcars
+  gaussian_data$disp_copy <- gaussian_data$disp
+  gaussian_data$linear_combo <- gaussian_data$cyl + gaussian_data$disp
+
+  expect_error(
+    mlxs_glm(
+      mpg ~ cyl + disp + disp_copy,
+      data = gaussian_data,
+      family = mlxs_gaussian()
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+  expect_error(
+    mlxs_glm(
+      mpg ~ cyl + disp + linear_combo,
+      data = gaussian_data,
+      family = mlxs_gaussian()
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+
+  binomial_data <- transform(mtcars, vs = as.integer(vs > 0))
+  binomial_data$mpg_copy <- binomial_data$mpg
+  expect_error(
+    mlxs_glm(
+      vs ~ mpg + wt + mpg_copy,
+      data = binomial_data,
+      family = mlxs_binomial()
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+})
+
 test_that("mlxs_glm bootstrap summary works", {
   formula <- vs ~ mpg + wt
   data <- transform(mtcars, vs = as.integer(vs > 0))

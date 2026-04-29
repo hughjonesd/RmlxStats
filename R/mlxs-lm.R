@@ -15,7 +15,9 @@
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
 #'   the `mlx` element.
 #'   Note that MLX currently operates in single precision, so fitted values and
-#'   diagnostics may differ from `stats::lm()` at around the 1e-6 level.
+#'   diagnostics may differ from `stats::lm()` at around the 1e-6 level. Unlike
+#'   [stats::lm()], rank-deficient model matrices are rejected rather than fit
+#'   with aliased coefficients.
 #' @export
 #'
 #' @examples
@@ -52,6 +54,7 @@ mlxs_lm <- function(formula, data, subset, weights) {
       call. = FALSE
     )
   }
+  .mlxs_check_full_rank(design, "mlxs_lm()")
 
   weights_mlx <- NULL
   if (!is.null(weights_raw)) {

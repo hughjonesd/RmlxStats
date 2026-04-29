@@ -125,6 +125,33 @@ test_that("mlxs_lm handles weights like stats::lm", {
   expect_equal(anova_weighted[["Mean Sq"]], base_weighted[["Mean Sq"]], tolerance = 1e-6)
 })
 
+test_that("mlxs_lm rejects rank-deficient model matrices", {
+  data <- mtcars
+  data$disp_copy <- data$disp
+  expect_error(
+    mlxs_lm(mpg ~ cyl + disp + disp_copy, data = data),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+
+  data$linear_combo <- data$cyl + data$disp
+  expect_error(
+    mlxs_lm(mpg ~ cyl + disp + linear_combo, data = data),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+
+  expect_error(
+    mlxs_lm(
+      mpg ~ cyl + disp + disp_copy,
+      data = data,
+      weights = seq_len(nrow(data))
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+})
+
 test_that("mlxs_lm bootstrap summary provides se", {
   fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
   sum_boot <- summary(fit, bootstrap = TRUE, bootstrap_args = list(B = 20, seed = 123, progress = FALSE))

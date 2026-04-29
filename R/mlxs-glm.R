@@ -12,7 +12,9 @@
 #' @return An object of class `c("mlxs_glm", "mlxs_model")` containing elements
 #'   similar to the result of [stats::glm()]. Computations use single-precision
 #'   MLX arrays, so results typically agree with [stats::glm()] to around 1e-6
-#'   unless a tighter tolerance is supplied via `control`.
+#'   unless a tighter tolerance is supplied via `control`. Unlike [stats::glm()],
+#'   rank-deficient model matrices are rejected rather than fit with aliased
+#'   coefficients.
 #' @export
 #'
 #' @examples
@@ -61,6 +63,7 @@ mlxs_glm <- function(
   }
 
   X <- stats::model.matrix(terms, mf)
+  .mlxs_check_full_rank(X, "mlxs_glm()")
   n_obs <- nrow(X)
   n_coef <- ncol(X)
 

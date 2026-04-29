@@ -60,7 +60,9 @@ mlxs_glm(
 An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements
 similar to the result of \code{\link[stats:glm]{stats::glm()}}. Computations use single-precision
 MLX arrays, so results typically agree with \code{\link[stats:glm]{stats::glm()}} to around 1e-6
-unless a tighter tolerance is supplied via \code{control}.
+unless a tighter tolerance is supplied via \code{control}. Unlike \code{\link[stats:glm]{stats::glm()}},
+rank-deficient model matrices are rejected rather than fit with aliased
+coefficients.
 }
 \description{
 Fit generalized linear models using iterative reweighted least squares (IRLS)

@@ -1,5 +1,8 @@
 # RmlxStats (development version)
 
+* `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient model matrices with a
+  clear error rather than returning unstable aliased coefficients.
+
 # RmlxStats 0.2.0
 
 * Added `mlxs_prcomp()`, a `prcomp()`-style PCA interface with exact and

@@ -9,6 +9,20 @@ utils::globalVariables("compiled")
   colnames(mm)
 }
 
+.mlxs_check_full_rank <- function(design, context) {
+  qr_rank <- qr(design)$rank
+  n_coef <- ncol(design)
+  if (qr_rank < n_coef) {
+    stop(
+      context,
+      " requires a full-rank model matrix; rank-deficient fits are not ",
+      "supported.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
 .mlxs_vcov_from_qr <- function(qr_fit, n_coef, scale = 1) {
   if (is.null(qr_fit)) {
     stop(
