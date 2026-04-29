@@ -109,16 +109,12 @@ git_value <- function(args, envvar = NULL, fallback = NA_character_) {
   if (length(out) && nzchar(out[[1]])) out[[1]] else fallback
 }
 
-fuzz_results_dir <- function() {
-  cwd <- normalizePath(getwd(), winslash = "/", mustWork = TRUE)
-  if (basename(cwd) == "testthat" && basename(dirname(cwd)) == "tests") {
-    return(file.path(cwd, "fuzz-results"))
-  }
-  file.path(cwd, "tests", "testthat", "fuzz-results")
-}
-
 write_fuzz_summary <- function(summary) {
-  out_dir <- fuzz_results_dir()
+  out_dir <- Sys.getenv("RMLXSTATS_FUZZ_OUT", unset = "")
+  if (!nzchar(out_dir)) {
+    message("Set RMLXSTATS_FUZZ_OUT to write fuzz summaries.")
+    return(invisible(FALSE))
+  }
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   path <- file.path(out_dir, paste0("mlxs-lm-", fuzz_tier, ".csv"))
   run_info <- data.frame(

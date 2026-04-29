@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   fuzz:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,8 +38,10 @@ jobs:
             tier="lm-fast"
           fi
           echo "tier=${tier}" >> "${GITHUB_OUTPUT}"
-          csv="tests/testthat/fuzz-results/mlxs-lm-${tier}.csv"
+          out_dir="tests/testthat/fuzz-results/github-macos-26"
+          csv="${out_dir}/mlxs-lm-${tier}.csv"
           echo "csv=${csv}" >> "${GITHUB_OUTPUT}"
+          echo "out_dir=${out_dir}" >> "${GITHUB_OUTPUT}"
 
       - name: Check whether fuzz results need updating
         id: changes
@@ -76,6 +78,7 @@ jobs:
         if: steps.changes.outputs.run == 'true'
         env:
           RMLXSTATS_RUN_FUZZ: ${{ steps.tier.outputs.tier }}
+          RMLXSTATS_FUZZ_OUT: ${{ steps.tier.outputs.out_dir }}
         run: R -q -e 'devtools::test(filter = "mlxs-lm-fuzz")'
 
       - name: Commit updated fuzz results
