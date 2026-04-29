@@ -9,11 +9,11 @@ on:
       tier:
         description: "Fuzz tier to run"
         required: true
-        default: "lm-fast"
+        default: "fast"
         type: choice
         options:
-          - lm-fast
-          - lm-long
+          - fast
+          - full
 
 permissions:
   contents: write
@@ -33,9 +33,9 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             tier="${{ inputs.tier }}"
           elif [[ "${{ github.event.schedule }}" == "43 4 * * 0" ]]; then
-            tier="lm-long"
+            tier="full"
           else
-            tier="lm-fast"
+            tier="fast"
           fi
           echo "tier=${tier}" >> "${GITHUB_OUTPUT}"
           out_dir="tests/testthat/fuzz-results/github-macos-26"

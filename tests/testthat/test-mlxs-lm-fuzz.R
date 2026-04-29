@@ -1,11 +1,11 @@
 fuzz_tier <- Sys.getenv("RMLXSTATS_RUN_FUZZ", unset = "")
-run_lm_fuzz <- fuzz_tier %in% c("lm-fast", "lm-long")
+run_lm_fuzz <- fuzz_tier %in% c("fast", "full")
 
 skip_lm_fuzz <- function() {
   testthat::skip_if_not(
     run_lm_fuzz,
     paste(
-      "Set RMLXSTATS_RUN_FUZZ to 'lm-fast' or 'lm-long' to run",
+      "Set RMLXSTATS_RUN_FUZZ to 'fast' or 'full' to run",
       "mlxs_lm fuzz tests."
     )
   )
@@ -318,10 +318,10 @@ test_that("mlxs_lm rank-deficient fuzz cases fail clearly", {
 test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
   skip_lm_fuzz()
 
-  reps <- if (identical(fuzz_tier, "lm-long")) 1000L else 200L
+  reps <- if (identical(fuzz_tier, "full")) 1000L else 200L
   hom <- run_lm_mc(reps = reps, seed0 = 10000, scenario = "homoskedastic")
   het <- run_lm_mc(
-    reps = if (identical(fuzz_tier, "lm-long")) 500L else 100L,
+    reps = if (identical(fuzz_tier, "full")) 500L else 100L,
     seed0 = 20000,
     scenario = "heteroskedastic"
   )
