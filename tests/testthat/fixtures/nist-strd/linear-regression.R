@@ -1,0 +1,91 @@
+# NIST Statistical Reference Datasets for linear least squares.
+# Sources:
+# https://www.itl.nist.gov/div898/strd/lls/data/Norris.shtml
+# https://www.itl.nist.gov/div898/strd/lls/data/Longley.shtml
+# https://www.itl.nist.gov/div898/strd/lls/data/Wampler1.shtml
+
+nist_lm_cases <- list(
+  norris = list(
+    name = "Norris",
+    formula = y ~ x,
+    data = data.frame(
+      y = c(
+        0.1, 338.8, 118.1, 888.0, 9.2, 228.1, 668.5, 998.5, 449.1,
+        778.9, 559.2, 0.3, 0.1, 778.1, 668.8, 339.3, 448.9, 10.8,
+        557.7, 228.3, 998.0, 888.8, 119.6, 0.3, 0.6, 557.6, 339.3,
+        888.0, 998.5, 778.9, 10.2, 117.6, 228.9, 668.4, 449.2, 0.2
+      ),
+      x = c(
+        0.2, 337.4, 118.2, 884.6, 10.1, 226.5, 666.3, 996.3, 448.6,
+        777.0, 558.2, 0.4, 0.6, 775.5, 666.9, 338.0, 447.5, 11.6,
+        556.0, 228.1, 995.8, 887.6, 120.2, 0.3, 0.3, 556.8, 339.1,
+        887.2, 999.0, 779.0, 11.1, 118.3, 229.2, 669.1, 448.9, 0.5
+      )
+    ),
+    coef = c(
+      "(Intercept)" = -0.262323073774029,
+      x = 1.00211681802045
+    ),
+    se = c(
+      "(Intercept)" = 0.232818234301152,
+      x = 0.429796848199937e-03
+    ),
+    sigma = 0.884796396144373,
+    r_squared = 0.999993745883712,
+    certified = TRUE
+  ),
+  longley = list(
+    name = "Longley",
+    formula = Employed ~ GNP.deflator + GNP + Unemployed +
+      Armed.Forces + Population + Year,
+    data = longley,
+    coef = c(
+      "(Intercept)" = -3482258.63459582,
+      GNP.deflator = 15.0618722713733,
+      GNP = -0.358191792925910e-01,
+      Unemployed = -2.02022980381683,
+      Armed.Forces = -1.03322686717359,
+      Population = -0.511041056535807e-01,
+      Year = 1829.15146461355
+    ),
+    se = c(
+      "(Intercept)" = 890420.383607373,
+      GNP.deflator = 84.9149257747669,
+      GNP = 0.334910077722432e-01,
+      Unemployed = 0.488399681651699,
+      Armed.Forces = 0.214274163161675,
+      Population = 0.226073200069370,
+      Year = 455.478499142212
+    ),
+    sigma = 304.854073561965,
+    r_squared = 0.995479004577296,
+    certified = FALSE
+  ),
+  wampler1 = list(
+    name = "Wampler1",
+    formula = y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5),
+    data = data.frame(
+      x = 0:20,
+      y = 1 + 0:20 + (0:20)^2 + (0:20)^3 + (0:20)^4 + (0:20)^5
+    ),
+    coef = c(
+      "(Intercept)" = 1,
+      x = 1,
+      "I(x^2)" = 1,
+      "I(x^3)" = 1,
+      "I(x^4)" = 1,
+      "I(x^5)" = 1
+    ),
+    se = c(
+      "(Intercept)" = 0,
+      x = 0,
+      "I(x^2)" = 0,
+      "I(x^3)" = 0,
+      "I(x^4)" = 0,
+      "I(x^5)" = 0
+    ),
+    sigma = 0,
+    r_squared = 1,
+    certified = FALSE
+  )
+)
