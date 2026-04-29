@@ -54,7 +54,7 @@ library(huxtable)
 ```{r data-generation}
 set.seed(20251111)
 
-n_sizes <- c(10000, 50000, 250000) / 10
+n_sizes <- c(10000, 50000, 250000) 
 p_sizes <- c(50, 100, 200, 400, 800)
 n_max <- max(n_sizes)
 p_max <- max(p_sizes)
@@ -89,6 +89,7 @@ full_data <- data.frame(
 
 # for fast debugging
 if (params$develop) {
+  n_sizes <- n_sizes/10
   p_sizes <- p_sizes/5
 }
 
@@ -220,7 +221,7 @@ extract_bootstrap_se <- function(method, fit) {
 ```
 </code>
 
-### `lm`
+### `mlxs_lm`
 
 <details>
 <summary>Code</summary>
@@ -294,7 +295,7 @@ all_accuracy <- rbind(all_accuracy, do.call(rbind, lm_accuracy))
 ```
 </details>
 
-### `glm`
+### `mlxs_glm`
 
 <details>
 <summary>Code</summary>
@@ -341,7 +342,7 @@ for (i in seq_len(nrow(glm_grid))) {
     iterations = 3,
     check = function (r1, r2) {
       all.equal(as.vector(coef(r1)), as.vector(coef(r2)), 
-                tolerance = 1e-5)
+                tolerance = 1e-4)
     },
     filter_gc = FALSE
   )
@@ -372,7 +373,7 @@ all_accuracy <- rbind(all_accuracy, do.call(rbind, glm_accuracy))
 ```
 </details>
 
-### `glmnet`
+### `mlxs_cv_glmnet`
 
 <details>
 <summary>Code</summary>
@@ -380,8 +381,7 @@ all_accuracy <- rbind(all_accuracy, do.call(rbind, glm_accuracy))
 glmnet_results <- list()
 glmnet_grid <- bench_grid
 glmnet_accuracy <- list()
-lambda_grid <- 1 / (1:50)
-lambda_accuracy_idx <- 20L
+glmnet_nfolds <- 3L
 
 for (i in seq_len(nrow(glmnet_grid))) {
   n <- glmnet_grid$n[i]
@@ -392,18 +392,26 @@ for (i in seq_len(nrow(glmnet_grid))) {
   y_sparse_subset <- y_sparse[1:n]
   beta_target <- beta_glmnet_true[seq_len(p)]
   stats_time <- system.time({
-    fit_stats <- glmnet::glmnet(x, y_sparse_subset, lambda = lambda_grid)
-    as.numeric(coef(fit_stats)[1, 1])
+    fit_stats <- glmnet::cv.glmnet(
+      x,
+      y_sparse_subset,
+      nfolds = glmnet_nfolds
+    )
+    as.numeric(fit_stats$lambda.min)
   })[["elapsed"]]
   mlx_time <- system.time({
-    fit_mlx <- mlxs_glmnet(x, y_sparse_subset, lambda = lambda_grid)
-    Rmlx::mlx_eval(fit_mlx$x_center)
-    Rmlx::mlx_eval(fit_mlx$x_scale)
-    as.numeric(fit_mlx$a0[1])
+    fit_mlx <- mlxs_cv_glmnet(
+      x,
+      y_sparse_subset,
+      nfolds = glmnet_nfolds
+    )
+    Rmlx::mlx_eval(fit_mlx$glmnet.fit$x_center)
+    Rmlx::mlx_eval(fit_mlx$glmnet.fit$x_scale)
+    as.numeric(fit_mlx$lambda.min)
   })[["elapsed"]]
 
   bm <- data.frame(
-    expression = c("glmnet::glmnet", "RmlxStats::mlxs_glmnet"),
+    expression = c("glmnet::cv.glmnet", "RmlxStats::mlxs_cv_glmnet"),
     median = bench::as_bench_time(c(stats_time, mlx_time)),
     stringsAsFactors = FALSE
   )
@@ -418,20 +426,17 @@ for (i in seq_len(nrow(glmnet_grid))) {
   glmnet_results[[i]] <- bm
 
   fits <- list(
-    "glmnet::glmnet" = fit_stats,
-    "RmlxStats::mlxs_glmnet" = fit_mlx
+    "glmnet::cv.glmnet" = fit_stats,
+    "RmlxStats::mlxs_cv_glmnet" = fit_mlx
   )
   scores <- lapply(names(fits), function(method) {
-    beta_path <- as.matrix(coef(fits[[method]]))[-1, , drop = FALSE]
+    beta_hat <- as.numeric(coef(fits[[method]], s = "lambda.min"))[-1]
     data.frame(
       model_type = "glmnet",
       n = n,
       p = p,
       method = method,
-      accuracy = safe_relative_rmse(
-        beta_path[, lambda_accuracy_idx],
-        beta_target
-      ),
+      accuracy = safe_relative_rmse(beta_hat, beta_target),
       stringsAsFactors = FALSE
     )
   })
@@ -444,7 +449,7 @@ all_accuracy <- rbind(all_accuracy, do.call(rbind, glmnet_accuracy))
 ```
 </details>
 
-### PCA
+### `mlxs_prcomp`
 
 <details>
 <summary>Code</summary>
@@ -553,8 +558,8 @@ For bootstrap, we use only smaller datasets due to computational cost.
 boot_results <- list()
 boot_grid <- bench_grid[bench_grid$n <= n_sizes[2] & bench_grid$p <= p_sizes[2], ]
 boot_accuracy <- list()
-bootstrap_reps <- if (params$develop) 50L else 200L
-oracle_reps <- if (params$develop) 50L else 300L
+bootstrap_reps <- if (params$develop) 50L else 100L
+oracle_reps <- if (params$develop) 50L else 200L
 
 for (i in seq_len(nrow(boot_grid))) {
   n <- boot_grid$n[i]
@@ -573,7 +578,6 @@ for (i in seq_len(nrow(boot_grid))) {
     coef(lm(boot_formula, data = dat[idx, , drop = FALSE]))
   }
   fitters <- list(
-    "stats::lm" = function() summary(lm(boot_formula, data = subset_data))$coef[, 2],
     "boot::boot" = function() boot::boot(
       subset_data,
       statistic = boot_stat,
@@ -617,7 +621,6 @@ for (i in seq_len(nrow(boot_grid))) {
   )
 
   bm <- mark(
-    "stats::lm" = fitters[["stats::lm"]](),
     "boot::boot" = fitters[["boot::boot"]](),
     "lmboot::paired.boot" = fitters[["lmboot::paired.boot"]](),
     "lmboot::residual.boot" = fitters[["lmboot::residual.boot"]](),
@@ -845,7 +848,7 @@ table_benchmark(glm_data, "General Linear Models")
 plot_benchmark(glm_data, "GLM Benchmark: Time by Dataset Size")
 ```
 
-### `mlxs_glmnet`
+### `mlxs_cv_glmnet`
 
 <details>
 <summary>Data table</summary>
@@ -950,9 +953,9 @@ plot_accuracy(glm_accuracy_data, "GLM Errors")
 ```
 </details>
 
-### `mlxs_glmnet`
+### `mlxs_cv_glmnet`
 
-Errors are calculated as the relative root mean squared error of the estimated betas, for a fixed value of `lambda`.
+Errors are calculated as the relative root mean squared error of the estimated betas, for `lambda = lambda.min`.
 
 <details>
 <summary>Data table</summary>

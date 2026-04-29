@@ -225,6 +225,7 @@ mlxs_glmnet <- function(x,
   n_pred <- ncol(x_mlx)
   y_mean <- if (intercept) mean(y) else 0
   y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+  shape_sig <- paste(n_obs, n_pred, sep = "x")
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
   lambda <- .mlxs_glmnet_lambda_path(lambda, lambda_max, nlambda,
@@ -255,7 +256,11 @@ mlxs_glmnet <- function(x,
     remaining <- maxit
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_get_compiled_chunk("gaussian", n_steps)(
+      state <- .mlxs_glmnet_get_compiled_chunk(
+        "gaussian",
+        n_steps,
+        shape_sig = shape_sig
+      )(
         x_mlx,
         beta_mlx,
         eta_mlx,
@@ -316,6 +321,7 @@ mlxs_glmnet <- function(x,
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
+  shape_sig <- paste(n_pred, n_pred, sep = "x")
 
   lambda_max <- max(abs(as.numeric(xy_mlx))) / max(alpha, 1e-8)
   if (is.finite(lambda_max) && lambda_max == 0) {
@@ -352,7 +358,11 @@ mlxs_glmnet <- function(x,
 
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_get_compiled_chunk("gaussian_gram", n_steps)(
+      state <- .mlxs_glmnet_get_compiled_chunk(
+        "gaussian_gram",
+        n_steps,
+        shape_sig = shape_sig
+      )(
         gram_mlx,
         xy_mlx,
         beta_mlx,
@@ -415,6 +425,7 @@ mlxs_glmnet <- function(x,
   n_pred <- ncol(x_mlx)
   y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
   ones_mlx <- Rmlx::mlx_ones(c(n_obs, 1L))
+  shape_sig <- paste(n_obs, n_pred, fit_intercept = intercept, sep = "x")
 
   p_hat <- mean(y)
   p_hat <- min(max(p_hat, 1e-6), 1 - 1e-6)
@@ -453,7 +464,8 @@ mlxs_glmnet <- function(x,
       state <- .mlxs_glmnet_get_compiled_chunk(
         "binomial",
         n_steps,
-        fit_intercept = intercept
+        fit_intercept = intercept,
+        shape_sig = shape_sig
       )(
         x_mlx,
         beta_mlx,

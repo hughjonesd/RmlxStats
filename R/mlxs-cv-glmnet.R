@@ -114,6 +114,8 @@ mlxs_cv_glmnet <- function(x,
   )
   nfolds <- length(unique(foldid))
 
+  .mlxs_glmnet_clear_chunk_cache()
+
   fit_args <- c(list(
     x = x,
     y = y,

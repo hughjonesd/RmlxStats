@@ -125,20 +125,35 @@
 
 .mlxs_glmnet_chunk_cache <- new.env(parent = emptyenv())
 
+.mlxs_glmnet_clear_chunk_cache <- function() {
+  rm(
+    list = ls(envir = .mlxs_glmnet_chunk_cache, all.names = TRUE),
+    envir = .mlxs_glmnet_chunk_cache
+  )
+}
+
 .mlxs_glmnet_chunk_key <- function(kind,
                                    n_steps,
-                                   fit_intercept = NULL) {
+                                   fit_intercept = NULL,
+                                   shape_sig = NULL) {
+  shape_part <- if (is.null(shape_sig)) "" else shape_sig
   if (is.null(fit_intercept)) {
-    paste(kind, n_steps, sep = "::")
+    paste(kind, n_steps, shape_part, sep = "::")
   } else {
-    paste(kind, n_steps, fit_intercept, sep = "::")
+    paste(kind, n_steps, fit_intercept, shape_part, sep = "::")
   }
 }
 
 .mlxs_glmnet_get_compiled_chunk <- function(kind,
                                             n_steps,
-                                            fit_intercept = NULL) {
-  key <- .mlxs_glmnet_chunk_key(kind, n_steps, fit_intercept)
+                                            fit_intercept = NULL,
+                                            shape_sig = NULL) {
+  key <- .mlxs_glmnet_chunk_key(
+    kind,
+    n_steps,
+    fit_intercept,
+    shape_sig
+  )
   if (!exists(key, envir = .mlxs_glmnet_chunk_cache, inherits = FALSE)) {
     chunk_fn <- switch(
       kind,
