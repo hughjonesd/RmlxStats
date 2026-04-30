@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           tier="${{ steps.tier.outputs.tier }}"
-          out_dir="${{ steps.tier.outputs.out_dir }}"
+          out_dir="tests/testthat/${{ steps.tier.outputs.out_dir }}"
           csvs=(
             "${out_dir}/mlxs-lm-deterministic-${tier}.csv"
             "${out_dir}/mlxs-lm-monte-carlo-${tier}.csv"
