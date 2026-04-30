@@ -11,8 +11,8 @@
 #' @param bootstrap Logical; should bootstrap standard errors be computed?
 #' @param bootstrap_args List of bootstrap configuration options. 
 #'   See [mlxs_boot()].
-#' @param evaluate Logical; evaluate the updated call?
-#' @param formula An `mlxs_lm` object used in place of formula for `model.frame`.
+#' @param formula An `mlxs_lm` object used in place of formula for
+#'   `model.frame`.
 #' @param data Optional data frame for `augment`.
 #' @param se_fit Logical; should standard errors of fit be included?
 #' @param output Character string; return format ("data.frame" or "mlx").
@@ -20,8 +20,9 @@
 #' @param optional Logical; passed to `as.data.frame`.
 #'
 #' @name mlxs-lm-methods
-#' @importFrom stats model.frame model.matrix model.response delete.response terms
-#' @importFrom stats update.default predict fitted residuals nobs lm anova confint
+#' @importFrom stats model.frame model.matrix model.response delete.response
+#' @importFrom stats terms
+#' @importFrom stats predict fitted residuals nobs lm anova confint
 #' @importFrom stats qt pf pt coef complete.cases na.pass quantile printCoefmat
 #' @importFrom stats vcov
 #' @importFrom generics tidy glance augment
@@ -95,8 +96,7 @@ confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
     }
   }
   vc <- vcov(object)
-  vc_mat <- as.matrix(vc)
-  se <- sqrt(diag(vc_mat))[parm]
+  se <- as.numeric(sqrt(Rmlx::diag(vc)))[parm]
   est <- cf_num[parm]
   alpha <- (1 - level) / 2
   t_quant <- qt(c(alpha, 1 - alpha), df = object$df.residual)
@@ -443,12 +443,6 @@ print.summary.mlxs_lm <- function(x, ...) {
     )
   }
   invisible(x)
-}
-
-#' @export
-#' @rdname mlxs-lm-methods
-update.mlxs_lm <- function(object, ..., evaluate = TRUE) {
-  update.default(object, ..., evaluate = evaluate)
 }
 
 #' @export

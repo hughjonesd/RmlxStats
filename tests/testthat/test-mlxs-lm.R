@@ -43,6 +43,13 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   )
   expect_equal(nobs(mlx_fit), nobs(base_fit))
 
+  updated <- update(mlx_fit, . ~ . + hp)
+  expect_s3_class(updated, "mlxs_lm")
+  expect_equal(
+    .mlxs_coef_names(updated),
+    c("(Intercept)", "cyl", "disp", "hp")
+  )
+
   newdata <- head(mtcars, 5)
   expect_equal(
     drop(as.matrix(predict(mlx_fit, newdata = newdata))),

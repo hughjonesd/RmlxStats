@@ -27,8 +27,7 @@ run_glm_mc_rep <- function(
   sum_fit <- summary(fit)
   estimates <- coef_vector(fit)
   ses <- as.numeric(sum_fit$std.error)
-  z <- qnorm(0.975)
-  ci <- cbind(estimates - z * ses, estimates + z * ses)
+  ci <- confint(fit)
 
   list(
     estimates = estimates,

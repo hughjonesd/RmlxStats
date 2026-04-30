@@ -13,6 +13,12 @@ test_that("mlxs_glm gaussian matches stats::glm", {
   )
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-6)
   expect_equal(unname(as.matrix(vcov(mlx_fit))), unname(vcov(base_fit)), tolerance = 1e-6)
+  expect_equal(
+    confint(mlx_fit),
+    confint.default(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
 
   newdata <- head(mtcars)
   expect_equal(
@@ -43,6 +49,17 @@ test_that("mlxs_glm gaussian matches stats::glm", {
 
   expect_s3_class(summary(mlx_fit), "summary.mlxs_glm")
   expect_error(anova(mlx_fit), "not implemented", fixed = TRUE)
+})
+
+test_that("mlxs_glm updates through the mlxs_model superclass", {
+  fit <- mlxs_glm(mpg ~ cyl + disp, data = mtcars, family = mlxs_gaussian())
+  updated <- update(fit, . ~ . + hp)
+
+  expect_s3_class(updated, "mlxs_glm")
+  expect_equal(
+    .mlxs_coef_names(updated),
+    c("(Intercept)", "cyl", "disp", "hp")
+  )
 })
 
 test_that("mlxs_glm respects observation weights", {
@@ -140,6 +157,15 @@ test_that("mlxs_glm binomial matches stats::glm", {
   expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-5, ignore_attr = TRUE)
   expect_equal(unname(drop(as.matrix(mlx_fit$fitted.values))), as.vector(fitted(base_fit)), tolerance = 1e-5)
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-5)
+  se <- as.numeric(sqrt(Rmlx::diag(vcov(mlx_fit))))
+  est <- as.numeric(coef(mlx_fit))
+  expected_ci <- cbind(
+    est + se * qnorm(0.025),
+    est + se * qnorm(0.975)
+  )
+  rownames(expected_ci) <- .mlxs_coef_names(mlx_fit)
+  colnames(expected_ci) <- c("2.5 %", "97.5 %")
+  expect_equal(confint(mlx_fit), expected_ci, tolerance = 1e-12)
 
   newdata <- head(data)
   expect_equal(

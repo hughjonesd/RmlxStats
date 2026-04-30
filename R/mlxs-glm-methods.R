@@ -21,8 +21,11 @@
 #' @param bootstrap_args List of bootstrap configuration options.
 #'   See [mlxs_boot()].
 #' @param output Character string; return format ("data.frame" or "mlx").
+#' @param parm Parameter specification for confidence intervals.
+#' @param level Confidence level for intervals.
 #'
 #' @name mlxs-glm-methods
+#' @importFrom stats qnorm
 NULL
 
 #' @rdname mlxs-glm-methods
@@ -115,6 +118,32 @@ vcov.mlxs_glm <- function(object, ...) {
   qr_fit <- object$qr
   n_coef <- length(.mlxs_coef_names(object))
   .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = object$dispersion)
+}
+
+#' @rdname mlxs-glm-methods
+#' @export
+confint.mlxs_glm <- function(object, parm, level = 0.95, ...) {
+  cf <- coef(object)
+  cf_num <- as.numeric(cf)
+  coef_names <- .mlxs_coef_names(object)
+  if (missing(parm)) {
+    parm <- seq_len(length(cf_num))
+  } else if (is.character(parm)) {
+    parm <- match(parm, coef_names, nomatch = NA_integer_)
+    if (any(is.na(parm))) {
+      stop("Some parameters not found in the model.", call. = FALSE)
+    }
+  }
+  se <- as.numeric(sqrt(Rmlx::diag(vcov(object))))[parm]
+  est <- cf_num[parm]
+  alpha <- (1 - level) / 2
+  z_quant <- qnorm(c(alpha, 1 - alpha))
+  limits <- outer(se, z_quant, `*`)
+  ci <- cbind(est + limits[, 1], est + limits[, 2])
+  probs <- c(alpha, 1 - alpha) * 100
+  colnames(ci) <- paste0(sprintf("%g", probs), " %")
+  rownames(ci) <- coef_names[parm]
+  ci
 }
 
 #' @rdname mlxs-glm-methods

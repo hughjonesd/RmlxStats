@@ -15,7 +15,6 @@
 \alias{summary.mlxs_lm}
 \alias{print.mlxs_lm}
 \alias{print.summary.mlxs_lm}
-\alias{update.mlxs_lm}
 \alias{model.frame.mlxs_lm}
 \alias{model.matrix.mlxs_lm}
 \alias{terms.mlxs_lm}
@@ -50,8 +49,6 @@
 \method{print}{mlxs_lm}(x, ...)
 
 \method{print}{summary.mlxs_lm}(x, ...)
-
-\method{update}{mlxs_lm}(object, ..., evaluate = TRUE)
 
 \method{model.frame}{mlxs_lm}(formula, ...)
 
@@ -96,9 +93,8 @@
 \item{bootstrap_args}{List of bootstrap configuration options.
 See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
 
-\item{evaluate}{Logical; evaluate the updated call?}
-
-\item{formula}{An \code{mlxs_lm} object used in place of formula for \code{model.frame}.}
+\item{formula}{An \code{mlxs_lm} object used in place of formula for
+\code{model.frame}.}
 
 \item{data}{Optional data frame for \code{augment}.}
 

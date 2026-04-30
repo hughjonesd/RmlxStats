@@ -7,6 +7,7 @@
 \alias{fitted.mlxs_glm}
 \alias{residuals.mlxs_glm}
 \alias{vcov.mlxs_glm}
+\alias{confint.mlxs_glm}
 \alias{print.mlxs_glm}
 \alias{summary.mlxs_glm}
 \alias{print.summary.mlxs_glm}
@@ -35,6 +36,8 @@
 \method{residuals}{mlxs_glm}(object, type = c("deviance", "pearson", "working", "response"), ...)
 
 \method{vcov}{mlxs_glm}(object, ...)
+
+\method{confint}{mlxs_glm}(object, parm, level = 0.95, ...)
 
 \method{print}{mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
@@ -79,6 +82,10 @@ residuals to return.}
 
 \item{se.fit}{Logical. Should standard errors of the fit be returned when
 supported?}
+
+\item{parm}{Parameter specification for confidence intervals.}
+
+\item{level}{Confidence level for intervals.}
 
 \item{x}{An \code{mlxs_glm} model fit (for methods with a leading \code{x} argument).}
 
