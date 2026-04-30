@@ -18,8 +18,8 @@ expect_mlxs_lm_matches_lm <- function(
   formula,
   data,
   weights = NULL,
-  coef_tol = 1e-4,
-  value_tol = 1e-5,
+  coef_tol = 1e-5,
+  value_tol = 1e-6,
   label = ""
 ) {
   base_fit <- if (is.null(weights)) {
@@ -353,8 +353,8 @@ test_that("mlxs_lm deterministic differential fuzz cases match stats::lm", {
     expect_mlxs_lm_matches_lm(
       case$formula,
       case$data,
-      coef_tol = 1e-3,
-      value_tol = 1e-4,
+      coef_tol = 1e-5,
+      value_tol = 1e-5,
       label = case_name
     )
   }
@@ -365,8 +365,8 @@ test_that("mlxs_lm deterministic differential fuzz cases match stats::lm", {
     weighted$formula,
     weighted$data,
     weights = weights,
-    coef_tol = 1e-5,
-    value_tol = 1e-5,
+    coef_tol = 1e-6,
+    value_tol = 1e-6,
     label = "weighted"
   )
 
@@ -427,22 +427,22 @@ test_that("mlxs_lm metamorphic fuzz properties hold", {
   perm <- sample(seq_len(nrow(data)))
   perm_fit <- mlxs_lm(case$formula, data = data[perm, ])
   expect_equal(coef_vector(perm_fit), coef_vector(fit),
-               tolerance = 1e-5, ignore_attr = TRUE)
+               tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(fitted(perm_fit)))[order(perm)],
                drop(as.matrix(fitted(fit))),
-               tolerance = 1e-5, ignore_attr = TRUE)
+               tolerance = 1e-6, ignore_attr = TRUE)
 
   col_fit <- mlxs_lm(y ~ x3 + x1 + x2, data = data)
   expect_equal(coef_vector(col_fit)[names(coef_vector(fit))],
                coef_vector(fit),
-               tolerance = 1e-5, ignore_attr = TRUE)
+               tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(predict(col_fit, newdata = data))),
                drop(as.matrix(predict(fit, newdata = data))),
-               tolerance = 1e-5, ignore_attr = TRUE)
+               tolerance = 1e-6, ignore_attr = TRUE)
 
   expect_equal(drop(as.matrix(predict(fit))),
                drop(as.matrix(predict(fit, newdata = data))),
-               tolerance = 1e-5, ignore_attr = TRUE)
+               tolerance = 1e-6, ignore_attr = TRUE)
 })
 
 test_that("mlxs_lm rank-deficient fuzz cases fail clearly", {
@@ -503,15 +503,15 @@ test_that("mlxs_lm near-rank-deficient stability is tracked", {
 
   moderate <- summary$condition_number <= 500
   expect_true(
-    all(summary$max_coef_error[moderate] <= 1e-3),
+    all(summary$max_coef_error[moderate] <= 1e-4),
     info = paste(summary$scenario[
-      moderate & summary$max_coef_error > 1e-3
+      moderate & summary$max_coef_error > 1e-4
     ], collapse = ", ")
   )
   expect_true(
-    all(summary$max_vcov_error[moderate] <= 1e-3),
+    all(summary$max_vcov_error[moderate] <= 1e-5),
     info = paste(summary$scenario[
-      moderate & summary$max_vcov_error > 1e-3
+      moderate & summary$max_vcov_error > 1e-5
     ], collapse = ", ")
   )
 })
@@ -565,7 +565,7 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
                    tolerance = 1e-8, info = case$name)
     } else {
       expect_equal(r_squared, case$r_squared,
-                   tolerance = 1e-5, info = case$name)
+                   tolerance = 1e-6, info = case$name)
     }
   }
 
