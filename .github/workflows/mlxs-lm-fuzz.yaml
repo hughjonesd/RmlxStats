@@ -38,7 +38,7 @@ jobs:
             tier="fast"
           fi
           echo "tier=${tier}" >> "${GITHUB_OUTPUT}"
-          out_dir="tests/testthat/fuzz-results/github-macos-26"
+          out_dir="fuzz-results/github-macos-26"
           echo "out_dir=${out_dir}" >> "${GITHUB_OUTPUT}"
 
       - name: Check whether fuzz results need updating
