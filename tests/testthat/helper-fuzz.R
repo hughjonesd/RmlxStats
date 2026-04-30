@@ -43,6 +43,7 @@ git_value <- function(args, envvar = NULL, fallback = NA_character_) {
 
 write_fuzz_summaries <- function(summaries_df, suite, tier) {
   out_dir <- Sys.getenv("RMLXSTATS_FUZZ_OUT", unset = "")
+  out_dir <- testthat::test_path(out_dir)
   if (!nzchar(out_dir)) {
     message("Set RMLXSTATS_FUZZ_OUT to write fuzz summaries.")
     return(invisible(FALSE))
