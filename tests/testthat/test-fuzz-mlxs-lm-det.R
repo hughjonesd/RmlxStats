@@ -298,7 +298,7 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
     )
 
     expect_true(all(is.finite(finite_values)), info = case$name)
-    if (isTRUE(case$certified)) {
+    if (isTRUE(case$strict_check)) {
       expect_equal(coefs[names(case$coef)], case$coef,
                    tolerance = 1e-4, ignore_attr = TRUE, info = case$name)
       expect_equal(se[names(case$se)], case$se,
