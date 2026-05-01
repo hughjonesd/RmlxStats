@@ -45,19 +45,9 @@ jobs:
         id: changes
         shell: bash
         run: |
-          tier="${{ steps.tier.outputs.tier }}"
           out_dir="${{ steps.tier.outputs.out_dir }}"
-          csvs=(
-            "${out_dir}/mlxs-lm-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-lm-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-glm-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-glm-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-glmnet-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-glmnet-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-prcomp-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-prcomp-monte-carlo-${tier}.csv"
-          )
-          last_commit="$(git log -1 --format=%H -- "${csvs[@]}" || true)"
+          csv="tests/testthat/${out_dir}/fuzz-results.csv"
+          last_commit="$(git log -1 --format=%H -- "${csv}" || true)"
           head_commit="$(git rev-parse HEAD)"
           if [[ -n "${last_commit}" ]] &&
              [[ "${last_commit}" == "${head_commit}" ]]; then
@@ -95,21 +85,11 @@ jobs:
         if: steps.changes.outputs.run == 'true'
         shell: bash
         run: |
-          tier="${{ steps.tier.outputs.tier }}"
           out_dir="tests/testthat/${{ steps.tier.outputs.out_dir }}"
-          csvs=(
-            "${out_dir}/mlxs-lm-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-lm-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-glm-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-glm-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-glmnet-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-glmnet-monte-carlo-${tier}.csv"
-            "${out_dir}/mlxs-prcomp-deterministic-${tier}.csv"
-            "${out_dir}/mlxs-prcomp-monte-carlo-${tier}.csv"
-          )
+          csv="${out_dir}/fuzz-results.csv"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${csvs[@]}"
+          git add "${csv}"
           if git diff --cached --quiet; then
             echo "No fuzz result changes to commit."
           else

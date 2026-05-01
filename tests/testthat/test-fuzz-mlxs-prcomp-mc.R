@@ -53,27 +53,43 @@ summarise_prcomp_mc <- function(results, reps) {
     interaction(results$scenario, results$method, drop = TRUE)
   )
   rows <- lapply(groups, function(group) {
-    data.frame(
-      case_type = "monte_carlo",
-      scenario = group$scenario[[1]],
-      n = group$n[[1]],
-      p = group$p[[1]],
-      nreps = reps,
-      rank = group$rank[[1]],
-      rank_true = group$rank_true[[1]],
-      method = group$method[[1]],
-      noise_sd = group$noise_sd[[1]],
-      max_sdev_error = max(group$max_sdev_error),
-      relative_sdev_rmse = mean(group$relative_sdev_rmse),
-      subspace_error = max(group$subspace_error),
-      reconstruction_error = mean(group$reconstruction_error),
-      reference_reconstruction_error =
-        mean(group$reference_reconstruction_error),
-      excess_reconstruction_error = max(group$excess_reconstruction_error),
-      orthogonality_error = max(group$orthogonality_error),
-      explained_variance_error = max(group$explained_variance_error),
-      all_finite = all(group$all_finite),
-      row.names = NULL
+    vals <- function(measure, target, aggregation, source = NULL) {
+      keep <- group$measure == measure &
+        group$target == target &
+        group$aggregation == aggregation
+      if (!is.null(source)) {
+        keep <- keep & group$source == source
+      }
+      group$value[keep]
+    }
+    fuzz_metric_rows(
+      list(
+        case_type = "monte_carlo",
+        scenario = group$scenario[[1]],
+        n = group$n[[1]],
+        p = group$p[[1]],
+        nreps = reps,
+        rank = group$rank[[1]],
+        rank_true = group$rank_true[[1]],
+        method = group$method[[1]],
+        noise_sd = group$noise_sd[[1]]
+      ),
+      measure     = c("error",     "ratio",     "error",    "loss",           "loss",           "delta",          "error",              "diagnostic",    "diagnostic"),
+      target      = c("pca_sdev",  "pca_sdev",  "subspace", "reconstruction", "reconstruction", "reconstruction", "explained_variance", "orthogonality", "finite"),
+      source      = c("mlx",       "mlx",       "mlx",      "mlx",            "reference",      "mlx",            "mlx",                "mlx",           "mlx"),
+      baseline    = c("reference", "reference", "reference", NA,              NA,               "reference",      "reference",          "ideal",         NA),
+      aggregation = c("max",       "mean",      "max",      "mean",           "mean",           "max",            "max",                "max",           "all"),
+      value = c(
+        max(vals("error", "pca_sdev", "max")),
+        mean(vals("ratio", "pca_sdev", "rmse")),
+        max(vals("error", "subspace", "value")),
+        mean(vals("loss", "reconstruction", "value", source = "mlx")),
+        mean(vals("loss", "reconstruction", "value", source = "reference")),
+        max(vals("delta", "reconstruction", "delta")),
+        max(vals("error", "explained_variance", "max")),
+        max(vals("diagnostic", "orthogonality", "max")),
+        as.numeric(all(as.logical(vals("diagnostic", "finite", "all"))))
+      )
     )
   })
   do.call(rbind, rows)
@@ -103,16 +119,6 @@ test_that("mlxs_prcomp Monte Carlo fuzz summaries are within tolerance", {
       seed0 = spec$seed0,
       rep_fun = run_prcomp_mc_rep,
       label = "run_prcomp_mc",
-      reproduce_args = list(
-        scenario = spec$scenario,
-        n = spec$n,
-        p = spec$p,
-        rank_true = spec$rank_true,
-        rank_fit = spec$rank_fit,
-        noise_sd = spec$noise_sd,
-        center = TRUE,
-        scale = spec$scale
-      ),
       scenario = spec$scenario,
       n = spec$n,
       p = spec$p,
@@ -128,19 +134,29 @@ test_that("mlxs_prcomp Monte Carlo fuzz summaries are within tolerance", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-prcomp-monte-carlo",
     tier = fuzz_tier
   )
 
-  expect_true(all(summaries_df$all_finite))
-  expect_true(all(summaries_df$orthogonality_error <= 5e-6))
-  strict <- summaries_df$scenario != "sparse_dense"
-  expect_true(all(summaries_df$max_sdev_error[strict] <= 1e-5))
-  expect_true(all(summaries_df$subspace_error[strict] <= 1e-5))
-  expect_true(all(abs(summaries_df$excess_reconstruction_error[strict]) <=
-    1e-6))
+  finite <- summaries_df[summaries_df$target == "finite", ]
+  orthogonality <- summaries_df[summaries_df$target == "orthogonality", ]
+  sdev_error <- summaries_df[
+    summaries_df$target == "pca_sdev" &
+      summaries_df$measure == "error",
+  ]
+  subspace <- summaries_df[summaries_df$target == "subspace", ]
+  excess_recon <- summaries_df[
+    summaries_df$target == "reconstruction" &
+      summaries_df$measure == "delta",
+  ]
+  expect_true(all(as.logical(finite$value)))
+  expect_true(all(orthogonality$value <= 5e-6))
+  strict <- sdev_error$scenario != "sparse_dense"
+  expect_true(all(sdev_error$value[strict] <= 1e-5))
+  strict <- subspace$scenario != "sparse_dense"
+  expect_true(all(subspace$value[strict] <= 1e-5))
+  strict <- excess_recon$scenario != "sparse_dense"
+  expect_true(all(abs(excess_recon$value[strict]) <= 1e-6))
 })

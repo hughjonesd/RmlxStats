@@ -62,30 +62,42 @@ test_that("mlxs_prcomp deterministic fuzz cases match stats::prcomp", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-prcomp-deterministic",
     tier = fuzz_tier
   )
 
-  exact <- summaries_df$method == "exact"
-  randomized <- summaries_df$method == "randomized"
+  sdev_error <- summaries_df[
+    summaries_df$target == "pca_sdev" & summaries_df$measure == "error",
+  ]
+  subspace <- summaries_df[summaries_df$target == "subspace", ]
+  excess_recon <- summaries_df[
+    summaries_df$target == "reconstruction" &
+      summaries_df$measure == "delta",
+  ]
+  orthogonality <- summaries_df[summaries_df$target == "orthogonality", ]
+  finite <- summaries_df[summaries_df$target == "finite", ]
+  exact <- sdev_error$method == "exact"
+  randomized <- sdev_error$method == "randomized"
   # Large means, duplicate columns, wide low-rank fits, and sparse-ish
   # randomized fits are kept as tracked stress diagnostics. The strict gates
   # below apply to well-identified reference components.
-  strict_exact <- summaries_df$scenario == "gaussian_full_exact"
+  strict_exact <- sdev_error$scenario == "gaussian_full_exact"
   strict_randomized <- randomized &
-    summaries_df$scenario != "sparse_dense_randomized"
-  expect_true(all(summaries_df$all_finite))
-  expect_true(all(summaries_df$orthogonality_error <= 5e-6))
-  expect_true(all(summaries_df$max_sdev_error[exact & strict_exact] <= 1e-5))
-  expect_true(all(summaries_df$subspace_error[exact & strict_exact] <= 1e-5))
-  expect_true(all(abs(summaries_df$excess_reconstruction_error[exact]) <=
+    sdev_error$scenario != "sparse_dense_randomized"
+  expect_true(all(as.logical(finite$value)))
+  expect_true(all(orthogonality$value <= 5e-6))
+  expect_true(all(sdev_error$value[exact & strict_exact] <= 1e-5))
+  strict_exact <- subspace$scenario == "gaussian_full_exact"
+  expect_true(all(subspace$value[subspace$method == "exact" & strict_exact] <=
     1e-5))
-  expect_true(all(summaries_df$max_sdev_error[strict_randomized] <= 1e-5))
-  expect_true(all(summaries_df$subspace_error[strict_randomized] <= 1e-5))
+  expect_true(all(abs(excess_recon$value[excess_recon$method == "exact"]) <=
+    1e-5))
+  expect_true(all(sdev_error$value[strict_randomized] <= 1e-5))
+  strict_randomized <- subspace$method == "randomized" &
+    subspace$scenario != "sparse_dense_randomized"
+  expect_true(all(subspace$value[strict_randomized] <= 1e-5))
 })
 
 test_that("mlxs_prcomp deterministic metamorphic properties hold", {
@@ -180,23 +192,31 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
   expect_lte(monotonicity_error, 1e-8)
 
   write_fuzz_summaries(
-    data.frame(
-      case_type = "metamorphic",
-      scenario = "row_column_rank_seed",
-      n = nrow(x),
-      p = ncol(x),
-      rank = rank_fit,
-      rank_true = 8L,
-      method = fit$method,
-      noise_sd = 1e-4,
-      subspace_error = max(
-        prcomp_projector_error(row_fit$rotation, fit$rotation),
-        prcomp_projector_error(col_rotation, fit$rotation)
+    fuzz_metric_rows(
+      list(
+        case_type = "metamorphic",
+        scenario = "row_column_rank_seed",
+        n = nrow(x),
+        p = ncol(x),
+        rank = rank_fit,
+        rank_true = 8L,
+        method = fit$method,
+        noise_sd = 1e-4
       ),
-      monotonicity_error = monotonicity_error,
-      reproducibility_error = reproducibility_error,
-      all_finite = all(is.finite(c(recon, reproducibility_error))),
-      stringsAsFactors = FALSE
+      measure     = c("error",     "diagnostic",  "diagnostic",     "diagnostic"),
+      target      = c("subspace",  "monotonicity", "reproducibility", "finite"),
+      source      = c("mlx",       "mlx",          "mlx",             "mlx"),
+      baseline    = c("reference", "ideal",        "same_seed",       NA),
+      aggregation = c("max",       "max",          "value",           "all"),
+      value = c(
+        max(
+          prcomp_projector_error(row_fit$rotation, fit$rotation),
+          prcomp_projector_error(col_rotation, fit$rotation)
+        ),
+        monotonicity_error,
+        reproducibility_error,
+        as.numeric(all(is.finite(c(recon, reproducibility_error))))
+      )
     ),
     suite = "mlxs-prcomp-deterministic",
     tier = fuzz_tier

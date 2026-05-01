@@ -87,26 +87,33 @@ run_glmnet_selection_rep <- function(
 summarise_glmnet_selection_mc <- function(results, reps) {
   numeric_cols <- vapply(results, is.numeric, logical(1))
   means <- colMeans(results[numeric_cols], na.rm = TRUE)
-  data.frame(
-    case_type = "monte_carlo",
-    scenario = results$scenario[[1]],
-    family = results$family[[1]],
-    n = results$n[[1]],
-    p = results$p[[1]],
-    nreps = reps,
-    alpha = results$alpha[[1]],
-    lambda_index = means[["lambda_index"]],
-    lambda = means[["lambda"]],
-    selection_recovery_probability =
+  fuzz_metric_rows(
+    list(
+      case_type = "monte_carlo",
+      scenario = results$scenario[[1]],
+      family = results$family[[1]],
+      n = results$n[[1]],
+      p = results$p[[1]],
+      nreps = reps,
+      alpha = results$alpha[[1]],
+      lambda_index = means[["lambda_index"]],
+      lambda = means[["lambda"]]
+    ),
+    measure     = c("selection",  "selection",   "selection",     "selection",      "selection",      "selection",          "selection",       "diagnostic"),
+    target      = c("active_set", "active_size", "true_positives", "false_positives", "false_negatives", "support_precision", "support_recall", "finite"),
+    source      = c("mlx",        "mlx",         "mlx",            "mlx",             "mlx",             "mlx",               "mlx",            "mlx"),
+    baseline    = c("truth",      "truth",       "truth",          "truth",           "truth",           "truth",             "truth",          NA),
+    aggregation = c("mean",       "mean",        "mean",           "mean",            "mean",            "mean",              "mean",           "all"),
+    value = c(
       means[["selection_recovery_probability"]],
-    active_size = means[["active_size"]],
-    true_positives = means[["true_positives"]],
-    false_positives = means[["false_positives"]],
-    false_negatives = means[["false_negatives"]],
-    support_precision = means[["support_precision"]],
-    support_recall = means[["support_recall"]],
-    all_finite = all(results$all_finite),
-    row.names = NULL
+      means[["active_size"]],
+      means[["true_positives"]],
+      means[["false_positives"]],
+      means[["false_negatives"]],
+      means[["support_precision"]],
+      means[["support_recall"]],
+      as.numeric(all(results$all_finite))
+    )
   )
 }
 
@@ -121,14 +128,6 @@ test_that("mlxs_glmnet Monte Carlo selection recovery is stable", {
     seed0 = 10000L,
     rep_fun = run_glmnet_selection_rep,
     label = "run_glmnet_selection_mc",
-    reproduce_args = list(
-      scenario = "ar1_correlated",
-      family = "gaussian",
-      n_train = n_train,
-      p = p,
-      alpha = 1,
-      nlambda = nlambda
-    ),
     scenario = "ar1_correlated",
     family = "gaussian",
     n_train = n_train,
@@ -140,15 +139,16 @@ test_that("mlxs_glmnet Monte Carlo selection recovery is stable", {
     do.call(rbind, results),
     reps = reps
   )
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-glmnet-monte-carlo",
     tier = fuzz_tier
   )
 
-  expect_true(all(summaries_df$all_finite))
-  expect_true(summaries_df$support_recall >= 0.75)
-  expect_true(summaries_df$selection_recovery_probability >= 0.2)
+  finite <- summaries_df[summaries_df$target == "finite", ]
+  recall <- summaries_df[summaries_df$target == "support_recall", ]
+  recovery <- summaries_df[summaries_df$target == "active_set", ]
+  expect_true(all(as.logical(finite$value)))
+  expect_true(recall$value >= 0.75)
+  expect_true(recovery$value >= 0.2)
 })

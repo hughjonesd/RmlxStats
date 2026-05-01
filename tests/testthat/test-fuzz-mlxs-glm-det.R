@@ -39,23 +39,31 @@ compare_glm_to_stats_glm <- function(
   mlx_eta <- drop(as.matrix(predict(mlx_fit, type = "link")))
   finite_values <- c(mlx_coef, mlx_vcov, mlx_fitted, mlx_eta)
 
-  data.frame(
-    case_type = "deterministic",
-    family = family,
-    scenario = scenario,
-    n = nrow(model.frame(formula, data)),
-    p = ncol(model.matrix(formula, data)),
-    condition_number = kappa(model.matrix(formula, data)),
-    max_coef_error = max(abs(mlx_coef - coef(base_fit))),
-    max_fitted_error = max(abs(mlx_fitted - fitted(base_fit))),
-    max_eta_error = max(abs(mlx_eta - predict(base_fit, type = "link"))),
-    max_vcov_error = max(abs(mlx_vcov - vcov(base_fit))),
-    deviance_error = abs(mlx_fit$deviance - base_fit$deviance),
-    aic_error = abs(mlx_fit$aic - base_fit$aic),
-    converged = mlx_fit$converged,
-    iterations = mlx_fit$iter,
-    all_finite = all(is.finite(finite_values)),
-    stringsAsFactors = FALSE
+  fuzz_metric_rows(
+    list(
+      case_type = "deterministic",
+      family = family,
+      scenario = scenario,
+      n = nrow(model.frame(formula, data)),
+      p = ncol(model.matrix(formula, data))
+    ),
+    measure     = c("diagnostic",       "error",       "error",     "error",            "error", "error",    "error", "diagnostic",  "diagnostic", "diagnostic"),
+    target      = c("condition_number", "coefficient", "fitted",    "linear_predictor", "vcov",  "deviance", "aic",   "convergence", "iterations", "finite"),
+    source      = c("design",           "mlx",         "mlx",       "mlx",              "mlx",   "mlx",      "mlx",   "mlx",         "mlx",        "mlx"),
+    baseline    = c(NA,                 "reference",   "reference", "reference",        "reference", "reference", "reference", NA,  NA,           NA),
+    aggregation = c("value",            "max",         "max",       "max",              "max",   "value",    "value", "value",       "value",      "all"),
+    value = c(
+      kappa(model.matrix(formula, data)),
+      max(abs(mlx_coef - coef(base_fit))),
+      max(abs(mlx_fitted - fitted(base_fit))),
+      max(abs(mlx_eta - predict(base_fit, type = "link"))),
+      max(abs(mlx_vcov - vcov(base_fit))),
+      abs(mlx_fit$deviance - base_fit$deviance),
+      abs(mlx_fit$aic - base_fit$aic),
+      as.numeric(mlx_fit$converged),
+      mlx_fit$iter,
+      as.numeric(all(is.finite(finite_values)))
+    )
   )
 }
 
@@ -211,16 +219,29 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
   }
 
   summaries_df <- do.call(rbind, summaries)
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-glm-deterministic",
     tier = fuzz_tier
   )
-  expect_true(all(summaries_df$converged))
-  expect_true(all(summaries_df$all_finite))
-  expect_true(all(summaries_df$max_coef_error <= 1e-5))
-  expect_true(all(summaries_df$max_vcov_error <= 1e-5))
+  converged <- summaries_df[
+    summaries_df$target == "convergence" &
+      summaries_df$aggregation == "value",
+  ]
+  finite <- summaries_df[
+    summaries_df$target == "finite" & summaries_df$aggregation == "all",
+  ]
+  coef_error <- summaries_df[
+    summaries_df$target == "coefficient" &
+      summaries_df$aggregation == "max",
+  ]
+  vcov_error <- summaries_df[
+    summaries_df$target == "vcov" & summaries_df$aggregation == "max",
+  ]
+  expect_true(all(as.logical(converged$value)))
+  expect_true(all(as.logical(finite$value)))
+  expect_true(all(coef_error$value <= 1e-5))
+  expect_true(all(vcov_error$value <= 1e-5))
 })
 
 test_that("mlxs_glm metamorphic fuzz properties hold", {

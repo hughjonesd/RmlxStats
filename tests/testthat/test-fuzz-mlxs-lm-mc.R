@@ -5,27 +5,46 @@ summarise_lm_mc <- function(results, truth, scenario, reps) {
   ses <- mc_field_matrix(results, "ses", names(truth))
   covered <- mc_field_matrix(results, "covered", names(truth))
   stopifnot(!anyNA(covered))
-  out <- data.frame(
-    case_type = "monte_carlo",
-    scenario = scenario,
-    coefficient = names(truth),
-    truth = unname(truth),
-    mean_estimate = colMeans(estimates),
-    bias = colMeans(estimates) - unname(truth),
-    mcse_bias = apply(estimates, 2, sd) / sqrt(reps),
-    rmse = sqrt(colMeans((sweep(
-      estimates, 2, unname(truth)
-    ))^2)),
-    empirical_se = apply(estimates, 2, sd),
-    average_model_se = colMeans(ses),
-    ci_coverage = colMeans(covered),
-    mcse_coverage = sqrt(colMeans(covered) * (1 - colMeans(covered)) / reps),
-    nreps = reps,
-    n = 80L,
-    p = length(truth),
-    row.names = NULL
+  bias <- colMeans(estimates) - unname(truth)
+  empirical_se <- apply(estimates, 2, sd)
+  coverage <- colMeans(covered)
+  metric_names <- c(
+    "truth", "estimate", "bias", "error", "standard_error",
+    "standard_error", "coverage"
   )
-  out
+  fuzz_metric_rows(
+    list(
+      case_type = "monte_carlo",
+      scenario = scenario,
+      nreps = reps,
+      n = 80L,
+      p = length(truth)
+    ),
+    term = rep(names(truth), each = length(metric_names)),
+    measure = rep(metric_names, times = length(truth)),
+    target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "confidence_interval"),
+    source      = c("truth",       "mlx",         "mlx",         "mlx",         "empirical",   "model",       "mlx"),
+    baseline    = c(NA,            "truth",       "truth",       "truth",       NA,            "empirical",   "truth"),
+    aggregation = c("value",       "mean",        "mean",        "rmse",        "value",       "mean",        "mean"),
+    value = c(rbind(
+      unname(truth),
+      colMeans(estimates),
+      bias,
+      sqrt(colMeans((sweep(estimates, 2, unname(truth)))^2)),
+      empirical_se,
+      colMeans(ses),
+      coverage
+    )),
+    value_se = c(rbind(
+      rep(NA_real_, length(truth)),
+      rep(NA_real_, length(truth)),
+      empirical_se / sqrt(reps),
+      rep(NA_real_, length(truth)),
+      rep(NA_real_, length(truth)),
+      rep(NA_real_, length(truth)),
+      sqrt(coverage * (1 - coverage) / reps)
+    ))
+  )
 }
 
 run_lm_mc_rep <- function(
@@ -111,28 +130,58 @@ summarise_lm_bootstrap_mc <- function(
   empirical_se <- apply(estimates, 2, sd, na.rm = TRUE)
   average_model_se <- colMeans(ses, na.rm = TRUE)
   average_bootstrap_se <- colMeans(boot_ses, na.rm = TRUE)
-  data.frame(
-    case_type = "monte_carlo",
-    scenario = scenario,
-    n = n,
-    p = length(truth),
-    nreps = reps,
-    bootstrap_B = bootstrap_B,
-    bootstrap_failure_rate = 0,
-    coefficient = names(truth),
-    truth = unname(truth),
-    mean_estimate = colMeans(estimates, na.rm = TRUE),
-    bias = colMeans(estimates, na.rm = TRUE) - unname(truth),
-    empirical_se = empirical_se,
-    average_model_se = average_model_se,
-    average_bootstrap_se = average_bootstrap_se,
-    model_se_ratio = average_model_se / empirical_se,
-    bootstrap_se_ratio = average_bootstrap_se / empirical_se,
-    all_finite = vapply(seq_along(truth), function(idx) {
-      vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
-      all(is.finite(vals[!is.na(vals)]))
-    }, logical(1)),
-    row.names = NULL
+  all_finite <- vapply(seq_along(truth), function(idx) {
+    vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
+    all(is.finite(vals[!is.na(vals)]))
+  }, logical(1))
+  coef_metrics <- c(
+    "truth", "estimate", "bias", "standard_error", "standard_error",
+    "standard_error", "standard_error_ratio", "standard_error_ratio",
+    "diagnostic"
+  )
+  rbind(
+    fuzz_metric_rows(
+      list(
+        case_type = "monte_carlo",
+        scenario = scenario,
+        n = n,
+        p = length(truth),
+        nreps = reps,
+        bootstrap_B = bootstrap_B
+      ),
+      term = rep(names(truth), each = length(coef_metrics)),
+      measure = rep(coef_metrics, times = length(truth)),
+      target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "finite"),
+      source      = c("truth",       "mlx",         "mlx",         "empirical",   "model",       "bootstrap",  "model",       "bootstrap",  "mlx"),
+      baseline    = c(NA,            "truth",       "truth",       NA,            "empirical",   "empirical",  "empirical",   "empirical",  NA),
+      aggregation = c("value",       "mean",        "mean",        "value",       "mean",        "mean",       "ratio",       "ratio",      "all"),
+      value = c(rbind(
+        unname(truth),
+        colMeans(estimates, na.rm = TRUE),
+        colMeans(estimates, na.rm = TRUE) - unname(truth),
+        empirical_se,
+        average_model_se,
+        average_bootstrap_se,
+        average_model_se / empirical_se,
+        average_bootstrap_se / empirical_se,
+        as.numeric(all_finite)
+      ))
+    ),
+    fuzz_metric_rows(
+      list(
+        case_type = "monte_carlo",
+        scenario = scenario,
+        n = n,
+        p = length(truth),
+        nreps = reps,
+        bootstrap_B = bootstrap_B
+      ),
+      measure = "diagnostic",
+      target = "bootstrap_failure",
+      source = "bootstrap",
+      aggregation = "rate",
+      value = 0
+    )
   )
 }
 
@@ -145,7 +194,6 @@ test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
     seed0 = 10000,
     rep_fun = run_lm_mc_rep,
     label = "run_lm_mc",
-    reproduce_args = list(scenario = "homoskedastic"),
     truth = truth,
     scenario = "homoskedastic"
   )
@@ -154,15 +202,12 @@ test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
     seed0 = 20000,
     rep_fun = run_lm_mc_rep,
     label = "run_lm_mc",
-    reproduce_args = list(scenario = "heteroskedastic"),
     truth = truth,
     scenario = "heteroskedastic"
   )
   hom <- summarise_lm_mc(hom_results, truth, "homoskedastic", hom_reps)
   het <- summarise_lm_mc(het_results, truth, "heteroskedastic", het_reps)
   summaries_df <- rbind(hom, het)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-lm-monte-carlo",
@@ -174,33 +219,34 @@ test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
   # homoskedastic replications for a meaningful coverage screen; the full
   # tier uses 10,000. The 4-MCSE band should almost never fail by
   # simulation noise alone, while still catching large regressions.
-  hom_bias_mcse <- hom$empirical_se / sqrt(hom_reps)
+  hom_bias <- hom[hom$measure == "bias", ]
   expect_true(
-    all(abs(hom$bias) <= 4 * hom_bias_mcse),
+    all(abs(hom_bias$value) <= 4 * hom_bias$value_se),
     info = paste(
       "homoskedastic bias outside Monte Carlo band:",
-      paste(hom$coefficient[abs(hom$bias) > 4 * hom_bias_mcse],
+      paste(hom_bias$term[abs(hom_bias$value) > 4 * hom_bias$value_se],
             collapse = ", ")
     )
   )
 
-  het_bias_mcse <- het$empirical_se / sqrt(het_reps)
+  het_bias <- het[het$measure == "bias", ]
   expect_true(
-    all(abs(het$bias) <= 4 * het_bias_mcse),
+    all(abs(het_bias$value) <= 4 * het_bias$value_se),
     info = paste(
       "heteroskedastic bias outside Monte Carlo band:",
-      paste(het$coefficient[abs(het$bias) > 4 * het_bias_mcse],
+      paste(het_bias$term[abs(het_bias$value) > 4 * het_bias$value_se],
             collapse = ", ")
     )
   )
 
-  coverage_band <- 4 * hom$mcse_coverage
+  hom_coverage <- hom[hom$measure == "coverage", ]
+  coverage_band <- 4 * hom_coverage$value_se
   expect_true(
-    all(abs(hom$ci_coverage - 0.95) <= coverage_band),
+    all(abs(hom_coverage$value - 0.95) <= coverage_band),
     info = paste(
       "homoskedastic coverage outside Monte Carlo band:",
-      paste(hom$coefficient[
-        abs(hom$ci_coverage - 0.95) > coverage_band
+      paste(hom_coverage$term[
+        abs(hom_coverage$value - 0.95) > coverage_band
       ], collapse = ", ")
     )
   )
@@ -223,11 +269,6 @@ test_that("mlxs_lm bootstrap SE calibration is stable", {
       seed0 = scenarios[[scenario]],
       rep_fun = run_lm_bootstrap_mc_rep,
       label = "run_lm_bootstrap_mc",
-      reproduce_args = list(
-        bootstrap_B = bootstrap_B,
-        scenario = scenario,
-        n = n
-      ),
       bootstrap_B = bootstrap_B,
       scenario = scenario,
       truth = truth,
@@ -243,8 +284,6 @@ test_that("mlxs_lm bootstrap SE calibration is stable", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-lm-monte-carlo",
@@ -253,16 +292,25 @@ test_that("mlxs_lm bootstrap SE calibration is stable", {
 
   lower <- if (identical(fuzz_tier, "full")) 0.88 else 0.80
   upper <- if (identical(fuzz_tier, "full")) 1.15 else 1.25
-  expect_true(all(summaries_df$bootstrap_failure_rate == 0))
-  expect_true(all(summaries_df$all_finite))
+  failure <- summaries_df[
+    summaries_df$target == "bootstrap_failure" &
+      summaries_df$aggregation == "rate",
+  ]
+  finite <- summaries_df[
+    summaries_df$target == "finite" & summaries_df$aggregation == "all",
+  ]
+  boot_ratio <- summaries_df[
+    summaries_df$measure == "standard_error_ratio" &
+      summaries_df$source == "bootstrap",
+  ]
+  expect_true(all(failure$value == 0))
+  expect_true(all(as.logical(finite$value)))
   expect_true(
-    all(summaries_df$bootstrap_se_ratio >= lower &
-          summaries_df$bootstrap_se_ratio <= upper),
+    all(boot_ratio$value >= lower & boot_ratio$value <= upper),
     info = paste(
       "bootstrap SE ratio outside calibration band:",
-      paste(summaries_df$coefficient[
-        summaries_df$bootstrap_se_ratio < lower |
-          summaries_df$bootstrap_se_ratio > upper
+      paste(boot_ratio$term[
+        boot_ratio$value < lower | boot_ratio$value > upper
       ], collapse = ", ")
     )
   )

@@ -145,33 +145,38 @@ summarise_prcomp_fit <- function(
     scale.
   )
 
-  data.frame(
-    case_type = case_type,
-    scenario = scenario,
-    n = nrow(x),
-    p = ncol(x),
-    rank = rank,
-    rank_true = rank_true,
-    method = fit$method,
-    noise_sd = noise_sd,
-    max_sdev_error = max(abs(stable_sdev - stable_ref_sdev)),
-    relative_sdev_rmse = sqrt(mean((stable_sdev - stable_ref_sdev)^2)) /
-      max(sqrt(mean(stable_ref_sdev^2)), 1e-12),
-    subspace_error = prcomp_projector_error(
-      stable_rotation,
-      stable_ref_rotation
+  fuzz_metric_rows(
+    list(
+      case_type = case_type,
+      scenario = scenario,
+      n = nrow(x),
+      p = ncol(x),
+      rank = rank,
+      rank_true = rank_true,
+      method = fit$method,
+      noise_sd = noise_sd
     ),
-    reconstruction_error = reconstruction,
-    reference_reconstruction_error = ref_reconstruction,
-    excess_reconstruction_error = reconstruction - ref_reconstruction,
-    orthogonality_error = max(abs(crossprod(rotation) - diag(rank))),
-    explained_variance_error = max(abs(prop_var - ref_prop_var)),
-    all_finite = all(is.finite(c(
-      sdev,
-      rotation,
+    measure     = c("error",     "ratio",     "error",     "loss",           "loss",           "delta",          "error",              "diagnostic",    "diagnostic"),
+    target      = c("pca_sdev",  "pca_sdev",  "subspace",  "reconstruction", "reconstruction", "reconstruction", "explained_variance", "orthogonality", "finite"),
+    source      = c("mlx",       "mlx",       "mlx",       "mlx",            "reference",      "mlx",            "mlx",                "mlx",           "mlx"),
+    baseline    = c("reference", "reference", "reference", NA,               NA,               "reference",      "reference",          "ideal",         NA),
+    aggregation = c("max",       "rmse",      "value",     "value",          "value",          "delta",          "max",                "max",           "all"),
+    value = c(
+      max(abs(stable_sdev - stable_ref_sdev)),
+      sqrt(mean((stable_sdev - stable_ref_sdev)^2)) /
+        max(sqrt(mean(stable_ref_sdev^2)), 1e-12),
+      prcomp_projector_error(stable_rotation, stable_ref_rotation),
       reconstruction,
-      ref_reconstruction
-    ))),
-    stringsAsFactors = FALSE
+      ref_reconstruction,
+      reconstruction - ref_reconstruction,
+      max(abs(prop_var - ref_prop_var)),
+      max(abs(crossprod(rotation) - diag(rank))),
+      as.numeric(all(is.finite(c(
+        sdev,
+        rotation,
+        reconstruction,
+        ref_reconstruction
+      ))))
+    )
   )
 }

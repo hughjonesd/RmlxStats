@@ -66,35 +66,64 @@ summarise_glmnet_fit <- function(
       family = family
     )
     support <- glmnet_fuzz_support(beta, case$beta)
-    rows[[row_idx]] <- cbind(
-      data.frame(
-        case_type = "deterministic",
-        scenario = scenario,
-        family = family,
-        n = nrow(case$x),
-        p = ncol(case$x),
-        alpha = alpha,
-        lambda_index = idx,
-        lambda = lambda[[idx]],
-        bias = mean(beta - case$beta),
-        rmse = sqrt(mean((beta - case$beta)^2)),
-        test_loss = test_loss,
-        reference_test_loss = ref_loss,
-        oracle_test_loss = oracle_loss,
-        excess_risk = test_loss - oracle_loss,
-        loss_error = abs(test_loss - ref_loss),
-        relative_loss_error = abs(test_loss - ref_loss) /
-          max(abs(ref_loss), 1e-12),
-        max_coef_error = max(abs(beta - ref_beta_col)),
-        max_prediction_error = max(abs(mlx_pred[, row_idx] -
-          ref_pred[, row_idx])),
-        objective_delta = obj - ref_obj,
-        all_finite = all(is.finite(c(
-          beta, mlx_a0[[row_idx]], mlx_pred[, row_idx], test_loss, obj
-        ))),
-        row.names = NULL
+    meta <- list(
+      case_type = "deterministic",
+      scenario = scenario,
+      family = family,
+      n = nrow(case$x),
+      p = ncol(case$x),
+      alpha = alpha,
+      lambda_index = idx,
+      lambda = lambda[[idx]]
+    )
+    rows[[row_idx]] <- rbind(
+      fuzz_metric_rows(
+        meta,
+        measure     = c("bias",        "error",       "loss",       "loss",       "loss",       "delta", "error",     "ratio",     "error",       "error",      "delta"),
+        target      = c("coefficient", "coefficient", "prediction", "prediction", "prediction", "risk",  "loss",      "loss",      "coefficient", "prediction", "objective"),
+        source      = c("mlx",         "mlx",         "mlx",        "reference",  "oracle",     "mlx",   "mlx",       "mlx",       "mlx",         "mlx",        "mlx"),
+        baseline    = c("truth",       "truth",       NA,           NA,           NA,           "oracle", "reference", "reference", "reference",   "reference",  "reference"),
+        aggregation = c("mean",        "rmse",        "value",      "value",      "value",      "delta", "value",     "ratio",     "max",         "max",        "delta"),
+        value = c(
+          mean(beta - case$beta),
+          sqrt(mean((beta - case$beta)^2)),
+          test_loss,
+          ref_loss,
+          oracle_loss,
+          test_loss - oracle_loss,
+          abs(test_loss - ref_loss),
+          abs(test_loss - ref_loss) / max(abs(ref_loss), 1e-12),
+          max(abs(beta - ref_beta_col)),
+          max(abs(mlx_pred[, row_idx] - ref_pred[, row_idx])),
+          obj - ref_obj
+        )
       ),
-      support
+      fuzz_metric_rows(
+        meta,
+        measure     = c("selection",   "selection",      "selection",       "selection",       "selection",         "selection"),
+        target      = c("active_size", "true_positives", "false_positives", "false_negatives", "support_precision", "support_recall"),
+        source      = c("mlx",         "mlx",            "mlx",             "mlx",             "mlx",               "mlx"),
+        baseline    = c("truth",       "truth",          "truth",           "truth",           "truth",             "truth"),
+        aggregation = c("count",       "count",          "count",           "count",           "value",             "value"),
+        value = c(
+          support$active_size,
+          support$true_positives,
+          support$false_positives,
+          support$false_negatives,
+          support$support_precision,
+          support$support_recall
+        )
+      ),
+      fuzz_metric_rows(
+        meta,
+        measure = "diagnostic",
+        target = "finite",
+        source = "mlx",
+        aggregation = "all",
+        value = as.numeric(all(is.finite(c(
+          beta, mlx_a0[[row_idx]], mlx_pred[, row_idx], test_loss, obj
+        ))))
+      )
     )
   }
   do.call(rbind, rows)
@@ -182,17 +211,27 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-glmnet-deterministic",
     tier = fuzz_tier
   )
 
-  expect_true(all(summaries_df$all_finite))
-  expect_true(all(summaries_df$max_prediction_error <= 1e-4))
-  expect_true(all(summaries_df$objective_delta <= 1e-5))
+  finite <- summaries_df[
+    summaries_df$target == "finite" & summaries_df$aggregation == "all",
+  ]
+  pred_error <- summaries_df[
+    summaries_df$target == "prediction" &
+      summaries_df$measure == "error" &
+      summaries_df$aggregation == "max",
+  ]
+  objective_delta <- summaries_df[
+    summaries_df$target == "objective" &
+      summaries_df$measure == "delta",
+  ]
+  expect_true(all(as.logical(finite$value)))
+  expect_true(all(pred_error$value <= 1e-4))
+  expect_true(all(objective_delta$value <= 1e-5))
 })
 
 test_that("mlxs_glmnet deterministic metamorphic properties hold", {

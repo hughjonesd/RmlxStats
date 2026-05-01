@@ -45,17 +45,25 @@ compare_lm_to_stats_lm <- function(scenario, formula, data, case_type) {
   mlx_fitted <- drop(as.matrix(fitted(mlx_fit)))
   finite_values <- c(mlx_coef, mlx_vcov, mlx_fitted)
 
-  data.frame(
-    case_type = case_type,
-    scenario = scenario,
-    n = nrow(model.frame(formula, data)),
-    p = ncol(model.matrix(formula, data)),
-    condition_number = kappa(model.matrix(formula, data)),
-    max_coef_error = max(abs(mlx_coef - coef(base_fit))),
-    max_fitted_error = max(abs(mlx_fitted - fitted(base_fit))),
-    max_vcov_error = max(abs(mlx_vcov - vcov(base_fit))),
-    all_finite = all(is.finite(finite_values)),
-    stringsAsFactors = FALSE
+  fuzz_metric_rows(
+    list(
+      case_type = case_type,
+      scenario = scenario,
+      n = nrow(model.frame(formula, data)),
+      p = ncol(model.matrix(formula, data))
+    ),
+    measure     = c("diagnostic",       "error",       "error",     "error", "diagnostic"),
+    target      = c("condition_number", "coefficient", "fitted",    "vcov",  "finite"),
+    source      = c("design",           "mlx",         "mlx",       "mlx",   "mlx"),
+    baseline    = c(NA,                 "reference",   "reference", "reference", NA),
+    aggregation = c("value",            "max",         "max",       "max",   "all"),
+    value = c(
+      kappa(model.matrix(formula, data)),
+      max(abs(mlx_coef - coef(base_fit))),
+      max(abs(mlx_fitted - fitted(base_fit))),
+      max(abs(mlx_vcov - vcov(base_fit))),
+      as.numeric(all(is.finite(finite_values)))
+    )
   )
 }
 
@@ -146,7 +154,6 @@ test_that("mlxs_lm deterministic differential fuzz cases match stats::lm", {
   }
 
   summaries_df <- do.call(rbind, summaries)
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-lm-deterministic",
@@ -227,34 +234,46 @@ test_that("mlxs_lm near-rank-deficient stability is tracked", {
   }
 
   summaries_df <- do.call(rbind, summaries)
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-lm-deterministic",
     tier = fuzz_tier
   )
 
-  expect_true(all(summaries_df$all_finite),
+  finite <- summaries_df[
+    summaries_df$target == "finite" & summaries_df$aggregation == "all",
+  ]
+  fitted_error <- summaries_df[
+    summaries_df$target == "fitted" & summaries_df$aggregation == "max",
+  ]
+  coef_error <- summaries_df[
+    summaries_df$target == "coefficient" & summaries_df$aggregation == "max",
+  ]
+  vcov_error <- summaries_df[
+    summaries_df$target == "vcov" & summaries_df$aggregation == "max",
+  ]
+  condition <- summaries_df[summaries_df$target == "condition_number", ]
+  expect_true(all(as.logical(finite$value)),
               info = "non-finite near-singular fit")
   expect_true(
-    all(summaries_df$max_fitted_error <= 0.05),
-    info = paste(summaries_df$scenario[
-      summaries_df$max_fitted_error > 0.05
-    ],
+    all(fitted_error$value <= 0.05),
+    info = paste(fitted_error$scenario[fitted_error$value > 0.05],
                  collapse = ", ")
   )
 
-  moderate <- summaries_df$condition_number <= 500
+  moderate_scenarios <- condition$scenario[condition$value <= 500]
+  moderate <- coef_error$scenario %in% moderate_scenarios
   expect_true(
-    all(summaries_df$max_coef_error[moderate] <= 1e-4),
-    info = paste(summaries_df$scenario[
-      moderate & summaries_df$max_coef_error > 1e-4
+    all(coef_error$value[moderate] <= 1e-4),
+    info = paste(coef_error$scenario[
+      moderate & coef_error$value > 1e-4
     ], collapse = ", ")
   )
+  moderate <- vcov_error$scenario %in% moderate_scenarios
   expect_true(
-    all(summaries_df$max_vcov_error[moderate] <= 1e-5),
-    info = paste(summaries_df$scenario[
-      moderate & summaries_df$max_vcov_error > 1e-5
+    all(vcov_error$value[moderate] <= 1e-5),
+    info = paste(vcov_error$scenario[
+      moderate & vcov_error$value > 1e-5
     ], collapse = ", ")
   )
 })
@@ -283,18 +302,26 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
     r_squared <- fit_summary$r.squared
     finite_values <- c(coefs, se, sigma, r_squared)
 
-    summaries[[case_name]] <- data.frame(
-      case_type = "nist_strd",
-      scenario = case$name,
-      n = nrow(model.frame(case$formula, case$data)),
-      p = ncol(model.matrix(case$formula, case$data)),
-      condition_number = kappa(model.matrix(case$formula, case$data)),
-      max_coef_error = max(abs(coefs[names(case$coef)] - case$coef)),
-      max_se_error = max(abs(se[names(case$se)] - case$se)),
-      sigma_error = abs(sigma - case$sigma),
-      r_squared_error = abs(r_squared - case$r_squared),
-      all_finite = all(is.finite(finite_values)),
-      stringsAsFactors = FALSE
+    summaries[[case_name]] <- fuzz_metric_rows(
+      list(
+        case_type = "nist_strd",
+        scenario = case$name,
+        n = nrow(model.frame(case$formula, case$data)),
+        p = ncol(model.matrix(case$formula, case$data))
+      ),
+      measure     = c("diagnostic",       "error",       "error",          "error",          "error",     "diagnostic"),
+      target      = c("condition_number", "coefficient", "standard_error", "residual_sigma", "r_squared", "finite"),
+      source      = c("design",           "mlx",         "mlx",            "mlx",            "mlx",       "mlx"),
+      baseline    = c(NA,                 "reference",   "reference",      "reference",      "reference", NA),
+      aggregation = c("value",            "max",         "max",            "value",          "value",     "all"),
+      value = c(
+        kappa(model.matrix(case$formula, case$data)),
+        max(abs(coefs[names(case$coef)] - case$coef)),
+        max(abs(se[names(case$se)] - case$se)),
+        abs(sigma - case$sigma),
+        abs(r_squared - case$r_squared),
+        as.numeric(all(is.finite(finite_values)))
+      )
     )
 
     expect_true(all(is.finite(finite_values)), info = case$name)
@@ -313,7 +340,6 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
   }
 
   summaries_df <- do.call(rbind, summaries)
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-lm-deterministic",

@@ -53,28 +53,63 @@ summarise_glm_mc <- function(
   converged <- vapply(results, `[[`, logical(1), "converged")
   iterations <- vapply(results, `[[`, numeric(1), "iterations")
   stopifnot(!anyNA(covered))
-  data.frame(
+  bias <- colMeans(estimates) - unname(truth)
+  empirical_se <- apply(estimates, 2, sd)
+  coverage <- colMeans(covered)
+  metric_names <- c(
+    "truth", "estimate", "bias", "error", "standard_error",
+    "standard_error", "coverage"
+  )
+  meta <- list(
     case_type = "monte_carlo",
     family = family,
     scenario = "regular",
     n = n,
     p = length(truth),
-    nreps = reps,
-    coefficient = names(truth),
-    truth = unname(truth),
-    mean_estimate = colMeans(estimates),
-    bias = colMeans(estimates) - unname(truth),
-    mcse_bias = apply(estimates, 2, sd) / sqrt(reps),
-    rmse = sqrt(colMeans((sweep(estimates, 2, unname(truth)))^2)),
-    empirical_se = apply(estimates, 2, sd),
-    average_model_se = colMeans(ses),
-    ci_coverage = colMeans(covered),
-    mcse_coverage = sqrt(colMeans(covered) * (1 - colMeans(covered)) / reps),
-    max_coef_error = max(max_coef_error),
-    convergence_rate = mean(converged),
-    mean_iterations = mean(iterations),
-    max_iterations = max(iterations),
-    row.names = NULL
+    nreps = reps
+  )
+  rbind(
+    fuzz_metric_rows(
+      meta,
+      term = rep(names(truth), each = length(metric_names)),
+      measure = rep(metric_names, times = length(truth)),
+      target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "confidence_interval"),
+      source      = c("truth",       "mlx",         "mlx",         "mlx",         "empirical",   "model",       "mlx"),
+      baseline    = c(NA,            "truth",       "truth",       "truth",       NA,            "empirical",   "truth"),
+      aggregation = c("value",       "mean",        "mean",        "rmse",        "value",       "mean",        "mean"),
+      value = c(rbind(
+        unname(truth),
+        colMeans(estimates),
+        bias,
+        sqrt(colMeans((sweep(estimates, 2, unname(truth)))^2)),
+        empirical_se,
+        colMeans(ses),
+        coverage
+      )),
+      value_se = c(rbind(
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        empirical_se / sqrt(reps),
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        sqrt(coverage * (1 - coverage) / reps)
+      ))
+    ),
+    fuzz_metric_rows(
+      meta,
+      measure     = c("error",       "diagnostic",  "diagnostic", "diagnostic"),
+      target      = c("coefficient", "convergence", "iterations", "iterations"),
+      source      = c("mlx",         "mlx",         "mlx",        "mlx"),
+      baseline    = c("reference",   NA,            NA,           NA),
+      aggregation = c("max",         "rate",        "mean",       "max"),
+      value = c(
+        max(max_coef_error),
+        mean(converged),
+        mean(iterations),
+        max(iterations)
+      )
+    )
   )
 }
 
@@ -139,32 +174,59 @@ summarise_glm_bootstrap_mc <- function(
   empirical_se <- apply(estimates, 2, sd, na.rm = TRUE)
   average_model_se <- colMeans(ses, na.rm = TRUE)
   average_bootstrap_se <- colMeans(boot_ses, na.rm = TRUE)
-  data.frame(
+  all_finite <- vapply(seq_along(truth), function(idx) {
+    vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
+    all(is.finite(vals[!is.na(vals)]))
+  }, logical(1))
+  family <- if (scenario == "gaussian_skew") "gaussian" else "binomial"
+  meta <- list(
     case_type = "monte_carlo",
-    family = if (scenario == "gaussian_skew") "gaussian" else "binomial",
+    family = family,
     scenario = scenario,
     n = n,
     p = length(truth),
     nreps = reps,
-    bootstrap_B = bootstrap_B,
-    bootstrap_failure_rate = 0,
-    coefficient = names(truth),
-    truth = unname(truth),
-    mean_estimate = colMeans(estimates, na.rm = TRUE),
-    bias = colMeans(estimates, na.rm = TRUE) - unname(truth),
-    empirical_se = empirical_se,
-    average_model_se = average_model_se,
-    average_bootstrap_se = average_bootstrap_se,
-    model_se_ratio = average_model_se / empirical_se,
-    bootstrap_se_ratio = average_bootstrap_se / empirical_se,
-    convergence_rate = mean(converged, na.rm = TRUE),
-    mean_iterations = mean(iterations, na.rm = TRUE),
-    max_iterations = max(iterations, na.rm = TRUE),
-    all_finite = vapply(seq_along(truth), function(idx) {
-      vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
-      all(is.finite(vals[!is.na(vals)]))
-    }, logical(1)),
-    row.names = NULL
+    bootstrap_B = bootstrap_B
+  )
+  coef_metrics <- c(
+    "truth", "estimate", "bias", "standard_error", "standard_error",
+    "standard_error", "standard_error_ratio", "standard_error_ratio",
+    "diagnostic"
+  )
+  rbind(
+    fuzz_metric_rows(
+      meta,
+      term = rep(names(truth), each = length(coef_metrics)),
+      measure = rep(coef_metrics, times = length(truth)),
+      target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "finite"),
+      source      = c("truth",       "mlx",         "mlx",         "empirical",   "model",       "bootstrap",  "model",       "bootstrap",  "mlx"),
+      baseline    = c(NA,            "truth",       "truth",       NA,            "empirical",   "empirical",  "empirical",   "empirical",  NA),
+      aggregation = c("value",       "mean",        "mean",        "value",       "mean",        "mean",       "ratio",       "ratio",      "all"),
+      value = c(rbind(
+        unname(truth),
+        colMeans(estimates, na.rm = TRUE),
+        colMeans(estimates, na.rm = TRUE) - unname(truth),
+        empirical_se,
+        average_model_se,
+        average_bootstrap_se,
+        average_model_se / empirical_se,
+        average_bootstrap_se / empirical_se,
+        as.numeric(all_finite)
+      ))
+    ),
+    fuzz_metric_rows(
+      meta,
+      measure     = c("diagnostic",        "diagnostic",  "diagnostic", "diagnostic"),
+      target      = c("bootstrap_failure", "convergence", "iterations", "iterations"),
+      source      = c("bootstrap",         "mlx",         "mlx",        "mlx"),
+      aggregation = c("rate",              "rate",        "mean",       "max"),
+      value = c(
+        0,
+        mean(converged, na.rm = TRUE),
+        mean(iterations, na.rm = TRUE),
+        max(iterations, na.rm = TRUE)
+      )
+    )
   )
 }
 
@@ -181,7 +243,6 @@ test_that("mlxs_glm Monte Carlo fuzz summaries are within tolerance", {
       seed0 = mc_seeds[[family]],
       rep_fun = run_glm_mc_rep,
       label = "run_glm_mc",
-      reproduce_args = list(family = family, n = n),
       family = family,
       truth = truth,
       n = n
@@ -195,42 +256,48 @@ test_that("mlxs_glm Monte Carlo fuzz summaries are within tolerance", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-glm-monte-carlo",
     tier = fuzz_tier
   )
 
-  expect_true(all(summaries_df$convergence_rate == 1))
-  expect_true(all(summaries_df$max_coef_error <= 1e-5))
+  convergence <- summaries_df[
+    summaries_df$target == "convergence" & summaries_df$aggregation == "rate",
+  ]
+  coef_error <- summaries_df[
+    summaries_df$measure == "error" &
+      summaries_df$target == "coefficient" &
+      summaries_df$aggregation == "max",
+  ]
+  expect_true(all(convergence$value == 1))
+  expect_true(all(coef_error$value <= 1e-5))
 
   # Gaussian identity GLM should have the same finite-sample bias behavior as
   # OLS. Binomial and Poisson MLE bias is only asymptotically zero, so those
   # families are recorded here but not failed on zero-bias in this first pass.
-  gaussian_rows <- summaries_df$family == "gaussian"
+  bias_rows <- summaries_df[summaries_df$measure == "bias", ]
+  gaussian_rows <- bias_rows$family == "gaussian"
   expect_true(
-    all(abs(summaries_df$bias[gaussian_rows]) <=
-          4 * summaries_df$mcse_bias[gaussian_rows]),
+    all(abs(bias_rows$value[gaussian_rows]) <=
+          4 * bias_rows$value_se[gaussian_rows]),
     info = paste(
       "gaussian bias outside Monte Carlo band:",
-      paste(summaries_df$coefficient[
+      paste(bias_rows$term[
         gaussian_rows &
-          abs(summaries_df$bias) > 4 * summaries_df$mcse_bias
+          abs(bias_rows$value) > 4 * bias_rows$value_se
       ], collapse = ", ")
     )
   )
 
+  coverage <- summaries_df[summaries_df$measure == "coverage", ]
   expect_true(
-    all(abs(summaries_df$ci_coverage - 0.95) <=
-          4 * summaries_df$mcse_coverage),
+    all(abs(coverage$value - 0.95) <= 4 * coverage$value_se),
     info = paste(
       "coverage outside Monte Carlo band:",
       paste(
-        paste(summaries_df$family, summaries_df$coefficient, sep = ":")[
-          abs(summaries_df$ci_coverage - 0.95) >
-            4 * summaries_df$mcse_coverage
+        paste(coverage$family, coverage$term, sep = ":")[
+          abs(coverage$value - 0.95) > 4 * coverage$value_se
         ],
         collapse = ", "
       )
@@ -252,11 +319,6 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
       seed0 = scenarios[[scenario]],
       rep_fun = run_glm_bootstrap_mc_rep,
       label = "run_glm_bootstrap_mc",
-      reproduce_args = list(
-        bootstrap_B = bootstrap_B,
-        scenario = scenario,
-        n = n
-      ),
       bootstrap_B = bootstrap_B,
       scenario = scenario,
       truth = truth,
@@ -272,8 +334,6 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
     )
   }
   summaries_df <- do.call(rbind, summaries)
-
-  print(summaries_df, digits = 4)
   write_fuzz_summaries(
     summaries_df,
     suite = "mlxs-glm-monte-carlo",
@@ -282,17 +342,29 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
 
   lower <- if (identical(fuzz_tier, "full")) 0.88 else 0.80
   upper <- if (identical(fuzz_tier, "full")) 1.15 else 1.25
-  expect_true(all(summaries_df$bootstrap_failure_rate == 0))
-  expect_true(all(summaries_df$all_finite))
-  expect_true(all(summaries_df$convergence_rate == 1))
+  failure <- summaries_df[
+    summaries_df$target == "bootstrap_failure" &
+      summaries_df$aggregation == "rate",
+  ]
+  finite <- summaries_df[
+    summaries_df$target == "finite" & summaries_df$aggregation == "all",
+  ]
+  convergence <- summaries_df[
+    summaries_df$target == "convergence" & summaries_df$aggregation == "rate",
+  ]
+  boot_ratio <- summaries_df[
+    summaries_df$measure == "standard_error_ratio" &
+      summaries_df$source == "bootstrap",
+  ]
+  expect_true(all(failure$value == 0))
+  expect_true(all(as.logical(finite$value)))
+  expect_true(all(convergence$value == 1))
   expect_true(
-    all(summaries_df$bootstrap_se_ratio >= lower &
-          summaries_df$bootstrap_se_ratio <= upper),
+    all(boot_ratio$value >= lower & boot_ratio$value <= upper),
     info = paste(
       "bootstrap SE ratio outside calibration band:",
-      paste(paste(summaries_df$family, summaries_df$coefficient, sep = ":")[
-        summaries_df$bootstrap_se_ratio < lower |
-          summaries_df$bootstrap_se_ratio > upper
+      paste(paste(boot_ratio$family, boot_ratio$term, sep = ":")[
+        boot_ratio$value < lower | boot_ratio$value > upper
       ], collapse = ", ")
     )
   )
