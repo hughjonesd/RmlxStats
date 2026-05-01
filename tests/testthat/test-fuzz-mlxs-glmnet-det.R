@@ -101,20 +101,49 @@ summarise_glmnet_fit <- function(
 }
 
 test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
-  specs <- data.frame(
-    scenario = c(
-      "ar1_correlated", "ar1_correlated", "block_correlated",
-      "null_signal", "null_signal", "strong_rare_binomial"
+  specs <- rbind(
+    data.frame(
+      scenario = c(
+        "ar1_correlated", "ar1_correlated", "block_correlated",
+        "null_signal", "null_signal", "strong_rare_binomial"
+      ),
+      family = c(
+        "gaussian", "binomial", "gaussian",
+        "gaussian", "binomial", "binomial"
+      ),
+      seed = c(1001L, 1002L, 1003L, 1004L, 1005L, 1006L),
+      n = c(900L, 900L, 900L, 900L, 900L, 1200L),
+      p = c(120L, 120L, 120L, 120L, 120L, 160L),
+      n_test = rep(700L, 6L),
+      rho = c(0.9, 0.9, 0, 0.8, 0.8, 0.5),
+      alpha = c(1, 1, 0.5, 1, 1, 0.5),
+      nlambda = rep(20L, 6L)
     ),
-    family = c(
-      "gaussian", "binomial", "gaussian",
-      "gaussian", "binomial", "binomial"
-    ),
-    seed = c(1001L, 1002L, 1003L, 1004L, 1005L, 1006L),
-    n = c(900L, 900L, 900L, 900L, 900L, 1200L),
-    p = c(120L, 120L, 120L, 120L, 120L, 160L),
-    rho = c(0.9, 0.9, 0, 0.8, 0.8, 0.5),
-    alpha = c(1, 1, 0.5, 1, 1, 0.5)
+    if (identical(fuzz_tier, "full")) {
+      data.frame(
+        scenario = c("ar1_correlated", "block_correlated"),
+        family = c("gaussian", "gaussian"),
+        seed = c(3001L, 3002L),
+        n = c(6000L, 1200L),
+        p = c(160L, 700L),
+        n_test = c(1000L, 400L),
+        rho = c(0.8, 0),
+        alpha = c(1, 0.5),
+        nlambda = c(12L, 12L)
+      )
+    } else {
+      data.frame(
+        scenario = c("ar1_correlated", "block_correlated"),
+        family = c("gaussian", "gaussian"),
+        seed = c(3001L, 3002L),
+        n = c(1600L, 500L),
+        p = c(100L, 260L),
+        n_test = c(400L, 200L),
+        rho = c(0.8, 0),
+        alpha = c(1, 0.5),
+        nlambda = c(10L, 10L)
+      )
+    }
   )
 
   summaries <- vector("list", nrow(specs))
@@ -126,19 +155,22 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
       family = spec$family,
       n = spec$n,
       p = spec$p,
-      n_test = 700L,
+      n_test = spec$n_test,
       rho = spec$rho
     )
     fit_pair <- fit_glmnet_pair(
       case,
       family = spec$family,
       alpha = spec$alpha,
-      nlambda = 20L,
+      nlambda = spec$nlambda,
       lambda_min_ratio = 1e-3
     )
     lambda_indices <- unique(pmax(
       1L,
-      pmin(length(fit_pair$lambda), c(1L, 10L, length(fit_pair$lambda)))
+      pmin(
+        length(fit_pair$lambda),
+        c(1L, ceiling(length(fit_pair$lambda) / 2), length(fit_pair$lambda))
+      )
     ))
     summaries[[spec_idx]] <- summarise_glmnet_fit(
       scenario = spec$scenario,

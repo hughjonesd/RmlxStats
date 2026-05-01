@@ -145,6 +145,11 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     "relative_loss_error",
     # Number of nonzero coefficients in a penalized fit:
     "active_size",
+    # Fraction of Monte Carlo reps where the selected active set exactly
+    # matched the true active set. In glmnet fuzz tests, the lambda is chosen
+    # oracle-style from the fitted path to ask whether the path contains a good
+    # sparse model, not whether a practical tuning rule found it:
+    "selection_recovery_probability",
     # Number of selected coefficients with nonzero true coefficient:
     "true_positives",
     # Number of selected coefficients with zero true coefficient:
