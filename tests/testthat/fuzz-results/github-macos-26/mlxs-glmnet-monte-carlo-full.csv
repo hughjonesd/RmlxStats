@@ -1,2 +1,0 @@
-"branch","commit_hash","datetime_utc","tier","suite","case_type","scenario","family","n","p","nreps","alpha","lambda_index","lambda","active_size","selection_recovery_probability","true_positives","false_positives","false_negatives","support_precision","support_recall","all_finite"
-"master","6a4156b6352a5382d159af07b30110f18ccea746","2026-05-01T12:32:33Z","full","mlxs-glmnet-monte-carlo","monte_carlo","ar1_correlated","gaussian",1500,500,20,1,6.4,0.371319730021123,8,1,8,0,0,1,1,TRUE
