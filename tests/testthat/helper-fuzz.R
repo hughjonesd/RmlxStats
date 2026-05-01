@@ -163,8 +163,8 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     "support_recall",
     # Largest absolute prediction difference from the reference:
     "max_prediction_error",
-    # Largest absolute penalized objective difference from the reference:
-    "max_objective_error",
+    # Penalized objective minus the reference objective; positive is worse:
+    "objective_delta",
     # Largest absolute PCA standard-deviation difference from the reference:
     "max_sdev_error",
     # Relative RMSE of PCA standard deviations against the reference:

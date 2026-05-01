@@ -88,7 +88,7 @@ summarise_glmnet_fit <- function(
         max_coef_error = max(abs(beta - ref_beta_col)),
         max_prediction_error = max(abs(mlx_pred[, row_idx] -
           ref_pred[, row_idx])),
-        max_objective_error = abs(obj - ref_obj),
+        objective_delta = obj - ref_obj,
         all_finite = all(is.finite(c(
           beta, mlx_a0[[row_idx]], mlx_pred[, row_idx], test_loss, obj
         ))),
@@ -192,7 +192,7 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
 
   expect_true(all(summaries_df$all_finite))
   expect_true(all(summaries_df$max_prediction_error <= 1e-4))
-  expect_true(all(summaries_df$max_objective_error <= 1e-5))
+  expect_true(all(summaries_df$objective_delta <= 1e-5))
 })
 
 test_that("mlxs_glmnet deterministic metamorphic properties hold", {
