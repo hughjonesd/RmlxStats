@@ -40,17 +40,19 @@ run_glm_mc_rep <- function(
 }
 
 summarise_glm_mc <- function(
-  estimates,
-  ses,
-  covered,
-  max_coef_error,
-  converged,
-  iterations,
+  results,
   truth,
   family,
   reps,
   n
 ) {
+  estimates <- mc_field_matrix(results, "estimates", names(truth))
+  ses <- mc_field_matrix(results, "ses", names(truth))
+  covered <- mc_field_matrix(results, "covered", names(truth))
+  max_coef_error <- vapply(results, `[[`, numeric(1), "max_coef_error")
+  converged <- vapply(results, `[[`, logical(1), "converged")
+  iterations <- vapply(results, `[[`, numeric(1), "iterations")
+  stopifnot(!anyNA(covered))
   data.frame(
     case_type = "monte_carlo",
     family = family,
@@ -76,71 +78,93 @@ summarise_glm_mc <- function(
   )
 }
 
-run_glm_mc <- function(
-  reps,
-  seed0,
-  family = c("gaussian", "binomial", "poisson"),
-  n = 1000L
+run_glm_bootstrap_mc_rep <- function(
+  seed,
+  bootstrap_B,
+  scenario = c("gaussian_skew", "binomial_regular"),
+  truth = c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05),
+  n = 20000L
 ) {
-  family <- match.arg(family)
-  truth <- c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05)
-  estimates <- matrix(NA_real_, nrow = reps, ncol = length(truth))
-  ses <- matrix(NA_real_, nrow = reps, ncol = length(truth))
-  covered <- matrix(NA, nrow = reps, ncol = length(truth))
-  max_coef_error <- rep(NA_real_, reps)
-  converged <- rep(NA, reps)
-  iterations <- rep(NA_integer_, reps)
-  colnames(estimates) <- colnames(ses) <- colnames(covered) <- names(truth)
+  scenario <- match.arg(scenario)
+  set.seed(seed)
+  p <- length(truth) - 1L
+  x <- make_design(n = n, p = p, rho = 0.3)
+  colnames(x) <- names(truth)[-1L]
+  eta <- truth[1] + drop(x %*% truth[-1L])
 
-  set.seed(seed0)
-  rep_seeds <- sample.int(.Machine$integer.max, reps)
-  for (rep_idx in seq_len(reps)) {
-    rep_result <- tryCatch(
-      run_glm_mc_rep(
-        seed = rep_seeds[rep_idx],
-        family = family,
-        truth = truth,
-        n = n
-      ),
-      error = function(err) {
-        stop(
-          "run_glm_mc failed for family='",
-          family,
-          "', rep=",
-          rep_idx,
-          ", seed=",
-          rep_seeds[rep_idx],
-          ". Reproduce with run_glm_mc_rep(seed = ",
-          rep_seeds[rep_idx],
-          ", family = '",
-          family,
-          "'): ",
-          conditionMessage(err),
-          call. = FALSE
-        )
-      }
-    )
-    estimates[rep_idx, ] <- rep_result$estimates
-    ses[rep_idx, ] <- rep_result$ses
-    covered[rep_idx, ] <- rep_result$covered
-    max_coef_error[rep_idx] <- rep_result$max_coef_error
-    converged[rep_idx] <- rep_result$converged
-    iterations[rep_idx] <- rep_result$iterations
+  if (scenario == "gaussian_skew") {
+    # The Gaussian identity model has correct conditional mean, but the error
+    # distribution is skewed. The bootstrap SE should still estimate the
+    # empirical coefficient variation in the large-n regime.
+    err <- (exp(rnorm(n)) - exp(0.5)) / sqrt((exp(1) - 1) * exp(1))
+    y <- eta + err
+    family <- mlxs_gaussian()
+  } else {
+    y <- rbinom(n, size = 1L, prob = plogis(eta))
+    family <- mlxs_binomial()
   }
 
-  stopifnot(!anyNA(covered))
+  data <- data.frame(y = y, x)
+  fit <- mlxs_glm(y ~ x1 + x2 + x3 + x4, data = data, family = family)
+  sum_fit <- summary(fit)
+  boot_sum <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(B = bootstrap_B, seed = seed, progress = FALSE)
+  )
 
-  summarise_glm_mc(
-    estimates = estimates,
-    ses = ses,
-    covered = covered,
-    max_coef_error = max_coef_error,
-    converged = converged,
-    iterations = iterations,
-    truth = truth,
-    family = family,
-    reps = reps,
-    n = n
+  list(
+    estimates = coef_vector(fit),
+    ses = as.numeric(sum_fit$std.error),
+    boot_ses = as.numeric(boot_sum$std.error),
+    converged = fit$converged,
+    iterations = fit$iter
+  )
+}
+
+summarise_glm_bootstrap_mc <- function(
+  results,
+  truth,
+  scenario,
+  reps,
+  bootstrap_B,
+  n
+) {
+  estimates <- mc_field_matrix(results, "estimates", names(truth))
+  ses <- mc_field_matrix(results, "ses", names(truth))
+  boot_ses <- mc_field_matrix(results, "boot_ses", names(truth))
+  converged <- vapply(results, `[[`, logical(1), "converged")
+  iterations <- vapply(results, `[[`, numeric(1), "iterations")
+
+  empirical_se <- apply(estimates, 2, sd, na.rm = TRUE)
+  average_model_se <- colMeans(ses, na.rm = TRUE)
+  average_bootstrap_se <- colMeans(boot_ses, na.rm = TRUE)
+  data.frame(
+    case_type = "monte_carlo",
+    family = if (scenario == "gaussian_skew") "gaussian" else "binomial",
+    scenario = scenario,
+    n = n,
+    p = length(truth),
+    nreps = reps,
+    bootstrap_B = bootstrap_B,
+    bootstrap_failure_rate = 0,
+    coefficient = names(truth),
+    truth = unname(truth),
+    mean_estimate = colMeans(estimates, na.rm = TRUE),
+    bias = colMeans(estimates, na.rm = TRUE) - unname(truth),
+    empirical_se = empirical_se,
+    average_model_se = average_model_se,
+    average_bootstrap_se = average_bootstrap_se,
+    model_se_ratio = average_model_se / empirical_se,
+    bootstrap_se_ratio = average_bootstrap_se / empirical_se,
+    convergence_rate = mean(converged, na.rm = TRUE),
+    mean_iterations = mean(iterations, na.rm = TRUE),
+    max_iterations = max(iterations, na.rm = TRUE),
+    all_finite = vapply(seq_along(truth), function(idx) {
+      vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
+      all(is.finite(vals[!is.na(vals)]))
+    }, logical(1)),
+    row.names = NULL
   )
 }
 
@@ -148,13 +172,25 @@ test_that("mlxs_glm Monte Carlo fuzz summaries are within tolerance", {
   reps <- if (identical(fuzz_tier, "full")) 2000L else 500L
   n <- if (identical(fuzz_tier, "full")) 2500L else 1000L
   mc_seeds <- c(gaussian = 10000L, binomial = 20000L, poisson = 30000L)
+  truth <- c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05)
   summaries <- vector("list", length(mc_seeds))
   names(summaries) <- names(mc_seeds)
   for (family in names(mc_seeds)) {
-    summaries[[family]] <- run_glm_mc(
+    results <- run_mc_reps(
       reps = reps,
       seed0 = mc_seeds[[family]],
+      rep_fun = run_glm_mc_rep,
+      label = "run_glm_mc",
+      reproduce_args = list(family = family, n = n),
       family = family,
+      truth = truth,
+      n = n
+    )
+    summaries[[family]] <- summarise_glm_mc(
+      results = results,
+      truth = truth,
+      family = family,
+      reps = reps,
       n = n
     )
   }
@@ -198,6 +234,66 @@ test_that("mlxs_glm Monte Carlo fuzz summaries are within tolerance", {
         ],
         collapse = ", "
       )
+    )
+  )
+})
+
+test_that("mlxs_glm bootstrap SE calibration is stable", {
+  reps <- if (identical(fuzz_tier, "full")) 300L else 120L
+  n <- if (identical(fuzz_tier, "full")) 50000L else 20000L
+  bootstrap_B <- if (identical(fuzz_tier, "full")) 100L else 50L
+  scenarios <- c(gaussian_skew = 40000L, binomial_regular = 50000L)
+  truth <- c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05)
+  summaries <- vector("list", length(scenarios))
+  names(summaries) <- names(scenarios)
+  for (scenario in names(scenarios)) {
+    results <- run_mc_reps(
+      reps = reps,
+      seed0 = scenarios[[scenario]],
+      rep_fun = run_glm_bootstrap_mc_rep,
+      label = "run_glm_bootstrap_mc",
+      reproduce_args = list(
+        bootstrap_B = bootstrap_B,
+        scenario = scenario,
+        n = n
+      ),
+      bootstrap_B = bootstrap_B,
+      scenario = scenario,
+      truth = truth,
+      n = n
+    )
+    summaries[[scenario]] <- summarise_glm_bootstrap_mc(
+      results = results,
+      truth = truth,
+      scenario = scenario,
+      reps = reps,
+      bootstrap_B = bootstrap_B,
+      n = n
+    )
+  }
+  summaries_df <- do.call(rbind, summaries)
+
+  print(summaries_df, digits = 4)
+  write_fuzz_summaries(
+    summaries_df,
+    suite = "mlxs-glm-monte-carlo",
+    tier = fuzz_tier
+  )
+
+  lower <- if (identical(fuzz_tier, "full")) 0.88 else 0.80
+  upper <- if (identical(fuzz_tier, "full")) 1.15 else 1.25
+  expect_true(all(summaries_df$bootstrap_failure_rate == 0))
+  expect_true(all(summaries_df$all_finite))
+  expect_true(all(summaries_df$convergence_rate == 1))
+  expect_true(
+    all(summaries_df$bootstrap_se_ratio >= lower &
+          summaries_df$bootstrap_se_ratio <= upper),
+    info = paste(
+      "bootstrap SE ratio outside calibration band:",
+      paste(paste(summaries_df$family, summaries_df$coefficient, sep = ":")[
+        summaries_df$bootstrap_se_ratio < lower |
+          summaries_df$bootstrap_se_ratio > upper
+      ], collapse = ", ")
     )
   )
 })

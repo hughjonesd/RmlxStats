@@ -27,6 +27,79 @@ skip_fuzz_tests <- function(subject) {
   fuzz_tier
 }
 
+#' Run Monte Carlo replications with reproducible per-rep seeds.
+#'
+#' @param reps Number of replications.
+#' @param seed0 Seed used to generate per-replication seeds.
+#' @param rep_fun Function called once per replication. It must accept a
+#'   `seed` argument.
+#' @param label Short label used in error messages.
+#' @param reproduce_args Named arguments to show in the reproducible call.
+#' @param ... Extra arguments passed to `rep_fun`.
+#'
+#' @return A list containing one result per replication.
+#' @noRd
+run_mc_reps <- function(
+  reps,
+  seed0,
+  rep_fun,
+  label,
+  reproduce_args = list(),
+  ...
+) {
+  rep_fun_name <- substitute(rep_fun)
+  if (!is.function(rep_fun)) {
+    stop("`rep_fun` must be a function.", call. = FALSE)
+  }
+  set.seed(seed0)
+  rep_seeds <- sample.int(.Machine$integer.max, reps)
+  args <- list(...)
+  results <- vector("list", reps)
+  for (rep_idx in seq_len(reps)) {
+    seed <- rep_seeds[[rep_idx]]
+    rep_call <- as.call(c(list(rep_fun_name), list(seed = seed), args))
+    results[[rep_idx]] <- tryCatch(
+      eval(rep_call),
+      error = function(err) {
+        reproduce_call <- as.call(c(
+          list(rep_fun_name),
+          list(seed = seed),
+          reproduce_args
+        ))
+        call_text <- deparse1(reproduce_call)
+        stop(
+          label,
+          " failed for rep=",
+          rep_idx,
+          ", seed=",
+          seed,
+          ". Reproduce with ",
+          call_text,
+          ": ",
+          conditionMessage(err),
+          call. = FALSE
+        )
+      }
+    )
+  }
+  results
+}
+
+#' Extract one vector-valued field from Monte Carlo results as a matrix.
+#'
+#' @param results List of per-replication results.
+#' @param field Field name to extract from each result.
+#' @param col_names Column names for the returned matrix.
+#'
+#' @return A matrix with one row per replication.
+#' @noRd
+mc_field_matrix <- function(results, field, col_names) {
+  out <- do.call(rbind, lapply(results, `[[`, field))
+  out <- as.matrix(out)
+  colnames(out) <- col_names
+  out
+}
+
 git_value <- function(args, envvar = NULL, fallback = NA_character_) {
   if (!is.null(envvar)) {
     env_value <- Sys.getenv(envvar, unset = "")
@@ -106,6 +179,16 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     # Mean model-reported standard error across replications. In
     # homoskedastic cases, should be close to empirical_se:
     "average_model_se",
+    # Mean bootstrap standard error across Monte Carlo replications:
+    "average_bootstrap_se",
+    # average_model_se / empirical_se:
+    "model_se_ratio",
+    # average_bootstrap_se / empirical_se:
+    "bootstrap_se_ratio",
+    # Number of bootstrap resamples within each Monte Carlo replication:
+    "bootstrap_B",
+    # Fraction of Monte Carlo replications where bootstrap summary failed:
+    "bootstrap_failure_rate",
     # Empirical confidence-interval coverage across replications:
     "ci_coverage",
     # Monte Carlo standard error of the coverage estimate:

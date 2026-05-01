@@ -67,7 +67,8 @@ summarise_prcomp_mc <- function(results, reps) {
       relative_sdev_rmse = mean(group$relative_sdev_rmse),
       subspace_error = max(group$subspace_error),
       reconstruction_error = mean(group$reconstruction_error),
-      reference_reconstruction_error = mean(group$reference_reconstruction_error),
+      reference_reconstruction_error =
+        mean(group$reference_reconstruction_error),
       excess_reconstruction_error = max(group$excess_reconstruction_error),
       orthogonality_error = max(group$orthogonality_error),
       explained_variance_error = max(group$explained_variance_error),
@@ -76,56 +77,6 @@ summarise_prcomp_mc <- function(results, reps) {
     )
   })
   do.call(rbind, rows)
-}
-
-run_prcomp_mc <- function(
-  scenario,
-  seed0,
-  reps,
-  n,
-  p,
-  rank_true,
-  rank_fit,
-  noise_sd,
-  center = TRUE,
-  scale = FALSE
-) {
-  set.seed(seed0)
-  rep_seeds <- sample.int(.Machine$integer.max, reps)
-  results <- vector("list", reps)
-  for (rep_idx in seq_len(reps)) {
-    results[[rep_idx]] <- tryCatch(
-      run_prcomp_mc_rep(
-        seed = rep_seeds[[rep_idx]],
-        scenario = scenario,
-        n = n,
-        p = p,
-        rank_true = rank_true,
-        rank_fit = rank_fit,
-        noise_sd = noise_sd,
-        center = center,
-        scale = scale
-      ),
-      error = function(err) {
-        stop(
-          "run_prcomp_mc failed for scenario='",
-          scenario,
-          "', rep=",
-          rep_idx,
-          ", seed=",
-          rep_seeds[[rep_idx]],
-          ". Reproduce with run_prcomp_mc_rep(seed = ",
-          rep_seeds[[rep_idx]],
-          ", scenario = '",
-          scenario,
-          "'): ",
-          conditionMessage(err),
-          call. = FALSE
-        )
-      }
-    )
-  }
-  summarise_prcomp_mc(do.call(rbind, results), reps = reps)
 }
 
 test_that("mlxs_prcomp Monte Carlo fuzz summaries are within tolerance", {
@@ -147,10 +98,22 @@ test_that("mlxs_prcomp Monte Carlo fuzz summaries are within tolerance", {
   summaries <- vector("list", nrow(specs))
   for (spec_idx in seq_len(nrow(specs))) {
     spec <- specs[spec_idx, ]
-    summaries[[spec_idx]] <- run_prcomp_mc(
-      scenario = spec$scenario,
-      seed0 = spec$seed0,
+    results <- run_mc_reps(
       reps = reps,
+      seed0 = spec$seed0,
+      rep_fun = run_prcomp_mc_rep,
+      label = "run_prcomp_mc",
+      reproduce_args = list(
+        scenario = spec$scenario,
+        n = spec$n,
+        p = spec$p,
+        rank_true = spec$rank_true,
+        rank_fit = spec$rank_fit,
+        noise_sd = spec$noise_sd,
+        center = TRUE,
+        scale = spec$scale
+      ),
+      scenario = spec$scenario,
       n = spec$n,
       p = spec$p,
       rank_true = spec$rank_true,
@@ -158,6 +121,10 @@ test_that("mlxs_prcomp Monte Carlo fuzz summaries are within tolerance", {
       noise_sd = spec$noise_sd,
       center = TRUE,
       scale = spec$scale
+    )
+    summaries[[spec_idx]] <- summarise_prcomp_mc(
+      do.call(rbind, results),
+      reps = reps
     )
   }
   summaries_df <- do.call(rbind, summaries)
