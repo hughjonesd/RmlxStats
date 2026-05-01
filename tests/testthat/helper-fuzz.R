@@ -80,6 +80,14 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     "lambda_index",
     # Penalization strength:
     "lambda",
+    # Number of principal components retained:
+    "rank",
+    # True generating rank for PCA-style synthetic data:
+    "rank_true",
+    # PCA algorithm path, e.g. exact or randomized:
+    "method",
+    # Noise standard deviation used by synthetic generators:
+    "noise_sd",
     # Coefficient name for coefficient-level Monte Carlo rows:
     "coefficient",
     # True data-generating coefficient value for Monte Carlo rows:
@@ -152,6 +160,31 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     "max_prediction_error",
     # Largest absolute penalized objective difference from the reference:
     "max_objective_error",
+    # Largest absolute PCA standard-deviation difference from the reference:
+    "max_sdev_error",
+    # Relative RMSE of PCA standard deviations against the reference:
+    "relative_sdev_rmse",
+    # Relative Frobenius distance between estimated and reference projection
+    # matrices VV'. This is sign-invariant and, unlike raw loadings, is stable
+    # when PCA columns can flip signs:
+    "subspace_error",
+    # Relative centred/scaled reconstruction error, ||X - scores V'|| / ||X||,
+    # for the MLX fit:
+    "reconstruction_error",
+    # Relative centred/scaled reconstruction error for the reference fit:
+    "reference_reconstruction_error",
+    # Reconstruction error minus reference reconstruction error:
+    "excess_reconstruction_error",
+    # Largest absolute entry of V'V - I, measuring whether loadings are
+    # orthonormal:
+    "orthogonality_error",
+    # Largest explained-variance ratio difference from the reference:
+    "explained_variance_error",
+    # Largest increase in reconstruction error over a rank ladder:
+    "monotonicity_error",
+    # Largest same-seed randomized PCA difference across the checked outputs:
+    # standard deviations and the loading subspace projector:
+    "reproducibility_error",
     # Largest absolute standard-error difference from certified values:
     "max_se_error",
     # Absolute residual standard error difference from certified value.

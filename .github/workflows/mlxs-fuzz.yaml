@@ -54,6 +54,8 @@ jobs:
             "${out_dir}/mlxs-glm-monte-carlo-${tier}.csv"
             "${out_dir}/mlxs-glmnet-deterministic-${tier}.csv"
             "${out_dir}/mlxs-glmnet-monte-carlo-${tier}.csv"
+            "${out_dir}/mlxs-prcomp-deterministic-${tier}.csv"
+            "${out_dir}/mlxs-prcomp-monte-carlo-${tier}.csv"
           )
           last_commit="$(git log -1 --format=%H -- "${csvs[@]}" || true)"
           head_commit="$(git rev-parse HEAD)"
@@ -87,9 +89,7 @@ jobs:
           RMLXSTATS_RUN_FUZZ: ${{ steps.tier.outputs.tier }}
           RMLXSTATS_FUZZ_OUT: ${{ steps.tier.outputs.out_dir }}
         run: |
-          R -q -e 'devtools::test(filter = paste(
-            "fuzz-mlxs-lm|fuzz-mlxs-glm|fuzz-mlxs-glmnet"
-          ))'
+          R -q -e 'devtools::test(filter = "fuzz")'
 
       - name: Commit updated fuzz results
         if: steps.changes.outputs.run == 'true'
@@ -104,6 +104,8 @@ jobs:
             "${out_dir}/mlxs-glm-monte-carlo-${tier}.csv"
             "${out_dir}/mlxs-glmnet-deterministic-${tier}.csv"
             "${out_dir}/mlxs-glmnet-monte-carlo-${tier}.csv"
+            "${out_dir}/mlxs-prcomp-deterministic-${tier}.csv"
+            "${out_dir}/mlxs-prcomp-monte-carlo-${tier}.csv"
           )
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
