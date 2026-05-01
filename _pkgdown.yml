@@ -22,7 +22,7 @@ reference:
   - title: Bootstrapping
     contents:
       - mlxs_boot
-  - title: Family Functions
+  - title: Family Functions and Utilities
     contents:
       - mlxs_gaussian
       - mlxs_binomial
@@ -30,4 +30,5 @@ reference:
       - mlxs_quasibinomial
       - mlxs_quasipoisson
       - generics-reexports
+      - mlxs-model-methods
       
