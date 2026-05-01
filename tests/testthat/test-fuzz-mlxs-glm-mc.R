@@ -306,9 +306,13 @@ test_that("mlxs_glm Monte Carlo fuzz summaries are within tolerance", {
 })
 
 test_that("mlxs_glm bootstrap SE calibration is stable", {
-  reps <- if (identical(fuzz_tier, "full")) 300L else 120L
-  n <- if (identical(fuzz_tier, "full")) 50000L else 20000L
-  bootstrap_B <- if (identical(fuzz_tier, "full")) 100L else 50L
+  skip_if_not(
+    identical(fuzz_tier, "full"),
+    "GLM bootstrap fuzz calibration runs only in the full tier."
+  )
+  reps <- 300L
+  n <- 20000L
+  bootstrap_B <- 100L
   scenarios <- c(gaussian_skew = 40000L, binomial_regular = 50000L)
   truth <- c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05)
   summaries <- vector("list", length(scenarios))

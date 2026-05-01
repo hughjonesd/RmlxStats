@@ -321,7 +321,7 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
     append = FALSE,
     qmethod = "double"
   )
-  message("Wrote fuzz summary to ", path)
+  
   invisible(path)
 }
 
