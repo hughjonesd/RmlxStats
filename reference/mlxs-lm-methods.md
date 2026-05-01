@@ -45,9 +45,6 @@ print(x, ...)
 print(x, ...)
 
 # S3 method for class 'mlxs_lm'
-update(object, ..., evaluate = TRUE)
-
-# S3 method for class 'mlxs_lm'
 model.frame(formula, ...)
 
 # S3 method for class 'mlxs_lm'
@@ -118,10 +115,6 @@ augment(
 
   List of bootstrap configuration options. See
   [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
-
-- evaluate:
-
-  Logical; evaluate the updated call?
 
 - formula:
 

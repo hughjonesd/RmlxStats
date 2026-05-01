@@ -1,16 +1,18 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://hughjonesd.github.io/RmlxStats/404.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/AGENTS.html</loc></url>
-<url><loc>https://hughjonesd.github.io/RmlxStats/GLMNET_OPTIMIZATION_ANALYSIS.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/articles/benchmarks.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/articles/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/authors.html</loc></url>
+<url><loc>https://hughjonesd.github.io/RmlxStats/fuzz-test-notes.html</loc></url>
+<url><loc>https://hughjonesd.github.io/RmlxStats/fuzz-testing-stats-libraries.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/news/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.html</loc></url>
+<url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs-model-methods.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs-prcomp-methods.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_binomial.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.html</loc></url>

@@ -39,7 +39,9 @@ similar to an `"lm"` fit, along with MLX intermediates stored in the
 `mlx` element. Note that MLX currently operates in single precision, so
 fitted values and diagnostics may differ from
 [`stats::lm()`](https://rdrr.io/r/stats/lm.html) at around the 1e-6
-level.
+level. Unlike [`stats::lm()`](https://rdrr.io/r/stats/lm.html),
+rank-deficient model matrices are rejected rather than fit with aliased
+coefficients.
 
 ## Examples
 

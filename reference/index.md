@@ -19,7 +19,6 @@
   [`summary(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`print(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`print(`*`<summary.mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
-  [`update(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`model.frame(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`model.matrix(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`terms(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
@@ -38,6 +37,7 @@
   [`fitted(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`residuals(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`vcov(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  [`confint(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`print(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`summary(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`print(`*`<summary.mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
@@ -80,7 +80,7 @@
 - [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md)
   : Bootstrap MLX arrays along the first dimension
 
-## Family Functions
+## Family Functions and Utilities
 
 - [`mlxs_gaussian()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_gaussian.md)
   : MLX-friendly Gaussian family
@@ -96,3 +96,5 @@
   [`glance()`](https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.md)
   [`augment()`](https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.md)
   : Re-export generics
+- [`update(`*`<mlxs_model>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-model-methods.md)
+  : Shared mlxs model methods

@@ -9,7 +9,7 @@ with MLX providing the heavy lifting for weighted least squares solves."></head>
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,7 +85,9 @@ with MLX providing the heavy lifting for weighted least squares solves.</p>
 
 <dt id="arg-subset">subset<a class="anchor" aria-label="anchor" href="#arg-subset"></a></dt>
 <dd><p>an optional vector specifying a subset of observations
-    to be used in the fitting process.</p></dd>
+    to be used in the fitting process.  (See additional details about how
+    this argument interacts with data-dependent bases in the
+    ‘Details’ below.)</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
@@ -122,7 +124,9 @@ with MLX providing the heavy lifting for weighted least squares solves.</p>
     <p>An object of class <code>c("mlxs_glm", "mlxs_model")</code> containing elements
 similar to the result of <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code>. Computations use single-precision
 MLX arrays, so results typically agree with <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code> to around 1e-6
-unless a tighter tolerance is supplied via <code>control</code>.</p>
+unless a tighter tolerance is supplied via <code>control</code>. Unlike <code><a href="https://rdrr.io/r/stats/glm.html" class="external-link">stats::glm()</a></code>,
+rank-deficient model matrices are rejected rather than fit with aliased
+coefficients.</p>
     </div>
 
     <div class="section level2">

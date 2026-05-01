@@ -48,7 +48,8 @@ mlxs_glm(
 - subset:
 
   an optional vector specifying a subset of observations to be used in
-  the fitting process.
+  the fitting process. (See additional details about how this argument
+  interacts with data-dependent bases in the ‘Details’ below.)
 
 - weights:
 
@@ -89,7 +90,9 @@ similar to the result of
 [`stats::glm()`](https://rdrr.io/r/stats/glm.html). Computations use
 single-precision MLX arrays, so results typically agree with
 [`stats::glm()`](https://rdrr.io/r/stats/glm.html) to around 1e-6 unless
-a tighter tolerance is supplied via `control`.
+a tighter tolerance is supplied via `control`. Unlike
+[`stats::glm()`](https://rdrr.io/r/stats/glm.html), rank-deficient model
+matrices are rejected rather than fit with aliased coefficients.
 
 ## Examples
 

@@ -28,6 +28,9 @@ residuals(object, type = c("deviance", "pearson", "working", "response"), ...)
 vcov(object, ...)
 
 # S3 method for class 'mlxs_glm'
+confint(object, parm, level = 0.95, ...)
+
+# S3 method for class 'mlxs_glm'
 print(x, digits = max(3, getOption("digits") - 3), ...)
 
 # S3 method for class 'mlxs_glm'
@@ -92,6 +95,14 @@ augment(
 - se.fit:
 
   Logical. Should standard errors of the fit be returned when supported?
+
+- parm:
+
+  Parameter specification for confidence intervals.
+
+- level:
+
+  Confidence level for intervals.
 
 - x:
 

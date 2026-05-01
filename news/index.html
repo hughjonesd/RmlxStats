@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,14 +37,15 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="rmlxstats-development-version">RmlxStats (development version)<a class="anchor" aria-label="anchor" href="#rmlxstats-development-version"></a></h2>
+<ul><li>
+<code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code> and <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> now reject rank-deficient model matrices with a clear error rather than returning unstable aliased coefficients.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="rmlxstats-020">RmlxStats 0.2.0<a class="anchor" aria-label="anchor" href="#rmlxstats-020"></a></h2>
-<ul><li>Added <code><a href="../reference/mlxs_prcomp.html">mlxs_prcomp()</a></code>, a <code><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp()</a></code>-style PCA interface with exact and randomized truncated MLX-backed decomposition paths.</li>
-<li>Reworked <code><a href="../reference/mlxs_glmnet.html">mlxs_glmnet()</a></code> to use dense on-device MLX updates, removing the active-set slicing/scatter hotspot from the Gaussian and binomial paths.</li>
-<li>Added a Gaussian covariance-space path for very tall problems, so <code><a href="../reference/mlxs_glmnet.html">mlxs_glmnet()</a></code> can reuse <code>X'X / n</code> when <code>n</code> is much larger than <code>p</code>.</li>
-<li>
-<code><a href="../reference/mlxs_glmnet.html">mlxs_glmnet()</a></code> can now outperform <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet::glmnet()</a></code> for large problems (roughly n x p &gt; 5,000,000).</li>
-<li>Cache <code>mlx_compile()</code>’d chunk updates inside <code><a href="../reference/mlxs_glmnet.html">mlxs_glmnet()</a></code>, cutting the host overhead for Gaussian and binomial path iterations.</li>
-<li>Added <code><a href="../reference/mlxs_cv_glmnet.html">mlxs_cv_glmnet()</a></code> as a cross-validation wrapper for the MLX-backed elastic-net path fits, along with <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> methods for <code>mlxs_glmnet</code> and <code>mlxs_cv_glmnet</code>.</li>
+<ul><li>Added <code><a href="../reference/mlxs_prcomp.html">mlxs_prcomp()</a></code>, a <code><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp()</a></code>-style PCA interface with exact and randomized truncated MLX-backed decomposition paths. Benchmarks show this greatly outperforms base R <code><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">prcomp()</a></code> and other specialised packages for fast PCA.</li>
+<li>Reworked <code><a href="../reference/mlxs_glmnet.html">mlxs_glmnet()</a></code>. It can now outperform <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet::glmnet()</a></code> for large problems (roughly n x p &gt; 5,000,000).</li>
+<li>Added <code><a href="../reference/mlxs_cv_glmnet.html">mlxs_cv_glmnet()</a></code> as a cross-validation wrapper for the MLX-backed elastic-net path fits, analogous to <code><a href="https://glmnet.stanford.edu/reference/cv.glmnet.html" class="external-link">glmnet::cv.glmnet()</a></code>.</li>
 <li>Export <code><a href="../reference/mlxs_lm_fit.html">mlxs_lm_fit()</a></code> so advanced users can call the MLX-backed QR solver directly.</li>
 </ul></div>
     <div class="section level2">

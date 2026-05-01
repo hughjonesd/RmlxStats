@@ -23,10 +23,11 @@ mlxs_gaussian(link = "identity")
   The `gaussian` family accepts the links (as names) `identity`, `log`
   and `inverse`; the `binomial` family the links `logit`, `probit`,
   `cauchit`, (corresponding to logistic, normal and Cauchy CDFs
-  respectively) `log` and `cloglog` (complementary log-log); the `Gamma`
-  family the links `inverse`, `identity` and `log`; the `poisson` family
-  the links `log`, `identity`, and `sqrt`; and the `inverse.gaussian`
-  family the links `1/mu^2`, `inverse`, `identity` and `log`.
+  respectively) `log`, `identity` and `cloglog` (complementary log-log);
+  the `Gamma` family the links `inverse`, `identity` and `log`; the
+  `poisson` family the links `log`, `identity`, and `sqrt`; and the
+  `inverse.gaussian` family the links `1/mu^2`, `inverse`, `identity`
+  and `log`.
 
   The `quasi` family accepts the links `logit`, `probit`, `cloglog`,
   `identity`, `inverse`, `log`, `1/mu^2` and `sqrt`, and the function

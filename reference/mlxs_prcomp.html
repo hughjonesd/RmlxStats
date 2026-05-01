@@ -9,7 +9,7 @@ and scaled data on device throughout the decomposition."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@ and scaled data on device throughout the decomposition.</p>
 <span>  scale. <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  tol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  rank. <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  oversample <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  oversample <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_iter <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -89,7 +89,8 @@ uses the randomized truncated PCA path.</p></dd>
 
 <dt id="arg-oversample">oversample<a class="anchor" aria-label="anchor" href="#arg-oversample"></a></dt>
 <dd><p>Oversampling added to the randomized subspace dimension.
-Ignored for exact fits.</p></dd>
+If <code>NULL</code>, randomized fits use
+<code>min(rank., max(10, ceiling(rank. / 2)))</code>. Ignored for exact fits.</p></dd>
 
 
 <dt id="arg-n-iter">n_iter<a class="anchor" aria-label="anchor" href="#arg-n-iter"></a></dt>
@@ -114,6 +115,27 @@ fits.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The interface follows <code><a href="https://rdrr.io/r/stats/prcomp.html" class="external-link">stats::prcomp()</a></code> closely. Full-rank fits use an exact
 decomposition. When <code>rank.</code> is supplied and smaller than <code>min(nrow(x), ncol(x))</code>, a randomized truncated PCA path is used instead.</p>
+<p>The randomized path first sketches a slightly larger subspace than the
+requested rank, then compresses back down to the requested components. The
+<code>oversample</code> parameter controls how much extra space is used in that sketch:
+larger values make it less likely that the random sketch misses part of the
+leading principal subspace. The <code>n_iter</code> parameter applies additional power
+iterations, which improve accuracy when the singular values decay slowly but
+require extra passes over the matrix.</p>
+<p>By default, <code>oversample</code> is chosen as
+<code>min(rank., max(10, ceiling(rank. / 2)))</code>, which keeps the usual
+constant-size oversampling for small target ranks while allowing more slack
+for larger truncated fits. This follows common randomized SVD guidance to
+start with modest oversampling, often around 5 to 10, and to increase
+oversampling before increasing the number of power iterations.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Halko, N., Martinsson, P.-G., and Tropp, J. A. (2011). Finding Structure
+with Randomness: Probabilistic Algorithms for Constructing Approximate Matrix
+Decompositions. <em>SIAM Review</em>, 53(2), 217-288.</p>
+<p>Musco, C. and Musco, C. (2015). Randomized Block Krylov Methods for Stronger
+and Faster Approximate Singular Value Decomposition. <em>NeurIPS 2015</em>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

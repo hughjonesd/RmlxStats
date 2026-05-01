@@ -9,7 +9,7 @@ devices. The interface mirrors stats::lm() for the common arguments."></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,9 @@ least squares.</p></dd>
 components similar to an <code>"lm"</code> fit, along with MLX intermediates stored in
 the <code>mlx</code> element.
 Note that MLX currently operates in single precision, so fitted values and
-diagnostics may differ from <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code> at around the 1e-6 level.</p>
+diagnostics may differ from <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code> at around the 1e-6 level. Unlike
+<code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code>, rank-deficient model matrices are rejected rather than fit
+with aliased coefficients.</p>
     </div>
 
     <div class="section level2">

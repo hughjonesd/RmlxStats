@@ -49,6 +49,7 @@ brew install mlx
 Then:
 
 ``` r
+
 remotes::install_github("hughjonesd/RmlxStats")
 ```
 
