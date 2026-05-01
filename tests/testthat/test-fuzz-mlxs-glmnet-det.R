@@ -104,7 +104,7 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
   specs <- data.frame(
     scenario = c(
       "ar1_correlated", "ar1_correlated", "block_correlated",
-      "near_null", "near_null", "strong_rare_binomial"
+      "null_signal", "null_signal", "strong_rare_binomial"
     ),
     family = c(
       "gaussian", "binomial", "gaussian",

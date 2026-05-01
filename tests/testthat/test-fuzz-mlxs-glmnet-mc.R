@@ -229,7 +229,7 @@ test_that("mlxs_glmnet Monte Carlo fuzz summaries are within tolerance", {
 
   specs <- data.frame(
     scenario = c(
-      "ar1_correlated", "block_correlated", "near_null",
+      "ar1_correlated", "block_correlated", "null_signal",
       "strong_rare_binomial"
     ),
     family = c("gaussian", "gaussian", "gaussian", "binomial"),
