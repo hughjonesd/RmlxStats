@@ -36,6 +36,68 @@ test_that("mlxs_glmnet matches glmnet for binomial lasso", {
   expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 5e-2)
 })
 
+test_that("mlxs_glmnet null binomial path does not overfit", {
+  set.seed(1005)
+  n <- 900
+  n_test <- 700
+  p <- 120
+  x <- scale(make_design(n = n, p = p, rho = 0.8))
+  x_test <- scale(make_design(n = n_test, p = p, rho = 0.8))
+  y <- rbinom(n, size = 1L, prob = plogis(0.1))
+  y_test <- rbinom(n_test, size = 1L, prob = plogis(0.1))
+
+  lambda <- glmnet::glmnet(
+    x,
+    y,
+    family = "binomial",
+    alpha = 1,
+    nlambda = 20,
+    lambda.min.ratio = 1e-3,
+    standardize = FALSE,
+    intercept = TRUE,
+    thresh = 1e-12,
+    maxit = 100000L
+  )$lambda
+  ref <- glmnet::glmnet(
+    x,
+    y,
+    family = "binomial",
+    alpha = 1,
+    lambda = lambda,
+    standardize = FALSE,
+    intercept = TRUE,
+    thresh = 1e-12,
+    maxit = 100000L
+  )
+  fit <- mlxs_glmnet(
+    x,
+    y,
+    family = mlxs_binomial(),
+    alpha = 1,
+    lambda = lambda,
+    standardize = FALSE,
+    intercept = TRUE,
+    maxit = 5000L,
+    tol = 1e-7
+  )
+
+  low_lambda <- length(lambda)
+  mlx_pred <- predict(fit, newx = x_test, s = lambda[low_lambda],
+                      type = "response")
+  ref_pred <- predict(ref, newx = x_test, s = lambda[low_lambda],
+                      type = "response")
+  mlx_loss <- glmnet_fuzz_loss(y_test, mlx_pred, family = "binomial")
+  ref_loss <- glmnet_fuzz_loss(y_test, ref_pred, family = "binomial")
+  oracle_loss <- glmnet_fuzz_loss(
+    y_test,
+    rep(plogis(0.1), n_test),
+    family = "binomial"
+  )
+
+  expect_equal(mlx_loss, ref_loss, tolerance = 1e-3)
+  expect_lte(mlx_loss, oracle_loss + 0.1)
+})
+
 test_that("mlxs_glmnet works with standardize = FALSE", {
   set.seed(123)
   n <- 100
