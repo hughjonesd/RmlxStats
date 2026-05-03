@@ -397,6 +397,52 @@ fuzz_glmnet_mc <- latest(fuzz) |>
 ```
 
 
+## `mlxs_cv_glmnet`
+
+```{r}
+fuzz_cv_glmnet_det <- latest(fuzz) |> 
+  filter(suite == "mlxs-cv-glmnet-deterministic") |> 
+  select(-(branch:case_type), -nreps, -(lambda_index:nfolds), -(rank:term))
+```
+
+We compare `mlxs_cv_glmnet()` to the reference `glmnet::cv.glmnet()`. Errors
+are:
+
+* `out_of_fold_prediction`: maximum absolute difference for out-of-fold predictions
+* `cv_loss`: maximum absolute difference of `cvm`, the cross-validated error
+  for each value of lambda
+* `cv_loss_se`: maximum absolute difference of `cvsd`, the estimated s.e.
+  of `cvm`
+* Absolute differences in `lambda_min` and `lambda_1se`
+
+```{r}
+fuzz_cv_glmnet_det |> 
+  filter(measure == "error", target == "out_of_fold_prediction") |>
+  ggplot(aes(y = Scenario, x = value)) +
+    geom_point() +
+    labs(
+      title = "Out of fold predictions of mlxs_cv_glmnet versus glmnet::cv.glmnet",
+      x = "Max. difference",
+      y = ""
+    )
+```
+
+
+```{r}
+fuzz_cv_glmnet_det |> 
+  filter(measure == "error", target != "out_of_fold_prediction") |> 
+  ggplot(aes(y = Measure, x = value)) + 
+    geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") + 
+    geom_point() +
+    facet_wrap(vars(Scenario)) +
+    scale_x_log10(labels = scales::label_math(format = log10)) + 
+    labs(
+      title = "Statistics of mlxs_cv_glmnet versus glmnet::cv.glmnet",
+      x = "Value (log scale)"
+    )
+```
+
+
 ## `mlxs_prcomp` {.tabset}
 
 ### Deterministic tests
