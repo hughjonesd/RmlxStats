@@ -47,13 +47,17 @@ jobs:
         run: |
           out_dir="${{ steps.tier.outputs.out_dir }}"
           csv="tests/testthat/${out_dir}/fuzz-results.csv"
-          last_commit="$(git log -1 --format=%H -- "${csv}" || true)"
-          head_commit="$(git rev-parse HEAD)"
-          if [[ -n "${last_commit}" ]] &&
-             [[ "${last_commit}" == "${head_commit}" ]]; then
-            echo "run=false" >> "${GITHUB_OUTPUT}"
-          else
+          if [[ ! -f "${csv}" ]]; then
             echo "run=true" >> "${GITHUB_OUTPUT}"
+          else
+            last_commit="$(git log -1 --format=%H -- "${csv}" || true)"
+            head_commit="$(git rev-parse HEAD)"
+            if [[ -n "${last_commit}" ]] &&
+               [[ "${last_commit}" == "${head_commit}" ]]; then
+              echo "run=false" >> "${GITHUB_OUTPUT}"
+            else
+              echo "run=true" >> "${GITHUB_OUTPUT}"
+            fi
           fi
 
       - name: Install MLX C++ library
