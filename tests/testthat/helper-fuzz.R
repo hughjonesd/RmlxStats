@@ -140,6 +140,8 @@ fuzz_metadata_columns <- function() {
     "nreps",
     # Elastic-net path metadata:
     "alpha", "lambda_index", "lambda",
+    # Cross-validation metadata:
+    "nfolds", "type_measure",
     # PCA rank metadata:
     "rank", "rank_true",
     # Algorithm path, e.g. exact or randomized PCA:
@@ -181,6 +183,9 @@ fuzz_metadata_columns <- function() {
 #     - Penalized regression: `prediction`, `risk`, `loss`, `objective`,
 #       `active_set`, `active_size`, `true_positives`, `false_positives`,
 #       `false_negatives`, `support_precision`, `support_recall`.
+#     - Cross-validation: `cv_loss`, `cv_loss_se`,
+#       `out_of_fold_prediction`, `lambda_min`, `lambda_1se`,
+#       `one_se_rule`.
 #     - PCA: `pca_sdev`, `subspace`, `reconstruction`, `explained_variance`,
 #       `orthogonality`, `monotonicity`, `reproducibility`.
 # * `source`: where the reported value came from.
@@ -199,6 +204,8 @@ fuzz_metadata_columns <- function() {
 #     - `oracle`: compare with data-generating prediction/loss.
 #     - `ideal`: compare with a mathematical ideal, e.g. orthogonality.
 #     - `same_seed`: compare with the same randomized algorithm rerun.
+#     - `row_permutation`: compare with the same rows in a different order.
+#     - `fold_remap`: compare with equivalent non-contiguous fold labels.
 #     - `NA`: no comparator; `value` is directly reported.
 # * `aggregation`: how lower-level values were reduced into `value`.
 #     - `value`: directly reported scalar.

@@ -8,8 +8,8 @@ But up till now R Mac users have not had access to the power of their GPUs.
 RmlxStats is an experiment in implementing common statistical methods on the 
 GPU. RmlxStats is early *work in progress*!
 
-Functions implemented so far include Rmlx versions of `lm`, `glm`, `glmnet`
-and a bootstrapping function `mlxs_boot()`.
+Functions implemented so far include Rmlx versions of `lm`, `glm`, `glmnet` and
+`prcomp`, and `mlxs_boot()` for bootstrapping.
 
 ## When to use
 
