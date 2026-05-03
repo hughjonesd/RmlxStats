@@ -8,11 +8,7 @@ params:
   develop: FALSE
 ---
 
-We benchmark RmlxStats against base R and specialized fast fitting packages,
-across varying numbers of cases (`n`) and predictors (`p`). We also
-check accuracy.
 
-Benchmarking was run on an M2 Macbook Air.
 
 <details>
 <summary>Setup code</summary>
@@ -42,8 +38,26 @@ library(lmboot)
 library(ggplot2)
 library(huxtable)
 
+date <- Sys.Date()
+commit <- system("git rev-parse --short HEAD", intern = TRUE)
+branch <- system("git branch --show-current", intern = TRUE)
+rmlx_version <- packageVersion("Rmlx")
+
 ```
 </details>
+
+We benchmark RmlxStats against base R and specialized fast fitting packages,
+across varying numbers of cases (`n`) and predictors (`p`). We also
+check accuracy.
+
+Benchmarking was run on an M2 Macbook Air.
+
+ Metadata    |  Metadata 
+-------------|------------
+Generated on | `r date` 
+Commit       | `r commit`
+Branch       | `r branch`
+Rmlx version | `r rmlx_version`
 
 ## Benchmarking Code
 

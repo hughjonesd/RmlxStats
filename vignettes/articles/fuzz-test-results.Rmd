@@ -1,0 +1,487 @@
+---
+title: "Fuzz test results"
+author: "David Hugh-Jones"
+date: "2026-05-02"
+output: 
+  html_document:
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+
+# Fuzz tests {.tabset}
+
+Fuzz tests live in `tests/testthat/test-fuzz-*`. We test extensively,
+aiming to cover hard cases and capture a number of relevant metrics: a single
+pass generates about 1000 pieces of data. We can't always binary pass/fail, 
+so this page is meant to show our current performance and also how it has 
+evolved over time.
+
+The GPU is 32-bit. MLX has support for float64 but not on the GPU, and Rmlx
+doesn't yet support float64 at all. That limits our precision. This page
+should help us figure out how much that affects performance.
+
+* What about diagnostics?
+* What about `mlxs_cv_glmnet()`? Need to write the tests first....
+
+```{r setup, echo=TRUE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggtext)
+library(glue)
+library(here)
+library(tidyverse)
+
+fuzz_theme <- theme_minimal() +
+  theme(
+        plot.background = element_rect("grey95"),
+        axis.text.y.left = element_markdown(),
+        panel.background = element_rect("white"),
+        legend.position = "none"
+    )
+set_theme(fuzz_theme)
+
+fuzz <- read_csv(here("tests/testthat/fuzz-results/github-macos-26/fuzz-results.csv"))
+
+latest <- function(fuzz) {
+  fuzz |> filter(branch == "master", datetime_utc == max(datetime_utc)) 
+}
+
+prettify <- function(x) {
+  stringr::str_to_title(gsub("_", " ", x))
+}
+
+fuzz <- fuzz |> 
+  mutate(
+    agg = replace_values(aggregation, "value" ~ ""),
+    Measure = if_else(agg == "", target, paste0(agg, "(", target, ")")),
+    Case_type = prettify(case_type),
+    Scenario = paste(prettify(scenario), paste("n", n), paste("p", p), sep = " / ")
+  ) 
+
+
+date <- Sys.Date()
+commit <- system("git rev-parse --short HEAD", intern = TRUE)
+branch <- system("git branch --show-current", intern = TRUE)
+rmlx_version <- packageVersion("Rmlx")
+
+```
+
+Metadata     |  Metadata 
+-------------|------------
+Generated on | `r date` 
+Commit       | `r commit`
+Branch       | `r branch`
+Rmlx version | `r rmlx_version`
+
+## `mlxs_lm` {.tabset}
+
+### Deterministic tests
+
+These tests all measure absolute difference of a statistic with a reference
+value in different scenarios.
+
+* Longley, Norris and Wamperl are NIST datasets where the reference value
+  was calculated independently.
+* The "Epsilon", "Large N" and "Large P" scenarios compare against `stats::lm`.
+  - "Epsilon" refers to near-rank deficient scenarios where one variable
+    is equal to another one plus noise times epsilon
+* Maximum errors are taken over all elements of the `vcov` matrix; 
+  per-case `fitted` values; or the set of `coefficient`s and their
+  `standard_error`s.
+  
+
+```{r, fig.height = 7}
+fuzz_lm_det <- latest(fuzz) |> 
+  filter(
+    suite == "mlxs-lm-deterministic",
+    measure == "error"
+  ) |> 
+  select(-suite, -family, -term, -(nreps:bootstrap_B))
+
+palette("Dark 2")
+cols <- palette()[1:6]
+names(cols) <- c("max(vcov)", "max(standard_error)", "residual_sigma",
+                 "r_squared", "max(fitted)", "max(coefficient)")
+fuzz_lm_det |> 
+  ggplot(aes(y = Measure, x = value, color = Measure)) + 
+    geom_vline(xintercept = 1e-5, linetype = "dashed") + 
+    geom_point() + 
+    facet_wrap(vars(Case_type, Scenario), axes = "all_x") + 
+    scale_x_log10(labels = scales::label_math(format = log10)) + 
+    scale_color_manual(values = cols) + 
+    scale_y_discrete(labels = \(x) sprintf(
+      "<span style='color:%s'>%s</span>", cols[x], x)) +
+    labs(x = "Error (log scale)")
+```
+
+### Monte Carlo tests
+
+
+#### Bias and confidence interval coverage
+
+We calculate confidence interval coverage over multiple Monte Carlo repetitions
+as the percentage of times the CI covered the term's true value. This also lets
+us generate standard errors, and hence normal-theory 95% confidence intervals
+for the true confidence interval coverage!
+
+Similarly bias is calculated as $E(estimate - truth)$ over the Monte Carlo
+repetitions, and we calculate standard errors and confidence intervals the same way.
+
+```{r}
+fuzz_lm_mc <- latest(fuzz) |> 
+  filter(
+    suite == "mlxs-lm-monte-carlo"
+  ) |> 
+  select(-suite, -family, -(alpha:noise_sd))
+```
+
+* We calculate the empirical s.e. as the standard deviation of the 
+  estimates over repeated Monte Carlo runs.
+* Ratios much above 1 might be worrying. (How much?)
+* We have bias stats. Is there a reason we don't calculate the 
+  Monte Carlo s.e.?
+* Do we need to record "truth" and "estimate"? Maybe it's enough
+  to look up the code, on the theory we won't change these much?
+* "truth" is recorded as the baseline both for "estimate" and for
+  "bias", which is true but in different senses....
+* We have a huge N for the very slow bootstrap, and a tiny N for
+  the fast linear model....
+* Also, why *is* the bootstrap so slow?
+
+```{r}
+fuzz_lm_mc |> 
+  drop_na(value_se) |> 
+  mutate(
+    Measure = paste0(measure, " (", term, ")"),
+    value_conf_low = value - 1.96*value_se,
+    value_conf_hi = value + 1.96*value_se,
+    ref_line = if_else(measure=="bias", 0, 0.95)
+  ) |> 
+  ggplot(aes(y = term, x = value, xmin = value_conf_low, 
+             xmax = value_conf_hi)) +
+    geom_vline(aes(xintercept = ref_line), linetype = "dotted", 
+               colour = "grey30") + 
+    geom_pointrange(size = 0.1) +
+    facet_grid(vars(Scenario), vars(measure), scales = "free_x", axes = "all_x") +
+    labs(
+      title = "Bias and 95% confidence interval coverage for Monte Carlo tests",
+      subtitle = "Lines show Monte Carlo confidence intervals for coverage",
+      x = "Term", y = "Value"
+    )
+```
+
+
+#### Standard errors
+
+
+We compare `mlxs_lm`'s estimated standard errors, either from 
+bootstrap option or from normal theory, against the empirical standard
+error, calculated as the standard deviation of the estimate over all
+our Monte Carlo replications.
+
+```{r}
+bootstrap_B <- na.omit(fuzz_lm_mc$bootstrap_B)
+stopifnot(n_distinct(bootstrap_B) == 1)
+
+fuzz_lm_mc |> 
+  drop_na(bootstrap_B) |> 
+  filter(measure == "standard_error_ratio") |> 
+  mutate(
+    `s.e. type` = replace_values(source, "model" ~ "normal theory")
+  ) |> 
+  ggplot(aes(y = term, x = value, colour = `s.e. type`)) + 
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey30") +
+    geom_point() +
+    facet_wrap(vars(Scenario)) +
+    labs(
+      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory s.e. ratios for non-normal error term"),
+      x = "s.e. ratio"
+    ) + 
+    theme(
+      legend.position = "bottom"
+    )
+  
+
+```
+
+
+## `mlxs_glm` {.tabset}
+
+### Deterministic tests
+
+Here we report absolute differences with the `stats:glm` reference value.
+For scenario details, look at the code in `test-fuzz-glm-det.R`.
+
+We test gaussian, Poisson and binomial family functions, but not all
+families for all scenarios.
+
+The dashed line at $10^{-5}$ is a slightly arbitrary breakpoint. In coefficient and
+s.e. space we might expect errors to be below this line.
+
+* `case_type` just says deterministic here, different from `mlxs_lm`
+  which is more useful.
+* The choice of p and n is worth revisiting, maybe Codex has been ducking errors...
+
+  
+```{r}
+fuzz_glm_det <- latest(fuzz) |> 
+  filter(suite == "mlxs-glm-deterministic", measure == "error") |> 
+  select(-suite, -case_type, -(nreps:term))
+```
+
+```{r, fig.height = 20}
+cols_glm <- palette()[1:6]
+names(cols_glm) <- unique(fuzz_glm_det$Measure)
+
+fuzz_glm_det |> 
+  ggplot(aes(y = Measure, x = value, colour = Measure)) + 
+    geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
+    geom_point() +
+    facet_grid(rows = vars(Scenario), cols = vars(family), 
+               axes = "all_x") + 
+    scale_x_log10(breaks = 10^c(-9, -5, -1), 
+                  labels = scales::label_math(format = log10)) + 
+    scale_color_manual(values = cols_glm) + 
+    scale_y_discrete(labels = \(x) sprintf(
+      "<span style='color:%s'>%s</span>", cols_glm[x], x)) +
+    labs(
+      title = "Errors of mlxs_glm statistics against glm reference",
+      x = "Error (log scale)"
+    ) + 
+    theme(
+      strip.text.y = element_text(size = 7, face = "bold")
+    )
+```
+
+
+### Monte Carlo tests
+
+* And here case_type is just "monte carlo"
+* The rmse measure really needs a comparison with `stats::glm` to be useful,
+  I think
+* Is it worth evaluating the standard errors separately from CI coverage?
+  Should have a similar message....
+* The "full" test should generate glm bootstrap Monte Carlos....
+
+#### Bias and confidence interval coverage
+
+```{r}
+fuzz_glm_mc <- latest(fuzz) |> 
+  filter(suite == "mlxs-glm-monte-carlo") |> 
+  select(-suite, -case_type, -(alpha:bootstrap_B))
+```
+
+```{r}
+fuzz_glm_mc |> 
+  drop_na(value_se) |> 
+  mutate(
+    value_conf_low = value - 1.96 * value_se,
+    value_conf_hi = value + 1.96 * value_se,
+    ref_line = if_else(measure == "bias", 0, 0.95),
+    Measure = prettify(measure),
+  ) |> 
+  ggplot(aes(y = term, x = value, xmin = value_conf_low, 
+             xmax = value_conf_hi)) +
+    geom_vline(aes(xintercept = ref_line), linetype = "dotted", 
+               colour = "grey30") + 
+    geom_pointrange(size = 0.1) +
+    facet_grid(vars(Scenario, family), vars(Measure), scales = "free", 
+               axes = "all_x") + 
+    labs(
+      title = "Bias and 95% confidence interval coverage for Monte Carlo tests",
+      subtitle = "Lines show Monte Carlo confidence intervals for coverage",
+      x = "Value", y = "Term"
+    )
+
+```
+
+## `mlxs_glmnet` {.tabset}
+
+### Deterministic tests
+
+  
+```{r}
+fuzz_glmnet_det <- latest(fuzz) |> 
+  filter(suite == "mlxs-glmnet-deterministic") |> 
+  select(-suite, -case_type, -nreps, -(rank:bootstrap_B))
+```
+
+* There's a bias measure but no confint for it, also a RMSE 
+* Then prediction loss of mlxs_glmnet, glmnet and an "oracle" (which is what?)
+* Then various measures/ratios against either truth or glmnet
+  - "risk" delta against the oracle
+  - "loss" and "loss ratio" against the glmnet reference
+  - here again, a simple statistic and description might help more than these
+    abstract terms
+* Then precision and recall of support recovery (i.e. which variables did
+  we decide were non-zero, versus the truth)
+* All of this is made at fixed lambdas. So as absolute statistics, are these
+  much use? Isn't this "along the path" and we care more about the final value?
+  - How were the lambdas selected?
+  - Why are there different lambda_idx values for different outcomes?
+* Alpha is usually 1, but sometimes 0.5... er... what is alpha?
+
+
+We measure precision and recall of the active set (i.e.
+variables with a non-zero beta), at selected lambda values on the
+fitted path.
+
+* Precision: out of all variables identified by the fit as active, what proportion
+  were truly active?
+* Recall: out of all truly active variables, what proportion were correctly 
+  identified?
+
+
+```{r}
+fuzz_glmnet_det |> 
+  filter(target %in% c("support_precision", "support_recall")) |> 
+  mutate(
+    Target = prettify(target),
+    Scenario = paste0(prettify(scenario), " (", family, ") / n = ", n, " / p = ", p),
+    `Lambda index` = factor(lambda_index)
+  ) |> 
+  ggplot(aes(y = Scenario, x = value, colour = `Lambda index`)) +
+    geom_point(position = position_dodge(width = 0.5)) +
+    facet_wrap(vars(Target)) +
+    theme(legend.position = "bottom")
+```
+
+We also examine quality of predictions for an out-of-sample test set.The 
+loss statistic is mean squared prediction error for Gaussian fits, or mean binomial
+negative log-likelihood for binomial fits. We
+compare against `glmnet::glmnet()` as a reference implementation, and also the "oracle"
+which is the true data-generating process (hence the best possible prediction
+in expectation).
+
+```{r, fig.height = 10}
+
+cols_glmnet <- c("Mlx" = "orange", "Reference" = "grey50", "Oracle" = "black")
+fuzz_glmnet_det |> 
+  filter(measure == "loss") |> 
+  # oracle loss is the same at all values of lambda so let's avoid overplotting
+  filter(source != "oracle" | lambda_index == 1) |>
+  mutate(
+    Source = prettify(source),
+    Source = fct_relevel(Source, "Mlx", "Reference", "Oracle"),
+    np = paste("n =", n, "/", "p =", p)
+  ) |> 
+  ggplot(aes(y = Source, x = value, colour = Source, shape = factor(lambda_index))) + 
+    geom_point(position = position_dodge(width = 0.5)) +
+    facet_grid(rows = vars(prettify(scenario), np), cols = vars(family), 
+               scales = "free_x", axes = "all_x") +
+    scale_y_discrete(labels = \(x) sprintf(
+      "<span style='color:%s'>%s</span>", cols_glmnet[x], x)) +
+    scale_colour_manual(values = cols_glmnet, guide = "none") + 
+    theme(
+      legend.position = "bottom",
+      legend.box = "vertical",
+      strip.text.y = element_text(size = 7, face = "bold")
+    ) +
+    labs(
+      x = "Loss",
+      colour = "Source",
+      shape = "Lambda index"
+    )
+```
+
+### Monte Carlo tests
+
+* These are monte carlo tests with just 5 repetitions
+* Not sure what they are for, meh
+
+```{r}
+fuzz_glmnet_mc <- latest(fuzz) |> 
+  filter(suite == "mlxs-glmnet-monte-carlo") |> 
+  select(-suite, -case_type, -(rank:term))
+```
+
+
+## `mlxs_prcomp` {.tabset}
+
+### Deterministic tests
+
+```{r}
+fuzz_prcomp_det <- latest(fuzz) |> 
+  filter(suite == "mlxs-prcomp-deterministic") |> 
+  select(-suite, -family, -(nreps:lambda), -bootstrap_B, -term) 
+```
+
+Scenarios are designed to test hard cases.
+
+  * Some test the exact path, some the randomized pca path
+  * They vary by n, p, rank (of the pca), true rank of the data, and by noise
+    which is added to the "systematic" part of the x (so it won't be exactly
+    the true rank matrix)
+  
+Metrics include:
+
+* `pca_sdev` : max error compared to the `stats::prcomp` reference,
+  and rmse against the reference. sdev is the standard deviations of the 
+  principal components/the square roots of the eigenvalues of the covariance
+  matrix.
+* subspace error compared to the reference; the Frobenius distance between 
+  matrices.
+* reconstruction loss (of the original variables) and delta to the reference
+* explained variance error, max. delta to the reference. this is also a 
+  statistic from the `sdev`s.
+* we record one "metamorphic" case type; not sure why just for this case
+  but anyway I ignore it here as it is more "diagnostic".
+* Need to think about which of these are indicating problems!
+
+```{r, fig.height = 8}
+fuzz_prcomp_det |> 
+  filter(measure != "diagnostic", Measure != "reconstruction",
+         case_type != "metamorphic") |> 
+  mutate(
+    Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
+  ) |> 
+  ggplot(aes(y = Measure, x = value, colour = method)) + 
+    geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
+    geom_point(position = position_dodge2(width = 0.5)) +
+    facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +
+    scale_x_log10(labels = scales::label_math(format = log10)) +
+    labs(
+      title = "Error metrics for `mlxs_prcomp`",
+      subtitle = "Reference is `stats::prcomp`",
+      x = "Error (log scale)",
+      colour = "PCA Method"
+    ) + 
+    theme(
+      legend.position = "bottom"
+    )
+
+```
+
+
+### Monte Carlo tests
+
+* These have only 12 reps which seems few. Is the Monte Carlo actually buying
+  us anything here? We never use it to estimate standard errors.
+* As with deterministic case, seems to struggle with "sparse dense".
+
+```{r}
+fuzz_prcomp_mc <- latest(fuzz) |> 
+  filter(suite == "mlxs-prcomp-monte-carlo") |> 
+  select(-suite, -case_type, -family, -(alpha:lambda), -bootstrap_B, -term)
+```
+
+
+```{r, fig.height = 8}
+fuzz_prcomp_mc |> 
+  filter(measure != "diagnostic", Measure != "mean(reconstruction)") |> 
+  mutate(
+    Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
+  ) |> 
+  ggplot(aes(y = Measure, x = value)) + 
+    geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
+    geom_point(position = position_dodge2(width = 0.5)) +
+    facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +
+    scale_x_log10(labels = scales::label_math(format = log10)) +
+    labs(
+      title = "Error metrics for mlxs_prcomp Monte Carlo tests",
+      subtitle = "Reference is stats::prcomp",
+      x = "Error (log scale)"
+    )
+
+```
