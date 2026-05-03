@@ -9,6 +9,24 @@ coef_vector <- function(fit) {
   setNames(drop(as.matrix(coefs)), attr(coefs, "coef_names"))
 }
 
+#' Return the fuzz run timestamp.
+#'
+#' @return A UTC timestamp shared by every fuzz summary written in this test run.
+#' @noRd
+fuzz_run_datetime_utc <- function() {
+  env_datetime <- Sys.getenv("RMLXSTATS_FUZZ_RUN_DATETIME_UTC", unset = "")
+  if (nzchar(env_datetime)) {
+    return(env_datetime)
+  }
+  opt <- "RmlxStats.fuzz_run_datetime_utc"
+  run_datetime <- getOption(opt)
+  if (is.null(run_datetime)) {
+    run_datetime <- format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    options(RmlxStats.fuzz_run_datetime_utc = run_datetime)
+  }
+  run_datetime
+}
+
 #' Skip a fuzz test file unless the fuzz tier is enabled.
 #'
 #' @param subject Human-readable subject included in the skip message.
@@ -297,7 +315,7 @@ write_fuzz_summaries <- function(summaries_df, suite, tier) {
       envvar = "GITHUB_REF_NAME"
     ),
     commit_hash = git_value(c("rev-parse", "HEAD"), envvar = "GITHUB_SHA"),
-    datetime_utc = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    datetime_utc = fuzz_run_datetime_utc(),
     tier = tier,
     suite = suite,
     stringsAsFactors = FALSE
