@@ -179,7 +179,7 @@ test_that("mlxs_cv_glmnet deterministic fuzz cases match cv.glmnet", {
     fit <- mlxs_cv_glmnet(
       case$x,
       case$y,
-      family = if (spec$family == "gaussian") mlxs_binomial() else mlxs_gaussian(),
+      family = if (spec$family == "gaussian") mlxs_gaussian() else mlxs_binomial(),
       alpha = spec$alpha,
       lambda = lambda,
       foldid = foldid,
