@@ -79,7 +79,7 @@ jobs:
           RMLXSTATS_RUN_FUZZ: ${{ steps.tier.outputs.tier }}
           RMLXSTATS_FUZZ_OUT: ${{ steps.tier.outputs.out_dir }}
         run: |
-          R -q -e 'devtools::test(filter = "fuzz")'
+          Rscript -e 'devtools::test(filter = "fuzz")'
 
       - name: Commit updated fuzz results
         if: steps.changes.outputs.run == 'true'
