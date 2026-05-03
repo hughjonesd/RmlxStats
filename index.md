@@ -9,8 +9,9 @@ of their GPUs. RmlxStats is an experiment in implementing common
 statistical methods on the GPU. RmlxStats is early *work in progress*!
 
 Functions implemented so far include Rmlx versions of `lm`, `glm`,
-`glmnet` and a bootstrapping function
-[`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+`glmnet` and `prcomp`, and
+[`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md)
+for bootstrapping.
 
 ## When to use
 

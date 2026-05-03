@@ -36,6 +36,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/benchmarks.html">Benchmarks</a></li>
+    <li><a class="dropdown-item" href="articles/fuzz-test-results.html">Fuzz test results</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -57,7 +58,7 @@
 </h1></div>
 <p>Statistical modelling front-ends that run on Apple GPU hardware via the <a href="https://github.com/hughjonesd/Rmlx" class="external-link">Rmlx</a> array library.</p>
 <p>GPUs are designed to handle matrices, which is a good fit for statistics. But up till now R Mac users have not had access to the power of their GPUs. RmlxStats is an experiment in implementing common statistical methods on the GPU. RmlxStats is early <em>work in progress</em>!</p>
-<p>Functions implemented so far include Rmlx versions of <code>lm</code>, <code>glm</code>, <code>glmnet</code> and a bootstrapping function <code><a href="reference/mlxs_boot.html">mlxs_boot()</a></code>.</p>
+<p>Functions implemented so far include Rmlx versions of <code>lm</code>, <code>glm</code>, <code>glmnet</code> and <code>prcomp</code>, and <code><a href="reference/mlxs_boot.html">mlxs_boot()</a></code> for bootstrapping.</p>
 <div class="section level2">
 <h2 id="when-to-use">When to use<a class="anchor" aria-label="anchor" href="#when-to-use"></a>
 </h2>
