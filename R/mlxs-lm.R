@@ -94,6 +94,7 @@ mlxs_lm <- function(formula, data, subset, weights) {
   result <- list(
     coefficients = fit_res$coefficients,
     fitted.values = fit_res$fitted.values,
+    na.action = attr(mf, "na.action"),
     residuals = fit_res$residuals,
     effects = fit_res$effects,
     rank = n_coef,

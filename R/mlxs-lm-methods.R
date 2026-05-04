@@ -65,7 +65,7 @@ fitted.mlxs_lm <- function(object, ...) {
 #' @export
 #' @rdname mlxs-lm-methods
 residuals.mlxs_lm <- function(object, ...) {
-  object$residuals
+  naresid(object$na.action, object$residuals)
 }
 
 #' @export
