@@ -25,9 +25,12 @@ Imports:
 Remotes: 
     hughjonesd/Rmlx
 Suggests:
-    testthat (>= 3.0.0),
     glmnet,
-    knitr
+    knitr,
+    lmtest,
+    sandwich,
+    testthat (>= 3.0.0),
+    withr
 Config/testthat/edition: 3
 Config/Needs/website:
     knitr,
@@ -48,4 +51,4 @@ Config/Needs/website:
     huxtable
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

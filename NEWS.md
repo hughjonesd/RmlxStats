@@ -2,6 +2,10 @@
 
 * `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient model matrices with a
   clear error rather than returning unstable aliased coefficients.
+* New `bread()`, `estfun()` and `hatvalues()` methods for `mlxs_lm` to allow for
+  sandwich-style robust standard errors. 
+* More `mlxs_lm` methods now return base R objects by default, controllable
+  via the `output` argument.
 
 # RmlxStats 0.2.0
 

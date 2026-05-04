@@ -2,7 +2,7 @@
 #'
 #' These helpers provide the familiar S3 surface for `mlxs_lm` fits.
 #'
-#' @param object An `mlxs_lm` model fit.
+#' @param object,model An `mlxs_lm` model fit.
 #' @param x An `mlxs_lm` model fit (for methods with a leading `x` argument).
 #' @param ... Additional arguments passed to underlying methods.
 #' @param newdata Optional data frame for prediction.
@@ -15,7 +15,9 @@
 #'   `model.frame`.
 #' @param data Optional data frame for `augment`.
 #' @param se_fit Logical; should standard errors of fit be included?
-#' @param output Character string; return format ("data.frame" or "mlx").
+#' @param output Character string; return format ("data.frame", "matrix", "vector" or "mlx").
+#'   To make methods from other packages work, the usual default is to return a base
+#'   R object.
 #' @param row.names Optional row names for data frame conversion.
 #' @param optional Logical; passed to `as.data.frame`.
 #'
@@ -24,17 +26,22 @@
 #' @importFrom stats terms
 #' @importFrom stats predict fitted residuals nobs lm anova confint
 #' @importFrom stats qt pf pt coef complete.cases na.pass quantile printCoefmat
-#' @importFrom stats vcov
-#' @importFrom generics tidy glance augment
+#' @importFrom stats vcov hatvalues naresid weights
 NULL
 
-# Helper to refit as base lm for operations that expect an lm object
 #' @export
 #' @rdname mlxs-lm-methods
-coef.mlxs_lm <- function(object, ...) {
-  coef_mlx <- object$coefficients
-  attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
-  coef_mlx
+coef.mlxs_lm <- function(object, ..., output = c("vector", "mlx")) {
+  output <- match.arg(output)
+  coef <- object$coefficients
+  if (identical(output, "vector")) {
+    coef <- as.numeric(coef) 
+    names(coef) <- .mlxs_coef_names(object)
+  } else {
+    attr(coef, "coef_names") <- .mlxs_coef_names(object)
+  }
+  
+  coef
 }
 
 #' @export

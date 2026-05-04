@@ -20,3 +20,5 @@ generics::glance
 #' @export
 #' @rdname generics-reexports
 generics::augment
+
+# Adding generics::estfun here gave an R CMD CHECK warning, so don't do that

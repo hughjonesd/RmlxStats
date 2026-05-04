@@ -44,5 +44,5 @@ This avoids calling into compiled C routines that only handle base types.
 }
 \details{
 Currently the \code{logit}, \code{log}, \code{cloglog}, and \code{cauchit} links are supported.
-For other link specifications, fall back to \code{\link[stats:family]{stats::binomial()}}.
+For other link specifications, fall back to \code{\link[stats:binomial]{stats::binomial()}}.
 }
