@@ -11,11 +11,10 @@ Authors@R:
       person("Balasubramanian", "Narasimhan", role = "ctb"),
       person("Kenneth", "Tay", role = "ctb"),
       person("Noah", "Simon", role = "ctb"),
-      person("James", "Yang", role = "ctb")
+      person("James", "Yang", role = "ctb"),
+      person("Achim", "Zeileis", role = "ctb"),
     )
-Description: GPU-backed linear algebra helpers that wrap the Rmlx package,
-    providing familiar formula interfaces and diagnostics for statistical
-    models on Apple Silicon.
+Description: Fast statistical routines on Apple Silicon using the Rmlx package.
 License: GPL (>= 2)
 URL: https://hughjonesd.github.io/RmlxStats, https://github.com/hughjonesd/RmlxStats
 BugReports: https://github.com/hughjonesd/RmlxStats/issues

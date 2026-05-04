@@ -38,6 +38,15 @@ coef.mlxs_glm <- function(object, ...) {
 
 #' @rdname mlxs-glm-methods
 #' @export
+weights.mlxs_glm <- function(object, type = c("prior", "working"), ...) {
+  type <- match.arg(type)
+  res <- if (identical(type, "prior")) object$prior.weights else object$working.weights
+  if (! is.null(object$na.action)) res <- napredict(object$na.action, res)
+  res
+}
+
+#' @rdname mlxs-glm-methods
+#' @export
 predict.mlxs_glm <- function(
   object,
   newdata = NULL,
@@ -398,7 +407,7 @@ augment.mlxs_glm <- function(
     return(list(.fitted = fitted_vals, .resid = resid_vals))
   }
 
-  out <- as.data.frame(if (is.null(newdata)) data else newdata)
+  out <- as.data.frame(newdata %||% data)
   out$.fitted <- as.numeric(fitted_vals)
   if (!is.null(resid_vals)) {
     out$.resid <- as.numeric(resid_vals)

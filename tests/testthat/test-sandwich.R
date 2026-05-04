@@ -11,6 +11,15 @@ test_that("sandwich::estfun gives same results for lm and mlxs_lm", {
                tolerance = 1e-6)
 })
 
+test_that("sandwich::estfun gives same results for glm and mlxs_glm", {
+  mlxs_fit <- mlxs_glm(mpg ~ gear + am, mtcars, family = mlxs_gaussian())
+  base_fit <- glm(mpg ~ gear + am, mtcars, family = "gaussian")
+  
+  expect_equal(as.matrix(sandwich::estfun(mlxs_fit)), 
+               unname(sandwich::estfun(base_fit)),
+               tolerance = 1e-6)
+})
+
 test_that("sandwich::bread gives same results for lm and mlxs_lm", {
   mlxs_fit <- mlxs_lm(mpg ~ gear + am, mtcars)
   base_fit <- lm(mpg ~ gear + am, mtcars)
