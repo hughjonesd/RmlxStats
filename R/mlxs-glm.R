@@ -67,7 +67,7 @@ mlxs_glm <- function(
   n_obs <- nrow(X)
   n_coef <- ncol(X)
 
-  coef_start <- if (is.null(start)) rep.int(0, n_coef) else start
+  coef_start <- start %||% rep.int(0, n_coef)
 
   weights_raw <- mf[["(weights)", exact = TRUE]]
 
@@ -320,7 +320,7 @@ mlxs_glm <- function(
     coef_names <- colnames(design)
     X_mlx <- Rmlx::as_mlx(design)
   }
-  coef_start <- if (is.null(coef_start)) rep.int(0, n_coef) else coef_start
+  coef_start <- coef_start %||% rep.int(0, n_coef)
   weights_supplied <- !is.null(weights_raw)
   weights_mlx <- if (!weights_supplied) {
     Rmlx::mlx_full(c(n_obs, 1L), 1)

@@ -136,7 +136,7 @@
                                    n_steps,
                                    fit_intercept = NULL,
                                    shape_sig = NULL) {
-  shape_part <- if (is.null(shape_sig)) "" else shape_sig
+  shape_part <- shapesig %||% ""
   if (is.null(fit_intercept)) {
     paste(kind, n_steps, shape_part, sep = "::")
   } else {

@@ -633,7 +633,7 @@ augment.mlxs_prcomp <- function(x,
   scores_df <- as.data.frame(as.matrix(scores))
   names(scores_df) <- paste0(".fitted", x$component_names)
 
-  base_data <- if (is.null(newdata)) data else newdata
+  base_data <- newdata %||% data 
   if (is.null(base_data)) {
     out <- as.data.frame(matrix(nrow = nrow(scores_df), ncol = 0L))
   } else {

@@ -43,3 +43,7 @@ utils::globalVariables("compiled")
   w <- Rmlx::as_mlx(weights)
   Rmlx::mlx_sum(w * vals * vals)
 }
+
+`%||% <- function (x, y) {
+  if (is.null(x)) y else x
+}
