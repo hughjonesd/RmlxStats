@@ -21,6 +21,8 @@
 \alias{glance.mlxs_glm}
 \alias{augment.mlxs_glm}
 \alias{estfun.mlxs_glm}
+\alias{hatvalues.mlxs_glm}
+\alias{bread.mlxs_glm}
 \title{mlxs_glm method utilities}
 \usage{
 \method{coef}{mlxs_glm}(object, ...)
@@ -75,6 +77,10 @@
 )
 
 \method{estfun}{mlxs_glm}(x, ..., output = c("matrix", "mlx"))
+
+\method{hatvalues}{mlxs_glm}(model, ..., output = c("matrix", "mlx"))
+
+\method{bread}{mlxs_glm}(x, ...)
 }
 \arguments{
 \item{object}{An \code{mlxs_glm} model fit.}

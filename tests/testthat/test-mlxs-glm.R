@@ -19,6 +19,7 @@ test_that("mlxs_glm gaussian matches stats::glm", {
     tolerance = 1e-6,
     ignore_attr = TRUE
   )
+  expect_equal(hatvalues(mlx_fit), hatvalues(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
 
   newdata <- head(mtcars)
   expect_equal(

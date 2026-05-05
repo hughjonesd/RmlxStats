@@ -40,7 +40,7 @@ estfun.mlxs_glm <- function(x, ..., output = c("matrix", "mlx")) {
   return(rval)
 }
 
-# adapted from sandwich:::bread.lm
+# adapted from stats:::hatvalues
 #' @export
 #' @rdname mlxs-lm-methods
 hatvalues.mlxs_lm <- function(model, ..., output = c("matrix", "mlx")) {
@@ -50,6 +50,12 @@ hatvalues.mlxs_lm <- function(model, ..., output = c("matrix", "mlx")) {
   if (identical(output, "matrix")) hv <- Rmlx::as_r(hv)
   hv
 }
+
+#' @export
+#' @rdname mlxs-glm-methods
+hatvalues.mlxs_glm <- hatvalues.mlxs_lm 
+
+
 
 #' @exportS3Method sandwich::bread
 #' @rdname mlxs-lm-methods

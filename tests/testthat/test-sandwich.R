@@ -29,11 +29,31 @@ test_that("sandwich::bread gives same results for lm and mlxs_lm", {
                tolerance = 1e-6)
 })
 
+test_that("sandwich::bread gives same results for glm and mlxs_glm", {
+  mlxs_fit <- mlxs_glm(mpg ~ gear + am, mtcars, family = mlxs_gaussian())
+  base_fit <- glm(mpg ~ gear + am, mtcars, family = "gaussian")
+  
+  expect_equal(as.matrix(sandwich::bread(mlxs_fit)), 
+               unname(sandwich::bread(base_fit)),
+               tolerance = 1e-6)
+})
+
 test_that("sandwich::vcovHC gives same results for lm and mlxs_lm", {
   skip_if_not_installed("sandwich")
   requireNamespace("sandwich")
   mlxs_fit <- mlxs_lm(mpg ~ gear + am, mtcars)
   base_fit <- lm(mpg ~ gear + am, mtcars)
+  
+  expect_equal(as.matrix(sandwich::vcovHC(mlxs_fit)), 
+               unname(sandwich::vcovHC(base_fit)),
+               tolerance = 1e-5)
+})
+
+test_that("sandwich::vcovHC gives same results for glm and mlxs_glm", {
+  skip_if_not_installed("sandwich")
+  requireNamespace("sandwich")
+  mlxs_fit <- mlxs_glm(mpg ~ gear + am, mtcars, family = mlxs_gaussian())
+  base_fit <- glm(mpg ~ gear + am, mtcars, family = "gaussian")
   
   expect_equal(as.matrix(sandwich::vcovHC(mlxs_fit)), 
                unname(sandwich::vcovHC(base_fit)),
@@ -49,18 +69,27 @@ test_that("sandwich::vcovHAC gives same results for lm and mlxs_lm", {
                tolerance = 1e-4)
 })
 
+test_that("sandwich::vcovHAC gives same results for glm and mlxs_glm", {
+  mlxs_fit <- mlxs_glm(mpg ~ gear + am, mtcars, family = mlxs_gaussian())
+  base_fit <- glm(mpg ~ gear + am, mtcars, family = "gaussian")
+  
+  expect_equal(as.matrix(sandwich::vcovHAC(mlxs_fit)), 
+               unname(sandwich::vcovHAC(base_fit)),
+               tolerance = 1e-4)
+})
 
-test_that("sandwich::vcovHAC gives same results for lm and mlxs_lm", {
-  skip("FIXME: not yet within reasonable tolerance")
+
+test_that("sandwich::vcovCL gives same results for lm and mlxs_lm", {
+  # skip("FIXME: not yet within reasonable tolerance")
   mlxs_fit <- mlxs_lm(mpg ~ gear + am, mtcars)
   base_fit <- lm(mpg ~ gear + am, mtcars)
   
-  expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit)), 
-               unname(sandwich::vcovCL(base_fit)),
+  expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit, type = "HC0")), 
+               unname(sandwich::vcovCL(base_fit, type = "HC0")),
                tolerance = 1e-4)
   
-  expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit, ~cyl)), 
-               unname(sandwich::vcovCL(base_fit, ~cyl)),
+  expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit, ~cyl, type = "HC0")), 
+               unname(sandwich::vcovCL(base_fit, ~cyl, type = "HC0")),
                tolerance = 1e-4)
 })
 
