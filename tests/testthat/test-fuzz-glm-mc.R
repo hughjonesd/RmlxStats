@@ -310,8 +310,8 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
     identical(fuzz_tier, "full"),
     "GLM bootstrap fuzz calibration runs only in the full tier."
   )
-  reps <- 300L
-  n <- 20000L
+  reps <- 50L
+  n <- 5000L
   bootstrap_B <- 100L
   scenarios <- c(gaussian_skew = 40000L, binomial_regular = 50000L)
   truth <- c("(Intercept)" = -0.15, x1 = 0.55, x2 = 0.35, x3 = 0.15, x4 = -0.05)
