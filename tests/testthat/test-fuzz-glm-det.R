@@ -288,6 +288,35 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
                  drop(as.matrix(predict(fit, newdata = data))),
                  tolerance = 1e-6, ignore_attr = TRUE, info = family)
 
+    centers <- c(x1 = 130, x2 = -1, x3 = 0.7, x4 = -0.1)
+    scales <- c(x1 = 180, x2 = 0.006, x3 = 32.4, x4 = 13.9)
+    transformed_data <- data
+    for (nm in names(scales)) {
+      transformed_data[[nm]] <- (data[[nm]] - centers[[nm]]) / scales[[nm]]
+    }
+    transformed_fit <- mlxs_glm(
+      case$formula,
+      data = transformed_data,
+      family = families$mlx
+    )
+    coef_orig <- coef_vector(fit)
+
+    # GLM coefficients live on the linear-predictor scale. The same
+    # transformation as linear regression preserves eta, and therefore
+    # preserves fitted means after applying the inverse link.
+    expected_coef <- coef_orig
+    expected_coef[names(scales)] <- coef_orig[names(scales)] * scales
+    expected_coef["(Intercept)"] <- coef_orig["(Intercept)"] +
+      sum(coef_orig[names(centers)] * centers)
+    expect_equal(coef_vector(transformed_fit), expected_coef,
+                 tolerance = 2e-5, ignore_attr = TRUE, info = family)
+    expect_equal(drop(as.matrix(predict(transformed_fit, type = "link"))),
+                 drop(as.matrix(predict(fit, type = "link"))),
+                 tolerance = 5e-5, ignore_attr = TRUE, info = family)
+    expect_equal(drop(as.matrix(fitted(transformed_fit))),
+                 drop(as.matrix(fitted(fit))),
+                 tolerance = 1e-4, ignore_attr = TRUE, info = family)
+
     expect_equal(drop(as.matrix(predict(fit, type = "response"))),
                  drop(as.matrix(predict(
                    fit,

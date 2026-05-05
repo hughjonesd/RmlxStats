@@ -183,6 +183,27 @@ test_that("mlxs_lm metamorphic fuzz properties hold", {
                drop(as.matrix(predict(fit, newdata = data))),
                tolerance = 1e-6, ignore_attr = TRUE)
 
+  centers <- c(x1 = 0.2, x2 = -0.4, x3 = 14)
+  scales <- c(x1 = 125, x2 = 0.003, x3 = 2.4)
+  transformed_data <- data
+  for (nm in names(scales)) {
+    transformed_data[[nm]] <- (data[[nm]] - centers[[nm]]) / scales[[nm]]
+  }
+  transformed_fit <- mlxs_lm(case$formula, data = transformed_data)
+  coef_orig <- coef_vector(fit)
+
+  # If z_j = (x_j - c_j) / s_j, the same fitted values are obtained with
+  # beta'_j = s_j beta_j and intercept' = intercept + sum_j c_j beta_j.
+  expected_coef <- coef_orig
+  expected_coef[names(scales)] <- coef_orig[names(scales)] * scales
+  expected_coef["(Intercept)"] <- coef_orig["(Intercept)"] +
+    sum(coef_orig[names(centers)] * centers)
+  expect_equal(coef_vector(transformed_fit), expected_coef,
+               tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(drop(as.matrix(fitted(transformed_fit))),
+               drop(as.matrix(fitted(fit))),
+               tolerance = 5e-6, ignore_attr = TRUE)
+
   expect_equal(drop(as.matrix(predict(fit))),
                drop(as.matrix(predict(fit, newdata = data))),
                tolerance = 1e-6, ignore_attr = TRUE)

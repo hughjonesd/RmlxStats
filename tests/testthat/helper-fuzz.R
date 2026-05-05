@@ -6,7 +6,11 @@
 #' @noRd
 coef_vector <- function(fit) {
   coefs <- coef(fit)
-  setNames(drop(as.matrix(coefs)), attr(coefs, "coef_names"))
+  coef_names <- attr(coefs, "coef_names")
+  if (is.null(coef_names)) {
+    coef_names <- names(coefs)
+  }
+  setNames(drop(as.matrix(coefs)), coef_names)
 }
 
 #' Return the fuzz run timestamp.

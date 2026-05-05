@@ -1,12 +1,13 @@
 fuzz_tier <- skip_fuzz_tests("mlxs_lm")
 
-summarise_lm_mc <- function(results, truth, scenario, reps) {
+summarise_lm_mc <- function(results, truth, scenario, reps, n) {
   estimates <- mc_field_matrix(results, "estimates", names(truth))
   ses <- mc_field_matrix(results, "ses", names(truth))
   covered <- mc_field_matrix(results, "covered", names(truth))
   stopifnot(!anyNA(covered))
   bias <- colMeans(estimates) - unname(truth)
   empirical_se <- apply(estimates, 2, sd)
+  model_se <- colMeans(ses)
   coverage <- colMeans(covered)
   metric_names <- c(
     "truth", "estimate", "bias", "error", "standard_error",
@@ -17,7 +18,7 @@ summarise_lm_mc <- function(results, truth, scenario, reps) {
       case_type = "monte_carlo",
       scenario = scenario,
       nreps = reps,
-      n = 80L,
+      n = n,
       p = length(truth)
     ),
     term = rep(names(truth), each = length(metric_names)),
@@ -32,7 +33,7 @@ summarise_lm_mc <- function(results, truth, scenario, reps) {
       bias,
       sqrt(colMeans((sweep(estimates, 2, unname(truth)))^2)),
       empirical_se,
-      colMeans(ses),
+      model_se,
       coverage
     )),
     value_se = c(rbind(
@@ -40,8 +41,8 @@ summarise_lm_mc <- function(results, truth, scenario, reps) {
       rep(NA_real_, length(truth)),
       empirical_se / sqrt(reps),
       rep(NA_real_, length(truth)),
-      rep(NA_real_, length(truth)),
-      rep(NA_real_, length(truth)),
+      empirical_se / sqrt(2 * (reps - 1)),
+      apply(ses, 2, sd) / sqrt(reps),
       sqrt(coverage * (1 - coverage) / reps)
     ))
   )
@@ -50,11 +51,11 @@ summarise_lm_mc <- function(results, truth, scenario, reps) {
 run_lm_mc_rep <- function(
   seed,
   scenario = c("homoskedastic", "heteroskedastic"),
-  truth = c("(Intercept)" = 1, x1 = 0.75, x2 = -0.5, x3 = 0.25)
+  truth = c("(Intercept)" = 1, x1 = 0.75, x2 = -0.5, x3 = 0.25),
+  n = 80L
 ) {
   scenario <- match.arg(scenario)
   set.seed(seed)
-  n <- 80
   x <- make_design(n = n, p = 3, rho = 0.35)
   colnames(x) <- names(truth)[-1L]
 
@@ -130,6 +131,8 @@ summarise_lm_bootstrap_mc <- function(
   empirical_se <- apply(estimates, 2, sd, na.rm = TRUE)
   average_model_se <- colMeans(ses, na.rm = TRUE)
   average_bootstrap_se <- colMeans(boot_ses, na.rm = TRUE)
+  model_se_se <- apply(ses, 2, sd, na.rm = TRUE) / sqrt(reps)
+  bootstrap_se_se <- apply(boot_ses, 2, sd, na.rm = TRUE) / sqrt(reps)
   all_finite <- vapply(seq_along(truth), function(idx) {
     vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
     all(is.finite(vals[!is.na(vals)]))
@@ -165,6 +168,17 @@ summarise_lm_bootstrap_mc <- function(
         average_model_se / empirical_se,
         average_bootstrap_se / empirical_se,
         as.numeric(all_finite)
+      )),
+      value_se = c(rbind(
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        empirical_se / sqrt(2 * (reps - 1)),
+        model_se_se,
+        bootstrap_se_se,
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth))
       ))
     ),
     fuzz_metric_rows(
@@ -188,6 +202,7 @@ summarise_lm_bootstrap_mc <- function(
 test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
   hom_reps <- if (identical(fuzz_tier, "full")) 10000L else 2000L
   het_reps <- if (identical(fuzz_tier, "full")) 2000L else 500L
+  n <- 80L
   truth <- c("(Intercept)" = 1, x1 = 0.75, x2 = -0.5, x3 = 0.25)
   hom_results <- run_mc_reps(
     reps = hom_reps,
@@ -195,7 +210,8 @@ test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
     rep_fun = run_lm_mc_rep,
     label = "run_lm_mc",
     truth = truth,
-    scenario = "homoskedastic"
+    scenario = "homoskedastic",
+    n = n
   )
   het_results <- run_mc_reps(
     reps = het_reps,
@@ -203,10 +219,11 @@ test_that("mlxs_lm Monte Carlo fuzz summaries are within tolerance", {
     rep_fun = run_lm_mc_rep,
     label = "run_lm_mc",
     truth = truth,
-    scenario = "heteroskedastic"
+    scenario = "heteroskedastic",
+    n = n
   )
-  hom <- summarise_lm_mc(hom_results, truth, "homoskedastic", hom_reps)
-  het <- summarise_lm_mc(het_results, truth, "heteroskedastic", het_reps)
+  hom <- summarise_lm_mc(hom_results, truth, "homoskedastic", hom_reps, n)
+  het <- summarise_lm_mc(het_results, truth, "heteroskedastic", het_reps, n)
   summaries_df <- rbind(hom, het)
   write_fuzz_summaries(
     summaries_df,
