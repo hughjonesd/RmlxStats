@@ -7,6 +7,8 @@ output:
     code_folding: hide
 editor_options: 
   chunk_output_type: console
+params:
+  tier: "any"
 ---
 
 # Fuzz tests {.tabset}
@@ -22,7 +24,6 @@ doesn't yet support float64 at all. That limits our precision. This page
 should help us figure out how much that affects performance.
 
 * What about diagnostics?
-* What about `mlxs_cv_glmnet()`? Need to write the tests first....
 
 ```{r setup, echo=TRUE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -43,8 +44,11 @@ set_theme(fuzz_theme)
 
 fuzz <- read_csv(here("tests/testthat/fuzz-results/github-macos-26/fuzz-results.csv"))
 
+chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
-  fuzz |> filter(branch == "master", datetime_utc == max(datetime_utc)) 
+  fuzz |> 
+    filter(tier %in% chosen_tiers) |> 
+    filter(branch == "master", datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -67,12 +71,13 @@ rmlx_version <- packageVersion("Rmlx")
 
 ```
 
-Metadata     |  Metadata 
+Metadata     |   
 -------------|------------
 Generated on | `r date` 
 Commit       | `r commit`
 Branch       | `r branch`
 Rmlx version | `r rmlx_version`
+Tier         | `r params$tier`
 
 ## `mlxs_lm` {.tabset}
 
