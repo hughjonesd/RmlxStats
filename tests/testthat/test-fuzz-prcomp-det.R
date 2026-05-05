@@ -5,21 +5,30 @@ test_that("mlxs_prcomp deterministic fuzz cases match stats::prcomp", {
     scenario = c(
       "gaussian_full_exact", "low_rank_tall_exact", "low_rank_wide_exact",
       "large_mean_exact", "near_duplicate_exact", "spiked_wide_randomized",
-      "spiked_tall_randomized", "sparse_dense_randomized"
+      "spiked_tall_randomized", "sparse_dense_randomized",
+      "high_n_low_rank_randomized", "high_p_low_rank_randomized",
+      "high_np_spiked_randomized"
     ),
     generator = c(
       "gaussian_full", "low_rank", "low_rank", "large_mean",
-      "near_duplicate", "spiked", "spiked", "sparse_dense"
+      "near_duplicate", "spiked", "spiked", "sparse_dense",
+      "low_rank", "low_rank", "spiked"
     ),
-    n = c(120L, 120L, 40L, 120L, 160L, 100L, 500L, 180L),
-    p = c(20L, 20L, 140L, 15L, 30L, 500L, 20L, 220L),
-    rank_true = c(20L, 5L, 8L, 5L, 8L, 8L, 8L, 10L),
+    n = c(120L, 120L, 40L, 120L, 160L, 100L, 500L, 180L,
+          5000L, 300L, 2500L),
+    p = c(20L, 20L, 140L, 15L, 30L, 500L, 20L, 220L,
+          40L, 1200L, 300L),
+    rank_true = c(20L, 5L, 8L, 5L, 8L, 8L, 8L, 10L, 8L, 12L, 12L),
     rank_fit = c(NA_integer_, NA_integer_, NA_integer_, NA_integer_,
-                 NA_integer_, 8L, 8L, 10L),
-    noise_sd = c(0, 0, 1e-5, 1e-4, 1e-5, 1e-5, 0.01, 0.01),
-    center = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
-    scale = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
-    seed = c(3000L, 3001L, 3002L, 3003L, 3004L, 3005L, 3006L, 3007L)
+                 NA_integer_, 8L, 8L, 10L, 8L, 12L, 12L),
+    noise_sd = c(0, 0, 1e-5, 1e-4, 1e-5, 1e-5, 0.01, 0.01,
+                 1e-4, 1e-4, 0.01),
+    center = c(TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+               TRUE, TRUE, TRUE),
+    scale = c(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
+              FALSE, FALSE, FALSE),
+    seed = c(3000L, 3001L, 3002L, 3003L, 3004L, 3005L, 3006L, 3007L,
+             3008L, 3009L, 3010L)
   )
 
   summaries <- vector("list", nrow(specs))
@@ -85,7 +94,10 @@ test_that("mlxs_prcomp deterministic fuzz cases match stats::prcomp", {
   # below apply to well-identified reference components.
   strict_exact <- sdev_error$scenario == "gaussian_full_exact"
   strict_randomized <- randomized &
-    sdev_error$scenario != "sparse_dense_randomized"
+    !sdev_error$scenario %in% c(
+      "sparse_dense_randomized",
+      "high_np_spiked_randomized"
+    )
   expect_true(all(as.logical(finite$value)))
   expect_true(all(orthogonality$value <= 5e-6))
   expect_true(all(sdev_error$value[exact & strict_exact] <= 1e-5))
@@ -96,7 +108,10 @@ test_that("mlxs_prcomp deterministic fuzz cases match stats::prcomp", {
     1e-5))
   expect_true(all(sdev_error$value[strict_randomized] <= 1e-5))
   strict_randomized <- subspace$method == "randomized" &
-    subspace$scenario != "sparse_dense_randomized"
+    !subspace$scenario %in% c(
+      "sparse_dense_randomized",
+      "high_np_spiked_randomized"
+    )
   expect_true(all(subspace$value[strict_randomized] <= 1e-5))
 })
 
@@ -155,6 +170,22 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
     2e-6
   )
 
+  signs <- rep(c(-1, 1), length.out = ncol(x))
+  sign_fit <- mlxs_prcomp(
+    sweep(x, 2L, signs, `*`),
+    center = TRUE,
+    scale. = FALSE,
+    rank. = rank_fit,
+    oversample = 10L,
+    n_iter = 2L,
+    seed = 202
+  )
+  sign_rotation <- sweep(as.matrix(sign_fit$rotation), 1L, signs, `*`)
+  expect_lte(
+    prcomp_projector_error(sign_rotation, fit$rotation),
+    2e-6
+  )
+
   same_seed_fit <- mlxs_prcomp(
     x,
     center = TRUE,
@@ -190,35 +221,4 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
   }, numeric(1))
   monotonicity_error <- max(diff(recon), 0)
   expect_lte(monotonicity_error, 1e-8)
-
-  write_fuzz_summaries(
-    fuzz_metric_rows(
-      list(
-        case_type = "metamorphic",
-        scenario = "row_column_rank_seed",
-        n = nrow(x),
-        p = ncol(x),
-        rank = rank_fit,
-        rank_true = 8L,
-        method = fit$method,
-        noise_sd = 1e-4
-      ),
-      measure     = c("error",     "diagnostic",  "diagnostic",     "diagnostic"),
-      target      = c("subspace",  "monotonicity", "reproducibility", "finite"),
-      source      = c("mlx",       "mlx",          "mlx",             "mlx"),
-      baseline    = c("reference", "ideal",        "same_seed",       NA),
-      aggregation = c("max",       "max",          "value",           "all"),
-      value = c(
-        max(
-          prcomp_projector_error(row_fit$rotation, fit$rotation),
-          prcomp_projector_error(col_rotation, fit$rotation)
-        ),
-        monotonicity_error,
-        reproducibility_error,
-        as.numeric(all(is.finite(c(recon, reproducibility_error))))
-      )
-    ),
-    suite = "mlxs-prcomp-deterministic",
-    tier = fuzz_tier
-  )
 })
