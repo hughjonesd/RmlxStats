@@ -12,7 +12,7 @@ Authors@R:
       person("Kenneth", "Tay", role = "ctb"),
       person("Noah", "Simon", role = "ctb"),
       person("James", "Yang", role = "ctb"),
-      person("Achim", "Zeileis", role = "ctb"),
+      person("Achim", "Zeileis", role = "ctb")
     )
 Description: Fast statistical routines on Apple Silicon using the Rmlx package.
 License: GPL (>= 2)
