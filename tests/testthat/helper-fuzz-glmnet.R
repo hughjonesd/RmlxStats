@@ -55,6 +55,55 @@ glmnet_fuzz_objective <- function(
   loss + penalty
 }
 
+#' Compute KKT optimality violation for a glmnet path point.
+#'
+#' @param x Training design matrix.
+#' @param y Training response.
+#' @param beta Coefficient vector, excluding intercept.
+#' @param a0 Intercept.
+#' @param lambda Penalization strength.
+#' @param alpha Elastic-net mixing parameter.
+#' @param family Model family.
+#' @param threshold Absolute coefficient value above which a coefficient is
+#'   treated as active.
+#'
+#' @return Maximum KKT residual over the intercept and coefficient conditions.
+#' @noRd
+glmnet_fuzz_kkt_violation <- function(
+  x,
+  y,
+  beta,
+  a0,
+  lambda,
+  alpha,
+  family = c("gaussian", "binomial"),
+  threshold = 1e-7
+) {
+  family <- match.arg(family)
+  n <- nrow(x)
+  eta <- drop(x %*% beta + a0)
+  residual <- if (family == "gaussian") {
+    eta - y
+  } else {
+    plogis(pmin(pmax(eta, -30), 30)) - y
+  }
+  gradient <- drop(crossprod(x, residual)) / n
+  active <- abs(beta) > threshold
+  ridge_gradient <- lambda * (1 - alpha) * beta
+  lasso_bound <- lambda * alpha
+  coef_violation <- numeric(length(beta))
+
+  coef_violation[active] <- abs(
+    gradient[active] + ridge_gradient[active] +
+      lasso_bound * sign(beta[active])
+  )
+  coef_violation[!active] <- pmax(
+    abs(gradient[!active]) - lasso_bound,
+    0
+  )
+  max(abs(mean(residual)), coef_violation)
+}
+
 #' Summarise support recovery for a penalized fit.
 #'
 #' @param beta Estimated coefficient vector, excluding intercept.

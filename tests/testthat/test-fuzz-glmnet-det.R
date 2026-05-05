@@ -41,18 +41,36 @@ summarise_glmnet_fit <- function(
       alpha,
       family = family
     )
-    ref_obj <- glmnet_fuzz_objective(
-      case$x,
-      case$y,
-      ref_beta_col,
+	    ref_obj <- glmnet_fuzz_objective(
+	      case$x,
+	      case$y,
+	      ref_beta_col,
       ref_a0[[row_idx]],
       lambda[[idx]],
-      alpha,
-      family = family
-    )
-    test_loss <- glmnet_fuzz_loss(
-      case$y_test,
-      mlx_pred[, row_idx],
+	      alpha,
+	      family = family
+	    )
+	    kkt <- glmnet_fuzz_kkt_violation(
+	      case$x,
+	      case$y,
+	      beta,
+	      mlx_a0[[row_idx]],
+	      lambda[[idx]],
+	      alpha,
+	      family = family
+	    )
+	    ref_kkt <- glmnet_fuzz_kkt_violation(
+	      case$x,
+	      case$y,
+	      ref_beta_col,
+	      ref_a0[[row_idx]],
+	      lambda[[idx]],
+	      alpha,
+	      family = family
+	    )
+	    test_loss <- glmnet_fuzz_loss(
+	      case$y_test,
+	      mlx_pred[, row_idx],
       family = family
     )
     ref_loss <- glmnet_fuzz_loss(
@@ -113,19 +131,24 @@ summarise_glmnet_fit <- function(
           support$support_precision,
           support$support_recall
         )
-      ),
-      fuzz_metric_rows(
-        meta,
-        measure = "diagnostic",
-        target = "finite",
-        source = "mlx",
-        aggregation = "all",
-        value = as.numeric(all(is.finite(c(
-          beta, mlx_a0[[row_idx]], mlx_pred[, row_idx], test_loss, obj
-        ))))
-      )
-    )
-  }
+	      ),
+	      fuzz_metric_rows(
+	        meta,
+	        measure     = c("diagnostic",    "diagnostic",    "diagnostic"),
+	        target      = c("kkt_violation", "kkt_violation", "finite"),
+	        source      = c("mlx",           "reference",     "mlx"),
+	        aggregation = c("max",           "max",           "all"),
+	        value = c(
+	          kkt,
+	          ref_kkt,
+	          as.numeric(all(is.finite(c(
+	            beta, mlx_a0[[row_idx]], mlx_pred[, row_idx], test_loss, obj,
+	            kkt, ref_kkt
+	          ))))
+	        )
+	      )
+	    )
+	  }
   do.call(rbind, rows)
 }
 
@@ -229,9 +252,26 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
     summaries_df$target == "objective" &
       summaries_df$measure == "delta",
   ]
+  mlx_kkt <- summaries_df[
+    summaries_df$target == "kkt_violation" &
+      summaries_df$source == "mlx",
+  ]
+  ref_kkt <- summaries_df[
+    summaries_df$target == "kkt_violation" &
+      summaries_df$source == "reference",
+  ]
+  kkt_pair <- merge(
+    mlx_kkt,
+    ref_kkt,
+    by = c("scenario", "family", "lambda_index", "lambda"),
+    suffixes = c("_mlx", "_reference")
+  )
   expect_true(all(as.logical(finite$value)))
   expect_true(all(pred_error$value <= 1e-4))
   expect_true(all(objective_delta$value <= 1e-5))
+  expect_true(
+    all(kkt_pair$value_mlx <= pmax(1e-3, 5 * kkt_pair$value_reference))
+  )
 })
 
 test_that("mlxs_glmnet deterministic metamorphic properties hold", {

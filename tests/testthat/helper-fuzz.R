@@ -184,9 +184,10 @@ fuzz_metadata_columns <- function() {
 #       `standard_error`, `residual_sigma`, `r_squared`, `deviance`, `aic`,
 #       `confidence_interval`, `condition_number`, `convergence`, `iterations`,
 #       `finite`, `bootstrap_failure`.
-#     - Penalized regression: `prediction`, `risk`, `loss`, `objective`,
-#       `active_set`, `active_size`, `true_positives`, `false_positives`,
-#       `false_negatives`, `support_precision`, `support_recall`.
+    #     - Penalized regression: `prediction`, `risk`, `loss`, `objective`,
+    #       `kkt_violation`, `active_set`, `active_size`, `true_positives`,
+    #       `false_positives`, `false_negatives`, `support_precision`,
+    #       `support_recall`.
 #     - Cross-validation: `cv_loss`, `cv_loss_se`,
 #       `out_of_fold_prediction`, `lambda_min`, `lambda_1se`,
 #       `one_se_rule`.
