@@ -120,36 +120,36 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
       "gaussian", "binomial", "poisson",
       "gaussian", "binomial", "poisson",
       "gaussian", "binomial", "poisson",
-      "binomial", "poisson",
+      "binomial", "binomial", "poisson",
       "binomial", "poisson"
     ),
     scenario = c(
       "regular_correlated", "regular_correlated", "regular_correlated",
       "large_n", "large_n", "large_n",
       "weighted", "rare_event", "overdispersed",
-      "large_p", "large_p",
+      "near_separation", "large_p", "large_p",
       "large_p_rare_event", "large_p_overdispersed"
     ),
     seed = c(
       1L, 2L, 3L,
       101L, 102L, 103L,
       151L, 152L, 153L,
-      201L, 202L,
+      351L, 201L, 202L,
       251L, 252L
     ),
     n = c(
       1000L, 1000L, 1000L,
       100000L, 100000L, 100000L,
       2000L, 2000L, 2000L,
-      15000L, 15000L,
+      1200L, 15000L, 15000L,
       15000L, 15000L
     ),
-    p = c(8L, 8L, 8L, 20L, 12L, 12L, 8L, 8L, 8L, 150L, 150L, 150L, 150L),
+    p = c(8L, 8L, 8L, 20L, 12L, 12L, 8L, 8L, 8L, 8L, 150L, 150L, 150L, 150L),
     rho = c(
       0.45, 0.45, 0.45,
       0.2, 0.2, 0.2,
       0.3, 0.3, 0.3,
-      0.35, 0.35,
+      0.35, 0.35, 0.35,
       0.35, 0.35
     )
   )
@@ -171,7 +171,20 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
   for (idx in seq_len(nrow(specs))) {
     spec <- specs[idx, ]
     beta_scale <- if (grepl("large_p|larger_p", spec$scenario)) 0.35 else 1
-    case <- if (grepl("overdispersed", spec$scenario)) {
+    case <- if (identical(spec$scenario, "near_separation")) {
+      set.seed(spec$seed)
+      x <- make_design(n = spec$n, p = spec$p, rho = spec$rho)
+      colnames(x) <- paste0("x", seq_len(spec$p))
+      eta <- -0.1 + 4 * x[, "x1"] + 0.25 * x[, "x2"] - 0.2 * x[, "x3"]
+      y <- as.integer(eta > 0)
+      # Flip a few labels so the data are nearly, but not completely, separated.
+      flip <- sample(seq_len(spec$n), size = 36L)
+      y[flip] <- 1L - y[flip]
+      list(
+        data = data.frame(y = y, x),
+        formula = reformulate(colnames(x), response = "y")
+      )
+    } else if (grepl("overdispersed", spec$scenario)) {
       make_case(
         seed = spec$seed,
         family = "poisson",
