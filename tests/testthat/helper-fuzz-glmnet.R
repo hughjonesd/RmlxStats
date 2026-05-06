@@ -197,7 +197,8 @@ glmnet_fuzz_case <- function(
   seed,
   scenario = c(
     "ar1_correlated", "block_correlated", "null_signal",
-    "strong_rare_binomial"
+    "strong_rare_binomial", "wide_sparse_correlated",
+    "wide_weak_sparse"
   ),
   family = c("gaussian", "binomial"),
   n,
@@ -217,6 +218,10 @@ glmnet_fuzz_case <- function(
     beta <- numeric(p)
   } else if (scenario == "strong_rare_binomial") {
     beta <- glmnet_fuzz_beta(p, n_signal = 8L, scale = 1.2)
+  } else if (scenario == "wide_sparse_correlated") {
+    beta <- glmnet_fuzz_beta(p, n_signal = 20L, scale = 0.6)
+  } else if (scenario == "wide_weak_sparse") {
+    beta <- glmnet_fuzz_beta(p, n_signal = 20L, scale = 0.16)
   } else {
     beta <- glmnet_fuzz_beta(p, n_signal = 8L, scale = 0.7)
   }

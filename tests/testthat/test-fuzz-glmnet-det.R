@@ -157,19 +157,21 @@ test_that("mlxs_glmnet deterministic fuzz cases match glmnet", {
     data.frame(
       scenario = c(
         "ar1_correlated", "ar1_correlated", "block_correlated",
-        "null_signal", "null_signal", "strong_rare_binomial"
+        "null_signal", "null_signal", "strong_rare_binomial",
+        "wide_sparse_correlated", "wide_weak_sparse"
       ),
       family = c(
         "gaussian", "binomial", "gaussian",
-        "gaussian", "binomial", "binomial"
+        "gaussian", "binomial", "binomial",
+        "gaussian", "gaussian"
       ),
-      seed = c(1001L, 1002L, 1003L, 1004L, 1005L, 1006L),
-      n = c(900L, 900L, 900L, 900L, 900L, 1200L),
-      p = c(120L, 120L, 120L, 120L, 120L, 160L),
-      n_test = rep(700L, 6L),
-      rho = c(0.9, 0.9, 0, 0.8, 0.8, 0.5),
-      alpha = c(1, 1, 0.5, 1, 1, 0.5),
-      nlambda = rep(20L, 6L)
+      seed = c(1001L, 1002L, 1003L, 1004L, 1005L, 1006L, 1007L, 1008L),
+      n = c(900L, 900L, 900L, 900L, 900L, 1200L, 250L, 250L),
+      p = c(120L, 120L, 120L, 120L, 120L, 160L, 1000L, 1000L),
+      n_test = c(rep(700L, 6L), 1500L, 1500L),
+      rho = c(0.9, 0.9, 0, 0.8, 0.8, 0.5, 0.9, 0.9),
+      alpha = c(1, 1, 0.5, 1, 1, 0.5, 1, 1),
+      nlambda = c(rep(20L, 6L), 10L, 10L)
     ),
     if (identical(fuzz_tier, "full")) {
       data.frame(
