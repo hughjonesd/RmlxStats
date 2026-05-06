@@ -68,7 +68,7 @@ date <- Sys.Date()
 commit <- system("git rev-parse --short HEAD", intern = TRUE)
 branch <- system("git branch --show-current", intern = TRUE)
 rmlx_version <- packageVersion("Rmlx")
-
+tier <- latest(fuzz)$tier[1]
 ```
 
 Metadata     |   
@@ -77,7 +77,44 @@ Generated on | `r date`
 Commit       | `r commit`
 Branch       | `r branch`
 Rmlx version | `r rmlx_version`
-Tier         | `r params$tier`
+Tier         | `r tier`
+
+## History
+
+```{r}
+# lm-det: not sure?
+# lm-mc: monte carlo bias and ci coverage with SEs
+# glm-det: aic and fitted errors; 
+# glm-mc: mc bias and ci as for lm-mc; 
+# glmnet-det: prediction errors
+# cv-glmnet: out of fold predictions
+# prcomp-det: subspace and reconstruction error
+# prcomp-mc: same
+# 
+fuzz |> 
+  filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se),
+                    position = position_dodge(0.5), size = 0.2) +
+    geom_line(aes(linetype = tier)) + 
+    facet_grid(rows = vars(Scenario))
+    
+```
+
+```{r}
+fuzz |> 
+  filter(suite == "mlxs-lm-monte-carlo", measure == "coverage") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se), size = 0.2,
+                    position = position_dodge(0.5)) +
+    geom_line(aes(linetype = tier)) + 
+    facet_grid(rows = vars(Scenario))
+```
+
+
 
 ## `mlxs_lm` {.tabset}
 
@@ -156,6 +193,7 @@ fuzz_lm_mc <- latest(fuzz) |>
 
 ```{r}
 fuzz_lm_mc |> 
+  filter(measure %in% c("bias", "coverage")) |> 
   drop_na(value_se) |> 
   mutate(
     Measure = paste0(measure, " (", term, ")"),
@@ -191,17 +229,19 @@ stopifnot(n_distinct(bootstrap_B) == 1)
 
 fuzz_lm_mc |> 
   drop_na(bootstrap_B) |> 
-  filter(measure == "standard_error_ratio") |> 
+  filter(measure == "standard_error") |> 
   mutate(
     `s.e. type` = replace_values(source, "model" ~ "normal theory")
   ) |> 
   ggplot(aes(y = term, x = value, colour = `s.e. type`)) + 
-    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey30") +
-    geom_point() +
+    geom_pointrange(aes(xmin = value - 1.96 * value_se, xmax = value + 1.96 * value_se),
+                    position = position_dodge2(0.25)) +
     facet_wrap(vars(Scenario)) +
     labs(
-      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory s.e. ratios for non-normal error term"),
-      x = "s.e. ratio"
+      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory standard errors with non-normal errors"),
+      subtitle = paste0("Empirical s.e.s are calculated over multiple Monte Carlo runs.\n",
+                        "Lines are Monte Carlo standard errors x 1.96 of the s.e. itself"),
+      x = "Coefficient s.e."
     ) + 
     theme(
       legend.position = "bottom"
@@ -301,6 +341,28 @@ fuzz_glm_mc |>
 
 ```
 
+#### Standard errors
+
+```{r}
+fuzz_glm_mc |> 
+  filter(measure == "standard_error") |> 
+  mutate(
+    Scenario = paste0(Scenario, " (", family, ")"),
+    Source = replace_values(source, "model" ~ "normal theory")
+  ) |> 
+  ggplot(aes(y = term, x = value, colour = Source)) +
+    geom_point(position = position_dodge2(0.5)) +
+    facet_wrap(vars(Scenario), scales = "free_x", axes = "all_x") + 
+    scale_colour_manual(values = c("bootstrap" = "green3", 
+                                   "normal theory" = "orange2", "empirical" = "black")) +
+    theme(legend.position = "bottom") +
+    labs(
+      title = "Standard errors, mlx estimates versus empirical Monte Carlo",
+      subtitle = "Empirical s.e.s are the standard deviation of the estimate across MC repetitions",
+      x = "Standard error"
+    )
+```
+
 ## `mlxs_glmnet` {.tabset}
 
 ### Deterministic tests
@@ -312,31 +374,67 @@ fuzz_glmnet_det <- latest(fuzz) |>
   select(-suite, -case_type, -nreps, -(rank:bootstrap_B))
 ```
 
-* There's a bias measure but no confint for it, also a RMSE 
-* Then prediction loss of mlxs_glmnet, glmnet and an "oracle" (which is what?)
-* Then various measures/ratios against either truth or glmnet
-  - "risk" delta against the oracle
-  - "loss" and "loss ratio" against the glmnet reference
-  - here again, a simple statistic and description might help more than these
-    abstract terms
-* Then precision and recall of support recovery (i.e. which variables did
-  we decide were non-zero, versus the truth)
-* All of this is made at fixed lambdas. So as absolute statistics, are these
-  much use? Isn't this "along the path" and we care more about the final value?
-  - How were the lambdas selected?
-  - Why are there different lambda_idx values for different outcomes?
-* Alpha is usually 1, but sometimes 0.5... er... what is alpha?
+We measure prediction accuracy against a test set, with the oracle being
+the true d.g.p. (i.e. if you know that, how well do you predict the test set?)
+We compare glmnet::glmnet as a reference.
 
 
-We measure precision and recall of the active set (i.e.
-variables with a non-zero beta), at selected lambda values on the
-fitted path.
+```{r}
+fuzz_glmnet_det |> 
+  filter(target == "prediction", measure == "loss") |> 
+  mutate(
+    `Lambda index` = as.factor(lambda_index),
+    Source = replace_values(source, "oracle" ~ "True d.g.p.", "reference" ~ "glmnet")
+  ) |> 
+  ggplot(aes(y = Scenario, x = value, colour = Source, shape = `Lambda index`)) +
+    geom_point(position = position_dodge2(0.75, padding = 0.2)) + 
+    facet_grid(cols = vars(family), scales = "free_x") + 
+    scale_x_log10() + 
+    scale_colour_manual(values = c("True d.g.p." = "black", "mlx" = "orange", 
+                                   "glmnet" = "seagreen")) +
+    theme(legend.position = "bottom", legend.box = "vertical") +
+    labs(
+      x = "Loss (log scale)",
+      title = "Prediction error (mse or loglikelihood) on test set"
+    )
+```
+
+
+We also check values of our objective function (within the training set). If
+we do worse than glmnet (positive values of e.g. 0.1 or more) that suggests
+we should check performance of the algorithm - we're not maximizing 
+what we are trying to maximize.
+
+
+```{r}
+fuzz_glmnet_det |> 
+  filter(measure=="delta", target=="objective") |> 
+  mutate(
+    `Lambda index` = as.factor(lambda_index),
+    better = value <= 0
+  ) |> 
+  ggplot(aes(y = Scenario, x = value, shape = `Lambda index`, colour = better)) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey30") +
+    geom_point(position = position_dodge2(0.5)) + 
+    facet_grid(cols = vars(family), scales = "free_x") + 
+    scale_colour_manual(values = c("TRUE" = "green4", "FALSE" = "red"), 
+                        guide = "none") +
+    theme(legend.position = "bottom") +
+    labs(
+      x = "Objective delta",
+      title = "Achieved objective delta against glmnet::glmnet",
+      subtitle = paste0("The objective to minimize is training loss plus a lambda penalty.\n",
+                        "Positive values: worse than glmnet; negative: better.")
+    )
+```
+
+Lastly, we measure precision and recall of the active set (i.e.
+variables with a non-zero beta).
 
 * Precision: out of all variables identified by the fit as active, what proportion
   were truly active?
 * Recall: out of all truly active variables, what proportion were correctly 
   identified?
-
 
 ```{r}
 fuzz_glmnet_det |> 
@@ -392,13 +490,33 @@ fuzz_glmnet_det |>
 
 ### Monte Carlo tests
 
-* These are monte carlo tests with just 5 repetitions
-* Not sure what they are for, meh
 
 ```{r}
 fuzz_glmnet_mc <- latest(fuzz) |> 
   filter(suite == "mlxs-glmnet-monte-carlo") |> 
   select(-suite, -case_type, -(rank:term))
+```
+
+These are only run on the "full" tier.
+
+```{r}
+if (tier == "full") {
+  fuzz_glmnet_mc |> 
+    filter(target == "prediction") |> 
+    mutate(
+      Source = replace_values(source, "reference" ~ "glmnet")
+    ) |> 
+    ggplot(aes(y = Source, x = value, colour = Source)) + 
+      geom_pointrange(aes(xmin = value - 1.96 * value_se, 
+                          xmax = value + 1.96 * value_se)) +
+      scale_colour_manual(values = c("mlx" = "orange", "glmnet" = "seagreen")) +
+      coord_cartesian(xlim = c(0, 0.05)) +
+      labs(
+        title = "Prediction loss for mlxs_glmnet and glmnet",
+        subtitle = paste(fuzz_glmnet_mc$nreps[1], "Monte Carlo reps. Lines show Monte Carlo s.e.s"),
+        x = "Loss"
+      )
+}
 ```
 
 
