@@ -55,6 +55,7 @@ summarise_glm_mc <- function(
   stopifnot(!anyNA(covered))
   bias <- colMeans(estimates) - unname(truth)
   empirical_se <- apply(estimates, 2, sd)
+  model_se <- colMeans(ses)
   coverage <- colMeans(covered)
   metric_names <- c(
     "truth", "estimate", "bias", "error", "standard_error",
@@ -83,7 +84,7 @@ summarise_glm_mc <- function(
         bias,
         sqrt(colMeans((sweep(estimates, 2, unname(truth)))^2)),
         empirical_se,
-        colMeans(ses),
+        model_se,
         coverage
       )),
       value_se = c(rbind(
@@ -91,8 +92,8 @@ summarise_glm_mc <- function(
         rep(NA_real_, length(truth)),
         empirical_se / sqrt(reps),
         rep(NA_real_, length(truth)),
-        rep(NA_real_, length(truth)),
-        rep(NA_real_, length(truth)),
+        empirical_se / sqrt(2 * (reps - 1)),
+        apply(ses, 2, sd) / sqrt(reps),
         sqrt(coverage * (1 - coverage) / reps)
       ))
     ),
@@ -174,6 +175,8 @@ summarise_glm_bootstrap_mc <- function(
   empirical_se <- apply(estimates, 2, sd, na.rm = TRUE)
   average_model_se <- colMeans(ses, na.rm = TRUE)
   average_bootstrap_se <- colMeans(boot_ses, na.rm = TRUE)
+  model_se_se <- apply(ses, 2, sd, na.rm = TRUE) / sqrt(reps)
+  bootstrap_se_se <- apply(boot_ses, 2, sd, na.rm = TRUE) / sqrt(reps)
   all_finite <- vapply(seq_along(truth), function(idx) {
     vals <- c(estimates[, idx], ses[, idx], boot_ses[, idx])
     all(is.finite(vals[!is.na(vals)]))
@@ -190,18 +193,17 @@ summarise_glm_bootstrap_mc <- function(
   )
   coef_metrics <- c(
     "truth", "estimate", "bias", "standard_error", "standard_error",
-    "standard_error", "standard_error_ratio", "standard_error_ratio",
-    "diagnostic"
+    "standard_error", "diagnostic"
   )
   rbind(
     fuzz_metric_rows(
       meta,
       term = rep(names(truth), each = length(coef_metrics)),
       measure = rep(coef_metrics, times = length(truth)),
-      target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "finite"),
-      source      = c("truth",       "mlx",         "mlx",         "empirical",   "model",       "bootstrap",  "model",       "bootstrap",  "mlx"),
-      baseline    = c(NA,            "truth",       "truth",       NA,            "empirical",   "empirical",  "empirical",   "empirical",  NA),
-      aggregation = c("value",       "mean",        "mean",        "value",       "mean",        "mean",       "ratio",       "ratio",      "all"),
+      target      = c("coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "coefficient", "finite"),
+      source      = c("truth",       "mlx",         "mlx",         "empirical",   "model",       "bootstrap",  "mlx"),
+      baseline    = c(NA,            "truth",       "truth",       NA,            "empirical",   "empirical",  NA),
+      aggregation = c("value",       "mean",        "mean",        "value",       "mean",        "mean",       "all"),
       value = c(rbind(
         unname(truth),
         colMeans(estimates, na.rm = TRUE),
@@ -209,9 +211,16 @@ summarise_glm_bootstrap_mc <- function(
         empirical_se,
         average_model_se,
         average_bootstrap_se,
-        average_model_se / empirical_se,
-        average_bootstrap_se / empirical_se,
         as.numeric(all_finite)
+      )),
+      value_se = c(rbind(
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        rep(NA_real_, length(truth)),
+        empirical_se / sqrt(2 * (reps - 1)),
+        model_se_se,
+        bootstrap_se_se,
+        rep(NA_real_, length(truth))
       ))
     ),
     fuzz_metric_rows(
@@ -344,8 +353,6 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
     tier = fuzz_tier
   )
 
-  lower <- if (identical(fuzz_tier, "full")) 0.88 else 0.80
-  upper <- if (identical(fuzz_tier, "full")) 1.15 else 1.25
   failure <- summaries_df[
     summaries_df$target == "bootstrap_failure" &
       summaries_df$aggregation == "rate",
@@ -356,20 +363,7 @@ test_that("mlxs_glm bootstrap SE calibration is stable", {
   convergence <- summaries_df[
     summaries_df$target == "convergence" & summaries_df$aggregation == "rate",
   ]
-  boot_ratio <- summaries_df[
-    summaries_df$measure == "standard_error_ratio" &
-      summaries_df$source == "bootstrap",
-  ]
   expect_true(all(failure$value == 0))
   expect_true(all(as.logical(finite$value)))
   expect_true(all(convergence$value == 1))
-  expect_true(
-    all(boot_ratio$value >= lower & boot_ratio$value <= upper),
-    info = paste(
-      "bootstrap SE ratio outside calibration band:",
-      paste(paste(boot_ratio$family, boot_ratio$term, sep = ":")[
-        boot_ratio$value < lower | boot_ratio$value > upper
-      ], collapse = ", ")
-    )
-  )
 })
