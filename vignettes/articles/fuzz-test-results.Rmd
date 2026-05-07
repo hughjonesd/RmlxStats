@@ -58,7 +58,7 @@ prettify <- function(x) {
 fuzz <- fuzz |> 
   mutate(
     agg = replace_values(aggregation, "value" ~ ""),
-    Measure = if_else(agg == "", target, paste0(agg, "(", target, ")")),
+    Target = if_else(agg == "", target, paste0(agg, "(", target, ")")),
     Case_type = prettify(case_type),
     Scenario = paste(prettify(scenario), paste("n", n), paste("p", p), sep = " / ")
   ) 
@@ -81,7 +81,7 @@ Tier         | `r tier`
 
 ## History
 
-```{r}
+```{r, fig.height = 10}
 # lm-det: not sure?
 # lm-mc: monte carlo bias and ci coverage with SEs
 # glm-det: aic and fitted errors; 
@@ -90,7 +90,11 @@ Tier         | `r tier`
 # cv-glmnet: out of fold predictions
 # prcomp-det: subspace and reconstruction error
 # prcomp-mc: same
-# 
+
+history_theme <- theme(panel.grid = element_blank(), 
+                       panel.grid.major.y = element_line(
+                         colour = "grey95", linewidth = 0.5))
+
 fuzz |> 
   filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
@@ -98,7 +102,8 @@ fuzz |>
                         ymax = value + 1.96 * value_se),
                     position = position_dodge(0.5), size = 0.2) +
     geom_line(aes(linetype = tier)) + 
-    facet_grid(rows = vars(Scenario))
+    facet_grid(rows = vars(Scenario)) +
+    history_theme
     
 ```
 
@@ -111,7 +116,8 @@ fuzz |>
                         ymax = value + 1.96 * value_se), size = 0.2,
                     position = position_dodge(0.5)) +
     geom_line(aes(linetype = tier)) + 
-    facet_grid(rows = vars(Scenario))
+    facet_grid(rows = vars(Scenario)) +
+    history_theme
 ```
 
 
@@ -146,7 +152,7 @@ cols <- palette()[1:6]
 names(cols) <- c("max(vcov)", "max(standard_error)", "residual_sigma",
                  "r_squared", "max(fitted)", "max(coefficient)")
 fuzz_lm_det |> 
-  ggplot(aes(y = Measure, x = value, color = Measure)) + 
+  ggplot(aes(y = Target, x = value, color = Target)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed") + 
     geom_point() + 
     facet_wrap(vars(Case_type, Scenario), axes = "all_x") + 
@@ -277,10 +283,10 @@ fuzz_glm_det <- latest(fuzz) |>
 
 ```{r, fig.height = 20}
 cols_glm <- palette()[1:6]
-names(cols_glm) <- unique(fuzz_glm_det$Measure)
+names(cols_glm) <- unique(fuzz_glm_det$Target)
 
 fuzz_glm_det |> 
-  ggplot(aes(y = Measure, x = value, colour = Measure)) + 
+  ggplot(aes(y = Target, x = value, colour = Target)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point() +
     facet_grid(rows = vars(Scenario), cols = vars(family), 
@@ -554,7 +560,7 @@ fuzz_cv_glmnet_det |>
 ```{r}
 fuzz_cv_glmnet_det |> 
   filter(measure == "error", target != "out_of_fold_prediction") |> 
-  ggplot(aes(y = Measure, x = value)) + 
+  ggplot(aes(y = Target, x = value)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") + 
     geom_point() +
     facet_wrap(vars(Scenario)) +
@@ -600,12 +606,12 @@ Metrics include:
 
 ```{r, fig.height = 8}
 fuzz_prcomp_det |> 
-  filter(measure != "diagnostic", Measure != "reconstruction",
+  filter(measure != "diagnostic", Target != "reconstruction",
          case_type != "metamorphic") |> 
   mutate(
     Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
   ) |> 
-  ggplot(aes(y = Measure, x = value, colour = method)) + 
+  ggplot(aes(y = Target, x = value, colour = method)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point(position = position_dodge2(width = 0.5)) +
     facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +
@@ -638,11 +644,11 @@ fuzz_prcomp_mc <- latest(fuzz) |>
 
 ```{r, fig.height = 8}
 fuzz_prcomp_mc |> 
-  filter(measure != "diagnostic", Measure != "mean(reconstruction)") |> 
+  filter(measure != "diagnostic", Target != "mean(reconstruction)") |> 
   mutate(
     Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
   ) |> 
-  ggplot(aes(y = Measure, x = value)) + 
+  ggplot(aes(y = Target, x = value)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point(position = position_dodge2(width = 0.5)) +
     facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +

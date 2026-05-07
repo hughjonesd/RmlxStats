@@ -47,7 +47,9 @@ jobs:
         run: |
           out_dir="${{ steps.tier.outputs.out_dir }}"
           csv="tests/testthat/${out_dir}/fuzz-results.csv"
-          if [[ ! -f "${csv}" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "run=true" >> "${GITHUB_OUTPUT}"
+          elif [[ ! -f "${csv}" ]]; then
             echo "run=true" >> "${GITHUB_OUTPUT}"
           else
             last_commit="$(git log -1 --format=%H -- "${csv}" || true)"
