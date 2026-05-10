@@ -163,10 +163,12 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
     y_work <- y_orig * w_sqrt
   }
 
-  qr_fit <- qr(x_work)
-  qty_mlx <- crossprod(qr_fit$Q, y_work)
-  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE)
-
+  # qr has to be on cpu at present...
+  qr_fit <- qr(x_work, device = "cpu")
+  qty_mlx <- crossprod(qr_fit$Q, , y_work)
+  # so does solve_triangular 
+  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE, 
+                                         device = "cpu")
   fitted_mlx <- x_orig %*% coef_mlx
   residual_mlx <- y_orig - fitted_mlx
 

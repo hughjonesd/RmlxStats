@@ -159,7 +159,7 @@ mlxs_prcomp <- function(x,
 
   denom <- max(1L, n_obs - 1L)
   cov_mat <- crossprod(x_scaled) / denom
-  eig <- Rmlx::mlx_eigh(cov_mat)
+  eig <- Rmlx::mlx_eigh(cov_mat, device = "cpu")
 
   idx <- seq.int(from = n_pred, to = 1L)
   values <- eig$values[idx]
@@ -193,7 +193,7 @@ mlxs_prcomp <- function(x,
   n_pred <- ncol(x_scaled)
   denom <- max(1L, n_obs - 1L)
   gram <- tcrossprod(x_scaled) / denom
-  eig <- Rmlx::mlx_eigh(gram)
+  eig <- Rmlx::mlx_eigh(gram, device = "cpu")
 
   idx <- seq.int(from = n_obs, to = 1L)
   values <- eig$values[idx]
@@ -255,7 +255,7 @@ mlxs_prcomp <- function(x,
   n_obs <- nrow(x_scaled)
   n_pred <- ncol(x_scaled)
   full_rank <- min(n_obs, n_pred)
-  decomp <- Rmlx::svd(x_scaled, nu = 0L, nv = full_rank)
+  decomp <- Rmlx::svd(x_scaled, nu = 0L, nv = full_rank, device = "cpu")
   sdev_all <- decomp$d / sqrt(max(1L, n_obs - 1L))
   keep <- .mlxs_prcomp_keep_count(sdev_all, rank_limit, tol)
 
@@ -289,7 +289,7 @@ mlxs_prcomp <- function(x,
     dtype = Rmlx::mlx_dtype(x_scaled),
     device = x_scaled$device
   )
-  q_basis <- qr(omega)$Q[, seq_len(work_rank), drop = FALSE]
+  q_basis <- qr(omega, device = "cpu")$Q[, seq_len(work_rank), drop = FALSE]
 
   if (n_iter > 0L) {
     for (iter in seq_len(n_iter)) {
@@ -299,7 +299,7 @@ mlxs_prcomp <- function(x,
 
   scores_basis <- x_scaled %*% q_basis
   small_cov <- crossprod(scores_basis) / max(1L, n_obs - 1L)
-  eig <- Rmlx::mlx_eigh(small_cov)
+  eig <- Rmlx::mlx_eigh(small_cov, device = "cpu")
   idx <- seq.int(from = work_rank, to = 1L)
   values <- eig$values[idx]
   basis_rot <- eig$vectors[, idx, drop = FALSE]
@@ -332,7 +332,7 @@ mlxs_prcomp <- function(x,
     if (is.null(compiled)) {
       compiled <<- Rmlx::mlx_compile(
         function(x_scaled, q_basis) {
-          qr(t(x_scaled) %*% (x_scaled %*% q_basis))$Q
+          qr(t(x_scaled) %*% (x_scaled %*% q_basis), device = "cpu")$Q
         }
       )
     }
