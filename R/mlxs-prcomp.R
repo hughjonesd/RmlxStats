@@ -164,10 +164,7 @@ mlxs_prcomp <- function(x,
   idx <- seq.int(from = n_pred, to = 1L)
   values <- eig$values[idx]
   rotation <- eig$vectors[, idx, drop = FALSE]
-  values <- Rmlx::mlx_maximum(
-    values,
-    Rmlx::as_mlx(0, dtype = Rmlx::mlx_dtype(values), device = values$device)
-  )
+  values <- Rmlx::mlx_maximum(values, 0)
   sdev_all <- sqrt(values)
   keep <- .mlxs_prcomp_keep_count(sdev_all, rank_limit, tol)
 
@@ -198,10 +195,7 @@ mlxs_prcomp <- function(x,
   idx <- seq.int(from = n_obs, to = 1L)
   values <- eig$values[idx]
   left_vecs <- eig$vectors[, idx, drop = FALSE]
-  values <- Rmlx::mlx_maximum(
-    values,
-    Rmlx::as_mlx(0, dtype = Rmlx::mlx_dtype(values), device = values$device)
-  )
+  values <- Rmlx::mlx_maximum(values, 0)
   sdev_all <- sqrt(values)
   keep <- .mlxs_prcomp_keep_count(sdev_all, rank_limit, tol)
 
@@ -287,7 +281,7 @@ mlxs_prcomp <- function(x,
     dim = c(n_pred, work_rank),
     seed = seed,
     dtype = Rmlx::mlx_dtype(x_scaled),
-    device = x_scaled$device
+    device = Rmlx::mlx_device(x_scaled)
   )
   q_basis <- qr(omega, device = "cpu")$Q[, seq_len(work_rank), drop = FALSE]
 
@@ -303,10 +297,7 @@ mlxs_prcomp <- function(x,
   idx <- seq.int(from = work_rank, to = 1L)
   values <- eig$values[idx]
   basis_rot <- eig$vectors[, idx, drop = FALSE]
-  values <- Rmlx::mlx_maximum(
-    values,
-    Rmlx::as_mlx(0, dtype = Rmlx::mlx_dtype(values), device = values$device)
-  )
+  values <- Rmlx::mlx_maximum(values, 0)
   sdev_all <- sqrt(values)
   keep <- .mlxs_prcomp_keep_count(sdev_all, rank_limit, tol)
 
@@ -449,7 +440,7 @@ mlxs_prcomp <- function(x,
   Rmlx::as_mlx(
     matrix(value, nrow = 1L, ncol = n_pred),
     dtype = Rmlx::mlx_dtype(x_scaled),
-    device = x_scaled$device
+    device = Rmlx::mlx_device(x_scaled)
   )
 }
 
