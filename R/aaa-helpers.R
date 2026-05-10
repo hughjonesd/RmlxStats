@@ -31,7 +31,8 @@ utils::globalVariables("compiled")
     )
   }
   eye <- Rmlx::mlx_eye(n_coef)
-  r_inv <- Rmlx::mlx_solve_triangular(qr_fit$R, eye, upper = TRUE)
+  r_inv <- Rmlx::mlx_solve_triangular(qr_fit$R, eye, upper = TRUE,
+                                      device = "cpu")
   scale * (r_inv %*% t(r_inv))
 }
 

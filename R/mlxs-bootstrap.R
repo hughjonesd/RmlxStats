@@ -209,7 +209,8 @@ mlxs_boot <- function(
   residual_fun <- function(residuals) {
     y_boot <- fitted_mlx + residuals
     qty <- crossprod(qr_state$Q, y_boot)
-    Rmlx::mlx_solve_triangular(qr_state$R, qty, upper = TRUE)
+    Rmlx::mlx_solve_triangular(qr_state$R, qty, upper = TRUE, 
+                               device = "cpu")
   }
 
   boot_res <- mlxs_boot(
