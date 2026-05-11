@@ -1,18 +1,17 @@
 #' MLX-backed generalized linear model
 #'
 #' Fit generalized linear models using iterative reweighted least squares (IRLS)
-#' with MLX providing the heavy lifting for weighted least squares solves.
+#' with MLX providing the heavy lifting for weighted least squares solves. Final
+#' convergence is done at double precision on the cpu.
 #'
 #' @inheritParams stats::glm
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
-#'   [mlxs_poisson()]).
+#'   [mlxs_poisson()]). You can use `"gaussian"` etc.
 #' @param control Optional list of control parameters passed to
-#'   [stats::glm.control()].
-#'
-#' @return An object of class `c("mlxs_glm", "mlxs_model")` containing elements
-#'   similar to the result of [stats::glm()]. Computations use single-precision
-#'   MLX arrays, so results typically agree with [stats::glm()] to around 1e-6
-#'   unless a tighter tolerance is supplied via `control`. Unlike [stats::glm()],
+#'   [mlxs_glm_control()]. Control parameters can include `epsilon`, `epsilon_f64`,
+#'   `maxit` and `trace`.
+#' @returns An object of class `c("mlxs_glm", "mlxs_model")` containing elements
+#'   similar to the result of [stats::glm()]. Unlike [stats::glm()],
 #'   rank-deficient model matrices are rejected rather than fit with aliased
 #'   coefficients.
 #' @export
@@ -34,6 +33,7 @@ mlxs_glm <- function(
   call <- match.call()
 
   if (is.character(family)) {
+    family <- paste0("mlxs_", family)
     family <- get(family, mode = "function", envir = parent.frame())
   }
   if (is.function(family)) {
@@ -43,8 +43,8 @@ mlxs_glm <- function(
     stop("Invalid 'family' argument.", call. = FALSE)
   }
 
-  control <- do.call(stats::glm.control, control)
-
+  control <- do.call(mlxs_glm_control, control)
+  
   mf <- match.call(expand.dots = FALSE)
   arg_names <- c("formula", "data", "subset", "weights", "na.action")
   keep <- match(arg_names, names(mf), nomatch = 0L)
@@ -89,6 +89,27 @@ mlxs_glm <- function(
 
   class(core_fit) <- c("mlxs_glm", "mlxs_model")
   core_fit
+}
+
+#' Control parameters
+#'
+#' @param epsilon Convergence tolerance parameter, interpreted as in 
+#'   [stats::glm.control()]. Iterations converge when 
+#'     `abs(deviance - deviance_old)/(abs(deviance) + 0.1) < epsilon`.
+#' @param epsilon_f64 Move operations to float64 on the cpu when convergence
+#'   is this close (using the same expression as above). Doing this allows more 
+#'   precision but slows computation.
+#' @param maxit Maximum number of IWLS iterations.
+#' @param trace Logical: trace each iteration?
+#' @returns A list with default values filled in.
+#' @export
+mlxs_glm_control <- function(
+    epsilon = 1e-8, 
+    epsilon_f64 = 1e-6, 
+    maxit = 25, 
+    trace = FALSE
+  ) {
+  list(epsilon = epsilon, epsilon_f64 = epsilon_f64, maxit = maxit, trace = trace)
 }
 
 .mlxs_glm_clamp_mu <- function(mu, family) {
@@ -169,7 +190,6 @@ mlxs_glm <- function(
   mu_init,
   control,
   eps_mlx,
-  epsilon_target,
   trace = FALSE,
   compile_step = TRUE
 ) {
@@ -186,7 +206,10 @@ mlxs_glm <- function(
   qr_state <- NULL
   converged <- FALSE
   iter_count <- control$maxit
-
+  epsilon_target <- control$epsilon
+  epsilon_f64 <- control$epsilon_f64
+  moved_to_f64 <- FALSE
+  
   for (iter in seq_len(control$maxit)) {
     var_mu_mlx <- family$variance(mu_mlx)
     var_numeric <- as.numeric(var_mu_mlx)
@@ -216,14 +239,14 @@ mlxs_glm <- function(
     beta_new_mlx <- wls_fit$coefficients
     qr_state <- wls_fit$qr
     delta_vec <- beta_new_mlx - beta_mlx
-    delta_val <- max(abs(as.numeric(delta_vec)))
+    delta_val <- as.numeric(max(abs(delta_vec)))
 
     eta_mlx <- X_mlx %*% beta_new_mlx
     mu_mlx <- family$linkinv(eta_mlx)
     mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
     dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-    deviance_val <- sum(as.numeric(dev_res_mlx))
+    deviance_val <- as.numeric(sum(dev_res_mlx))
     dev_change_val <- if (is.finite(dev_prev)) {
       abs(deviance_val - dev_prev) / (0.1 + abs(deviance_val))
     } else {
@@ -243,32 +266,41 @@ mlxs_glm <- function(
       )
     }
 
-    if (delta_val < epsilon_target || dev_change_val < epsilon_target) {
-      converged <- TRUE
-      beta_mlx <- beta_new_mlx
-      dev_prev <- deviance_val
-      iter_count <- iter
-      break
-    }
-    if (
-      !is.finite(deviance_val) ||
-        (is.finite(dev_prev) &&
-          deviance_val > dev_prev &&
-          abs(deviance_val - dev_prev) > epsilon_target)
-    ) {
-      warning(
-        "Divergence detected in mlxs_glm; stopping iterations.",
-        call. = FALSE
-      )
-      beta_mlx <- beta_new_mlx
-      dev_prev <- deviance_val
-      iter_count <- iter
-      break
-    }
-
+    # order matters in the next few lines!
+    
+    diverged <- ! is.finite(deviance_val) ||
+        (is.finite(dev_prev) && deviance_val - dev_prev > epsilon_target)
+    
     beta_mlx <- beta_new_mlx
     dev_prev <- deviance_val
     iter_count <- iter
+    
+    if (delta_val < epsilon_target || dev_change_val < epsilon_target) {
+      converged <- TRUE
+      break
+    }
+    if (diverged) {
+      warning("Divergence detected in mlxs_glm; stopping iterations.",
+              call. = FALSE)
+      break
+    }
+
+    if (delta_val < epsilon_f64 || dev_change_val < epsilon_f64) {
+      if (! moved_to_f64) {
+        if (trace) message("Casting to float64 and working on cpu...")
+        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64", device = "cpu")
+        mu_mlx <- Rmlx::mlx_cast(mu_mlx, dtype = "float64", device = "cpu")
+        eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64", device = "cpu")
+        X_mlx <- Rmlx::mlx_cast(X_mlx, dtype = "float64", device = "cpu")
+        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64", device = "cpu")
+        weights_sqrt_mlx <- Rmlx::mlx_cast(weights_sqrt_mlx, dtype = "float64", 
+                                           device = "cpu")
+        weights_mlx <- Rmlx::mlx_cast(weights_mlx, dtype = "float64", 
+                                      device = "cpu")
+        Rmlx::local_default_device("cpu")
+        moved_to_f64 <- TRUE
+      }
+    }
   }
 
   list(
@@ -282,6 +314,7 @@ mlxs_glm <- function(
     deviance = dev_prev,
     iter = iter_count,
     converged = converged,
+    float64 = moved_to_f64,
     qr = qr_state
   )
 }
@@ -337,10 +370,10 @@ mlxs_glm <- function(
     )
   }
   if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
-    stop("Weights must be non-negative and finite.", call. = FALSE)
+    stop("Weights must be finite.", call. = FALSE)
   }
   if (any(weights_mlx < 0)) {
-    stop("Weights must be non-negative and finite.", call. = FALSE)
+    stop("Weights must be non-negative.", call. = FALSE)
   }
 
   y_mlx <- if (inherits(response, "mlx")) {
@@ -407,8 +440,7 @@ mlxs_glm <- function(
   }
 
   eps_mlx <- Rmlx::mlx_scalar(.Machine$double.eps)
-  epsilon_target <- max(control$epsilon, 1e-6)
-  compile_step <- isTRUE(getOption("mlxs.glm.compile", TRUE))
+  compile_step <- isTRUE(getOption("mlxs.glm.compile", FALSE))
 
   irls_state <- .mlxs_glm_run_irls(
     X_mlx = X_mlx,
@@ -421,7 +453,6 @@ mlxs_glm <- function(
     mu_init = mu_mlx,
     control = control,
     eps_mlx = eps_mlx,
-    epsilon_target = epsilon_target,
     trace = control$trace,
     compile_step = compile_step
   )

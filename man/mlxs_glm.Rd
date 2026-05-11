@@ -23,7 +23,7 @@ mlxs_glm(
     under \sQuote{Details}.}
 
 \item{family}{A mlxs family object (e.g., \code{\link[=mlxs_gaussian]{mlxs_gaussian()}}, \code{\link[=mlxs_binomial]{mlxs_binomial()}},
-\code{\link[=mlxs_poisson]{mlxs_poisson()}}).}
+\code{\link[=mlxs_poisson]{mlxs_poisson()}}). You can use \code{"gaussian"} etc.}
 
 \item{data}{an optional data frame, list or environment (or object
     coercible by \code{\link{as.data.frame}} to a data frame) containing
@@ -49,7 +49,8 @@ mlxs_glm(
 \item{start}{starting values for the parameters in the linear predictor.}
 
 \item{control}{Optional list of control parameters passed to
-\code{\link[stats:glm.control]{stats::glm.control()}}.}
+\code{\link[=mlxs_glm_control]{mlxs_glm_control()}}. Control parameters can include \code{epsilon}, \code{epsilon_f64},
+\code{maxit} and \code{trace}.}
 
 \item{...}{
     For \code{glm}: arguments to be used to form the default
@@ -60,15 +61,14 @@ mlxs_glm(
 }
 \value{
 An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements
-similar to the result of \code{\link[stats:glm]{stats::glm()}}. Computations use single-precision
-MLX arrays, so results typically agree with \code{\link[stats:glm]{stats::glm()}} to around 1e-6
-unless a tighter tolerance is supplied via \code{control}. Unlike \code{\link[stats:glm]{stats::glm()}},
+similar to the result of \code{\link[stats:glm]{stats::glm()}}. Unlike \code{\link[stats:glm]{stats::glm()}},
 rank-deficient model matrices are rejected rather than fit with aliased
 coefficients.
 }
 \description{
 Fit generalized linear models using iterative reweighted least squares (IRLS)
-with MLX providing the heavy lifting for weighted least squares solves.
+with MLX providing the heavy lifting for weighted least squares solves. Final
+convergence is done at double precision on the cpu.
 }
 \examples{
 fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
