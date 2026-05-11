@@ -83,7 +83,7 @@
 \method{bread}{mlxs_glm}(x, ...)
 }
 \arguments{
-\item{object}{An \code{mlxs_glm} model fit.}
+\item{object, model}{An \code{mlxs_glm} model fit.}
 
 \item{...}{Additional arguments passed to underlying methods.}
 

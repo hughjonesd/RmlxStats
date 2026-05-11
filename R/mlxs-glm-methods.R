@@ -3,7 +3,7 @@
 #' Support functions that provide a familiar S3 surface for `mlxs_glm`
 #' fits by delegating to equivalent base `glm` behaviour where helpful.
 #'
-#' @param object An `mlxs_glm` model fit.
+#' @param object,model An `mlxs_glm` model fit.
 #' @param ... Additional arguments passed to underlying methods.
 #' @param newdata Optional data frame used for prediction.
 #' @param type Character string indicating the scale of the prediction or
