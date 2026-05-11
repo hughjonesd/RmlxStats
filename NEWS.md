@@ -1,5 +1,8 @@
 # RmlxStats (development version)
 
+* `mlxs_glm()` now moves to float64 on the cpu where necessary to 
+  compute more accurate estimates.
+* New `mlxs_glm_control()` function.
 * `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient model matrices with a
   clear error rather than returning unstable aliased coefficients.
 * New `bread()`, `estfun()` and `hatvalues()` methods for `mlxs_lm` to allow for
