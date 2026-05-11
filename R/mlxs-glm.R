@@ -209,7 +209,7 @@ mlxs_glm_control <- function(
   epsilon_target <- control$epsilon
   epsilon_f64 <- control$epsilon_f64
   moved_to_f64 <- FALSE
-  
+  step_size_mlx <- Rmlx::mlx_vector(1)
   for (iter in seq_len(control$maxit)) {
     var_mu_mlx <- family$variance(mu_mlx)
     var_numeric <- as.numeric(var_mu_mlx)
@@ -236,7 +236,9 @@ mlxs_glm_control <- function(
     w_mlx <- step_inputs$w
 
     wls_fit <- mlxs_lm_fit(step_inputs$x_w, step_inputs$z_w)
-    beta_new_mlx <- wls_fit$coefficients
+    
+    beta_new_mlx <- (1 - step_size_mlx) * beta_mlx + 
+                          step_size_mlx * wls_fit$coefficients
     qr_state <- wls_fit$qr
     delta_vec <- beta_new_mlx - beta_mlx
     delta_val <- as.numeric(max(abs(delta_vec)))
@@ -262,15 +264,17 @@ mlxs_glm_control <- function(
         ", delta = ",
         format(delta_val, digits = 6),
         ", dev_change = ",
-        format(dev_change_val, digits = 6)
+        format(dev_change_val, digits = 6),
+        ", step_size = ",
+        format(as.numeric(step_size_mlx), digits = 6)
       )
     }
 
     # order matters in the next few lines!
-    
-    diverged <- ! is.finite(deviance_val) ||
+
+    diverging <- ! is.finite(deviance_val) ||
         (is.finite(dev_prev) && deviance_val - dev_prev > epsilon_target)
-    
+
     beta_mlx <- beta_new_mlx
     dev_prev <- deviance_val
     iter_count <- iter
@@ -279,10 +283,13 @@ mlxs_glm_control <- function(
       converged <- TRUE
       break
     }
-    if (diverged) {
-      warning("Divergence detected in mlxs_glm; stopping iterations.",
-              call. = FALSE)
-      break
+    if (diverging) {
+      step_size_mlx <- step_size_mlx/2
+      if (as.logical(step_size_mlx < epsilon_target)) {
+        warning("Divergence detected in mlxs_glm; stopping iterations.",
+                call. = FALSE)
+        break
+      }
     }
 
     if (delta_val < epsilon_f64 || dev_change_val < epsilon_f64) {
@@ -297,8 +304,12 @@ mlxs_glm_control <- function(
                                            device = "cpu")
         weights_mlx <- Rmlx::mlx_cast(weights_mlx, dtype = "float64", 
                                       device = "cpu")
+        step_size_mlx <- Rmlx::mlx_cast(step_size_mlx, dtype = "float64",
+                                        device = "cpu")
         Rmlx::local_default_device("cpu")
         moved_to_f64 <- TRUE
+        dev_prev <- Inf # we restart counting the deviance
+        
       }
     }
   }
