@@ -281,7 +281,7 @@ fuzz_glm_det <- latest(fuzz) |>
   select(-suite, -case_type, -(nreps:term))
 ```
 
-```{r, fig.height = 20}
+```{r, fig.height = 20, eval = nrow(fuzz_glm_det) > 0}
 cols_glm <- palette()[1:6]
 names(cols_glm) <- unique(fuzz_glm_det$Target)
 
@@ -323,7 +323,7 @@ fuzz_glm_mc <- latest(fuzz) |>
   select(-suite, -case_type, -(alpha:bootstrap_B))
 ```
 
-```{r}
+```{r, eval = nrow(fuzz_glm_mc) > 0}
 fuzz_glm_mc |> 
   drop_na(value_se) |> 
   mutate(
@@ -349,7 +349,7 @@ fuzz_glm_mc |>
 
 #### Standard errors
 
-```{r}
+```{r, eval = nrow(fuzz_glm_mc) > 0}
 fuzz_glm_mc |> 
   filter(measure == "standard_error") |> 
   mutate(
