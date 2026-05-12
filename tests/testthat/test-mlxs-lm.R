@@ -132,6 +132,34 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   expect_equal(drop(as.matrix(sum_obj$coef)), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
 })
 
+test_that("mlxs_lm passes epsilon_f64 control to the fit", {
+  set.seed(2)
+  n <- 160
+  x1 <- rnorm(n)
+  x2 <- x1 + rnorm(n, sd = 1e-5)
+  x3 <- rnorm(n)
+  data <- data.frame(
+    y = 1 + 0.75 * x1 - 0.5 * x2 +
+      0.25 * x3 + rnorm(n, sd = 0.01),
+    x1 = x1,
+    x2 = x2,
+    x3 = x3
+  )
+
+  fit <- mlxs_lm(
+    y ~ x1 + x2 + x3,
+    data = data,
+    control = list(epsilon_f64 = 1e-6)
+  )
+
+  expect_true(fit$refined)
+  expect_equal(fit$control$epsilon_f64, 1e-6)
+  expect_equal(Rmlx::mlx_dtype(fit$coefficients), "float64")
+  expect_equal(Rmlx::mlx_device(fit$coefficients), "cpu")
+  expect_no_error(predict(fit, newdata = head(data, 3)))
+  expect_no_error(augment(fit, newdata = head(data, 3)))
+})
+
 test_that("mlxs_lm handles weights like stats::lm", {
   formula <- mpg ~ cyl + disp
   w <- seq_len(nrow(mtcars)) / nrow(mtcars)

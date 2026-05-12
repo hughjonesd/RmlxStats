@@ -1,5 +1,7 @@
 # RmlxStats (development version)
 
+* `mlxs_lm_fit()` and `mlxs_lm()` can optionally use float64 CPU iterative
+  refinement after the initial MLX QR solve via `epsilon_f64`.
 * `mlxs_glm()` now moves to float64 on the cpu where necessary to 
   compute more accurate estimates.
 * New `mlxs_glm_control()` function.

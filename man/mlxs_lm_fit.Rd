@@ -4,7 +4,7 @@
 \alias{mlxs_lm_fit}
 \title{Fit an MLX linear model from design matrices}
 \usage{
-mlxs_lm_fit(x, y, weights = NULL)
+mlxs_lm_fit(x, y, weights = NULL, epsilon_f64 = NULL)
 }
 \arguments{
 \item{x}{MLX design matrix (or object coercible via \code{\link[Rmlx:as_mlx]{Rmlx::as_mlx()}}) whose
@@ -16,6 +16,9 @@ the response values.}
 \item{weights}{Optional MLX column vector or numeric vector of non-negative
 observation weights. When supplied, weighted least squares are fit via the
 standard square-root weighting.}
+
+\item{epsilon_f64}{Optional backward-error threshold for switching to
+float64 CPU iterative refinement. When \code{NULL}, no refinement is run.}
 }
 \value{
 A list with components \code{coefficients}, \code{fitted.values}, \code{residuals},

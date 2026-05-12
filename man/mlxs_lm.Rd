@@ -4,7 +4,7 @@
 \alias{mlxs_lm}
 \title{MLX-backed linear regression}
 \usage{
-mlxs_lm(formula, data, subset, weights)
+mlxs_lm(formula, data, subset, weights, control = list())
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -17,6 +17,10 @@ variables in the model.}
 \item{weights}{Optional non-negative observation weights. Treated like the
 \code{weights} argument to \code{\link[stats:lm]{stats::lm()}}, i.e. they enter the fit via weighted
 least squares.}
+
+\item{control}{Optional list of control parameters. Currently supports
+\code{epsilon_f64}, a backward-error threshold for switching to float64 CPU
+iterative refinement.}
 }
 \value{
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing

@@ -58,7 +58,11 @@ predict.mlxs_lm <- function(object, newdata = NULL, ...) {
   )
   mm <- model.matrix(delete.response(terms_obj), mf)
   beta_mlx <- object$coefficients
-  mm_mlx <- Rmlx::as_mlx(mm)
+  mm_mlx <- Rmlx::as_mlx(
+    mm,
+    dtype = Rmlx::mlx_dtype(beta_mlx),
+    device = Rmlx::mlx_device(beta_mlx)
+  )
   preds <- mm_mlx %*% beta_mlx
   preds
 }
@@ -350,7 +354,8 @@ summary.mlxs_lm <- function(
   y_mlx <- resid_mlx + fitted_mlx
   n_obs <- nobs(object)
   y_mean <- as.numeric(Rmlx::mlx_sum(y_mlx)) / n_obs
-  centered <- y_mlx - Rmlx::mlx_scalar(y_mean)
+  centered <- y_mlx - Rmlx::mlx_scalar(y_mean, 
+                                       device = Rmlx::mlx_device(y_mlx))
   tss <- as.numeric(Rmlx::mlx_sum(centered * centered))
   r.squared <- if (tss < .Machine$double.eps) 1 else 1 - rss / tss
   df.int <- attr(object$terms, "intercept")
@@ -547,7 +552,11 @@ augment.mlxs_lm <- function(
       na.action = na.pass
     )
     mm <- model.matrix(delete.response(terms_obj), mf)
-    mm_mlx <- Rmlx::as_mlx(mm)
+    mm_mlx <- Rmlx::as_mlx(
+      mm,
+      dtype = Rmlx::mlx_dtype(x$coefficients),
+      device = Rmlx::mlx_device(x$coefficients)
+    )
     fitted_vals <- mm_mlx %*% x$coefficients
     residuals_vals <- NULL
     base_data <- newdata
