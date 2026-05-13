@@ -280,8 +280,7 @@ mlxs_prcomp <- function(x,
   omega <- .mlxs_prcomp_random_normal(
     dim = c(n_pred, work_rank),
     seed = seed,
-    dtype = Rmlx::mlx_dtype(x_scaled),
-    device = Rmlx::mlx_device(x_scaled)
+    dtype = Rmlx::mlx_dtype(x_scaled)
   )
   q_basis <- qr(omega, device = "cpu")$Q[, seq_len(work_rank), drop = FALSE]
 
@@ -439,20 +438,20 @@ mlxs_prcomp <- function(x,
   value <- as.numeric(value)
   Rmlx::as_mlx(
     matrix(value, nrow = 1L, ncol = n_pred),
-    dtype = Rmlx::mlx_dtype(x_scaled),
-    device = Rmlx::mlx_device(x_scaled)
+    dtype = Rmlx::mlx_dtype(x_scaled)
   )
 }
 
-.mlxs_prcomp_random_normal <- function(dim, seed, dtype, device) {
+.mlxs_prcomp_random_normal <- function(dim, seed, dtype) {
+  if (identical(dtype, "float64")) Rmlx::mlx_local_device("cpu")
   base_key <- Rmlx::mlx_key(seed)
   subkeys <- Rmlx::mlx_key_split(base_key, num = 2L)
-  u1_bits <- Rmlx::mlx_key_bits(dim, key = subkeys[[1L]], device = device)
-  u2_bits <- Rmlx::mlx_key_bits(dim, key = subkeys[[2L]], device = device)
+  u1_bits <- Rmlx::mlx_key_bits(dim, key = subkeys[[1L]])
+  u2_bits <- Rmlx::mlx_key_bits(dim, key = subkeys[[2L]])
 
-  scale <- Rmlx::as_mlx(4294967296, dtype = dtype, device = device)
-  eps <- Rmlx::as_mlx(1e-7, dtype = dtype, device = device)
-  two_pi <- Rmlx::as_mlx(2 * pi, dtype = dtype, device = device)
+  scale <- Rmlx::as_mlx(4294967296, dtype = dtype)
+  eps <- Rmlx::as_mlx(1e-7, dtype = dtype)
+  two_pi <- Rmlx::as_mlx(2 * pi, dtype = dtype)
 
   u1 <- (Rmlx::mlx_cast(u1_bits, dtype = dtype) + 0.5) / scale
   u2 <- (Rmlx::mlx_cast(u2_bits, dtype = dtype) + 0.5) / scale

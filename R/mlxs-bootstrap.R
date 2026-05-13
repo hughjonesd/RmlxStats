@@ -189,8 +189,9 @@ mlxs_boot <- function(
   dtypes <- vapply(boot_res$samples, Rmlx::mlx_dtype, character(1))
   common_dtype <- if (any(dtypes == "float64")) "float64" else "float32"
   common_device <- if (common_dtype == "float64") "cpu" else "gpu"
+  Rmlx::local_device(common_device)
   boot_res$samples <- lapply(boot_res$samples, Rmlx::mlx_cast,
-                             dtype = common_dtype, device = common_device)
+                             dtype = common_dtype)
 
   .mlxs_bootstrap_from_samples(
     boot_res$samples,

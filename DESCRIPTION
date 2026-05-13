@@ -19,7 +19,7 @@ License: GPL (>= 2)
 URL: https://hughjonesd.github.io/RmlxStats, https://github.com/hughjonesd/RmlxStats
 BugReports: https://github.com/hughjonesd/RmlxStats/issues
 Imports: 
-    Rmlx,
+    Rmlx (>= 0.3.0),
     generics
 Remotes: 
     hughjonesd/Rmlx

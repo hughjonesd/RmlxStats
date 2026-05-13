@@ -79,8 +79,10 @@ predict.mlxs_glm <- function(
     mf,
     contrasts.arg = object$contrasts
   )
-  mm_mlx <- Rmlx::as_mlx(mm, device = Rmlx::mlx_device(object$coefficients),
-                         dtype = Rmlx::mlx_dtype(object$coefficients))
+  if (identical(Rmlx::mlx_dtype(object$coefficients), "float64")) {
+    Rmlx::local_device("cpu")
+  }
+  mm_mlx <- Rmlx::as_mlx(mm, dtype = Rmlx::mlx_dtype(object$coefficients))
   
   eta <- mm_mlx %*% object$coefficients
   if (type == "response") {
@@ -203,13 +205,15 @@ summary.mlxs_glm <- function(
       method = bootstrap_type
     )
     se_col_mlx <- bootstrap_info$se
+    if (identical(Rmlx::mlx_dtype(se_col_mlx), "float64")) {
+      Rmlx::local_device("cpu")
+    }
     se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, length(coef_names)))
-    diag_eye <- Rmlx::mlx_eye(length(coef_names), 
-                              device = Rmlx::mlx_device(se_sq_row))
+    diag_eye <- Rmlx::mlx_eye(length(coef_names))
     vcov_mlx <- diag_eye *
       Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_shape(diag_eye))
   }
-  coef_mlx <- Rmlx::mlx_cast(coef_mlx, device = Rmlx::mlx_device(se_col_mlx))
+  
   stat_mlx <- coef_mlx / se_col_mlx
   stat_label <- if (object$family$family %in% c("gaussian", "quasigaussian")) {
     "t value"
@@ -222,7 +226,7 @@ summary.mlxs_glm <- function(
     p_num <- 2 * stats::pt(-abs(stat_num), df = object$df.residual)
     Rmlx::mlx_vector(p_num)
   } else {
-    2 * Rmlx::mlx_pnorm(-abs(stat_mlx), device = Rmlx::mlx_device(stat_mlx))
+    2 * Rmlx::mlx_pnorm(-abs(stat_mlx))
   }
 
   sum_list <- list(

@@ -295,21 +295,17 @@ mlxs_glm_control <- function(
     if (delta_val < epsilon_f64 || dev_change_val < epsilon_f64) {
       if (! moved_to_f64) {
         if (trace) message("Casting to float64 and working on cpu...")
-        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64", device = "cpu")
-        mu_mlx <- Rmlx::mlx_cast(mu_mlx, dtype = "float64", device = "cpu")
-        eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64", device = "cpu")
-        X_mlx <- Rmlx::mlx_cast(X_mlx, dtype = "float64", device = "cpu")
-        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64", device = "cpu")
-        weights_sqrt_mlx <- Rmlx::mlx_cast(weights_sqrt_mlx, dtype = "float64", 
-                                           device = "cpu")
-        weights_mlx <- Rmlx::mlx_cast(weights_mlx, dtype = "float64", 
-                                      device = "cpu")
-        step_size_mlx <- Rmlx::mlx_cast(step_size_mlx, dtype = "float64",
-                                        device = "cpu")
-        Rmlx::local_default_device("cpu")
+        Rmlx::local_device("cpu")
+        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+        mu_mlx <- Rmlx::mlx_cast(mu_mlx, dtype = "float64")
+        eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64")
+        X_mlx <- Rmlx::mlx_cast(X_mlx, dtype = "float64")
+        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64")
+        weights_sqrt_mlx <- Rmlx::mlx_cast(weights_sqrt_mlx, dtype = "float64")
+        weights_mlx <- Rmlx::mlx_cast(weights_mlx, dtype = "float64")
+        step_size_mlx <- Rmlx::mlx_cast(step_size_mlx, dtype = "float64")
         moved_to_f64 <- TRUE
         dev_prev <- Inf # we restart counting the deviance
-        
       }
     }
   }
@@ -470,6 +466,9 @@ mlxs_glm_control <- function(
 
   if (!irls_state$converged) {
     warning("mlxs_glm did not converge within maxit iterations.", call. = FALSE)
+  }
+  if (irls_state$float64) {
+    Rmlx::local_device("cpu")
   }
 
   dev_res_vec <- as.numeric(irls_state$dev_resids)
