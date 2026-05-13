@@ -30,6 +30,9 @@ utils::globalVariables("compiled")
       call. = FALSE
     )
   }
+  if (identical(Rmlx::mlx_dtype(qr_fit$R), "float64")) {
+    Rmlx::local_device("cpu")
+  }
   eye <- Rmlx::mlx_eye(n_coef)
   r_inv <- Rmlx::mlx_solve_triangular(qr_fit$R, eye, upper = TRUE,
                                       device = "cpu")

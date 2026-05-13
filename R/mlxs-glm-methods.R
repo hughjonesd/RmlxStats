@@ -147,6 +147,10 @@ confint.mlxs_glm <- function(object, parm, level = 0.95, ...) {
       stop("Some parameters not found in the model.", call. = FALSE)
     }
   }
+  vcov. <- vcov(object)
+  if (identical(Rmlx::mlx_dtype(vcov.), "float64")) {
+    Rmlx::local_device("cpu")
+  }
   se <- as.numeric(sqrt(Rmlx::diag(vcov(object))))[parm]
   est <- cf_num[parm]
   alpha <- (1 - level) / 2
@@ -190,6 +194,9 @@ summary.mlxs_glm <- function(
   coef_names <- .mlxs_coef_names(object)
   coef_mlx <- object$coefficients
   vcov_mlx <- vcov(object)
+  if (Rmlx::mlx_dtype(vcov_mlx) == "float64") {
+    Rmlx::local_device("cpu")
+  }
   diag_mlx <- Rmlx::diag(vcov_mlx)
   n_coef <- length(coef_names)
   se_col_mlx <- Rmlx::mlx_reshape(sqrt(diag_mlx), c(n_coef, 1L))
