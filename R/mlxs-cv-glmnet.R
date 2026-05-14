@@ -98,14 +98,15 @@ mlxs_cv_glmnet <- function(x,
 
   type.measure <- .mlxs_cv_glmnet_normalize_measure(type.measure, family_name)
 
-  y <- as.numeric(y)
+  y_host <- as.numeric(y)
+  y_mlx <- Rmlx::as_mlx(y)
   n_obs <- nrow(x)
-  if (n_obs != length(y)) {
+  if (n_obs != length(y_host)) {
     stop("x and y must have the same number of observations.", call. = FALSE)
   }
 
   foldid <- .mlxs_cv_glmnet_foldid(
-    y = y,
+    y = y_host,
     n_obs = n_obs,
     nfolds = nfolds,
     foldid = foldid,
@@ -117,7 +118,7 @@ mlxs_cv_glmnet <- function(x,
 
   fit_args <- c(list(
     x = x,
-    y = y,
+    y = y_mlx,
     family = family,
     lambda = lambda
   ), list(...))
@@ -143,7 +144,7 @@ mlxs_cv_glmnet <- function(x,
 
     fold_fit_args <- c(list(
       x = x[train, , drop = FALSE],
-      y = y[train],
+      y = y_mlx[train],
       family = family,
       lambda = lambda_path
     ), list(...))
@@ -155,7 +156,7 @@ mlxs_cv_glmnet <- function(x,
       type = "response"
     )
     fold_loss <- .mlxs_cv_glmnet_loss(
-      y = y[holdout],
+      y = y_host[holdout],
       pred = fold_pred,
       family_name = family_name,
       type.measure = type.measure
@@ -174,6 +175,9 @@ mlxs_cv_glmnet <- function(x,
 
   min_idx <- which.min(cvm)
   one_se_idx <- which(cvm <= cvm[min_idx] + cvsd[min_idx])[1L]
+  if (isTRUE(glmnet_fit$float64)) {
+    Rmlx::local_device("cpu")
+  }
 
   result <- list(
     lambda = lambda_path,
@@ -181,7 +185,7 @@ mlxs_cv_glmnet <- function(x,
     cvsd = cvsd,
     cvup = cvup,
     cvlo = cvlo,
-    nzero = colSums(abs(as.matrix(glmnet_fit$beta)) > 0),
+    nzero = as.vector(Rmlx::colSums(abs(glmnet_fit$beta) > 0)),
     call = match.call(),
     name = stats::setNames(
       .mlxs_cv_glmnet_measure_name(type.measure, family_name),
@@ -202,7 +206,7 @@ mlxs_cv_glmnet <- function(x,
   )
 
   if (!is.null(fit_preval) && family_name %in% c("binomial", "quasibinomial")) {
-    attr(result$fit.preval, "classnames") <- sort(unique(as.character(y)))
+    attr(result$fit.preval, "classnames") <- sort(unique(as.character(y_host)))
   }
 
   class(result) <- "mlxs_cv_glmnet"
@@ -331,81 +335,17 @@ mlxs_cv_glmnet <- function(x,
   }
 
   lambda <- as.numeric(object$lambda)
-
-  if (identical(output, "mlx")) {
-    if (is.null(s)) {
-      return(list(
-        beta = object$beta,
-        a0 = t(object$a0),
-        lambda = lambda,
-        names = paste0("s", seq_along(lambda) - 1L)
-      ))
-    }
-
-    s_names <- names(s)
-    s <- as.numeric(s)
-    if (anyNA(s)) {
-      stop("s cannot contain NA values.", call. = FALSE)
-    }
-
-    log_lambda <- log(lambda)
-    log_s <- log(s)
-    beta_cols <- vector("list", length(s))
-    a0_cols <- vector("list", length(s))
-
-    for (j in seq_along(s)) {
-      if (log_s[j] >= log_lambda[1L]) {
-        beta_cols[[j]] <- object$beta[, 1L, drop = FALSE]
-        a0_cols[[j]] <- object$a0[1L, , drop = FALSE]
-        next
-      }
-      if (log_s[j] <= log_lambda[length(log_lambda)]) {
-        last <- length(log_lambda)
-        beta_cols[[j]] <- object$beta[, last, drop = FALSE]
-        a0_cols[[j]] <- object$a0[last, , drop = FALSE]
-        next
-      }
-
-      right <- which(log_lambda <= log_s[j])[1L]
-      left <- right - 1L
-      if (isTRUE(all.equal(log_s[j], log_lambda[left], tolerance = 1e-12))) {
-        beta_cols[[j]] <- object$beta[, left, drop = FALSE]
-        a0_cols[[j]] <- object$a0[left, , drop = FALSE]
-        next
-      }
-      if (isTRUE(all.equal(log_s[j], log_lambda[right], tolerance = 1e-12))) {
-        beta_cols[[j]] <- object$beta[, right, drop = FALSE]
-        a0_cols[[j]] <- object$a0[right, , drop = FALSE]
-        next
-      }
-
-      weight_left <- (log_s[j] - log_lambda[right]) /
-        (log_lambda[left] - log_lambda[right])
-      weight_right <- 1 - weight_left
-      beta_cols[[j]] <- object$beta[, left, drop = FALSE] * weight_left +
-        object$beta[, right, drop = FALSE] * weight_right
-      a0_cols[[j]] <- object$a0[left, , drop = FALSE] * weight_left +
-        object$a0[right, , drop = FALSE] * weight_right
-    }
-
-    return(list(
-      beta = do.call(cbind, beta_cols),
-      a0 = do.call(cbind, a0_cols),
-      lambda = s,
-      names = s_names
-    ))
-  }
-
-  beta <- as.matrix(object$beta)
-  a0 <- as.numeric(object$a0)
+  beta <- object$beta
+  a0 <- t(object$a0)
 
   if (is.null(s)) {
-    return(list(
+    selected <- list(
       beta = beta,
       a0 = a0,
       lambda = lambda,
       names = paste0("s", seq_along(lambda) - 1L)
-    ))
+    )
+    return(.mlxs_glmnet_format_selected_path(selected, output))
   }
 
   s_names <- names(s)
@@ -416,44 +356,72 @@ mlxs_cv_glmnet <- function(x,
 
   log_lambda <- log(lambda)
   log_s <- log(s)
-  n_pred <- nrow(beta)
-  beta_out <- matrix(NA_real_, nrow = n_pred, ncol = length(s))
-  a0_out <- numeric(length(s))
+  n_pred <- nrow(object$beta)
+  dtype <- Rmlx::mlx_dtype(object$beta)
+  beta_out <- Rmlx::mlx_zeros(c(n_pred, length(s)), dtype = dtype)
+  a0_out <- Rmlx::mlx_zeros(c(1L, length(s)), dtype = dtype)
 
   for (j in seq_along(s)) {
     if (log_s[j] >= log_lambda[1L]) {
-      beta_out[, j] <- beta[, 1L]
-      a0_out[j] <- a0[1L]
-      next
-    }
-    if (log_s[j] <= log_lambda[length(log_lambda)]) {
-      beta_out[, j] <- beta[, length(log_lambda)]
-      a0_out[j] <- a0[length(log_lambda)]
-      next
+      left <- right <- 1L
+      weight_left <- 1
+      weight_right <- 0
+    } else if (log_s[j] <= log_lambda[length(log_lambda)]) {
+      left <- right <- length(log_lambda)
+      weight_left <- 1
+      weight_right <- 0
+    } else {
+      right <- which(log_lambda <= log_s[j])[1L]
+      left <- right - 1L
+      if (isTRUE(all.equal(log_s[j], log_lambda[left], tolerance = 1e-12))) {
+        right <- left
+        weight_left <- 1
+        weight_right <- 0
+      } else if (isTRUE(all.equal(log_s[j], log_lambda[right],
+                                  tolerance = 1e-12))) {
+        left <- right
+        weight_left <- 1
+        weight_right <- 0
+      } else {
+        weight_left <- (log_s[j] - log_lambda[right]) /
+          (log_lambda[left] - log_lambda[right])
+        weight_right <- 1 - weight_left
+      }
     }
 
-    right <- which(log_lambda <= log_s[j])[1L]
-    left <- right - 1L
-    if (isTRUE(all.equal(log_s[j], log_lambda[left], tolerance = 1e-12))) {
-      beta_out[, j] <- beta[, left]
-      a0_out[j] <- a0[left]
-      next
-    }
-    if (isTRUE(all.equal(log_s[j], log_lambda[right], tolerance = 1e-12))) {
-      beta_out[, j] <- beta[, right]
-      a0_out[j] <- a0[right]
-      next
+    beta_col <- beta[, left, drop = FALSE] * weight_left
+    a0_col <- a0[, left, drop = FALSE] * weight_left
+    if (weight_right != 0) {
+      beta_col <- beta_col + beta[, right, drop = FALSE] * weight_right
+      a0_col <- a0_col + a0[, right, drop = FALSE] * weight_right
     }
 
-    weight_left <- (log_s[j] - log_lambda[right]) /
-      (log_lambda[left] - log_lambda[right])
-    weight_right <- 1 - weight_left
-
-    beta_out[, j] <- beta[, left] * weight_left + beta[, right] * weight_right
-    a0_out[j] <- a0[left] * weight_left + a0[right] * weight_right
+    beta_out <- Rmlx::mlx_slice_update(
+      beta_out,
+      beta_col,
+      start = c(1L, j),
+      stop = c(n_pred, j)
+    )
+    a0_out <- Rmlx::mlx_slice_update(
+      a0_out,
+      a0_col,
+      start = c(1L, j),
+      stop = c(1L, j)
+    )
   }
 
-  list(beta = beta_out, a0 = a0_out, lambda = s, names = s_names)
+  selected <- list(beta = beta_out, a0 = a0_out, lambda = s, names = s_names)
+  .mlxs_glmnet_format_selected_path(selected, output)
+}
+
+.mlxs_glmnet_format_selected_path <- function(selected, output) {
+  if (identical(output, "mlx")) {
+    return(selected)
+  }
+
+  selected$beta <- as.matrix(selected$beta)
+  selected$a0 <- as.numeric(selected$a0)
+  selected
 }
 
 #' @export

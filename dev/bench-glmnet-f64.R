@@ -82,7 +82,7 @@ score_fit <- function(dat, fit, ref) {
   
   coef_diff <- mean(abs(as.matrix(coef(ref)) - coef(fit)))
   
-  list(
+  data.frame(
     float64 = isTRUE(fit$float64),
     pred_loss = loss,
     coef_diff = coef_diff,
@@ -124,15 +124,13 @@ for (scenario in scenarios) {
     message("Running ", scenario, " / ", method)
     out <- fit_once(dat, method, lambda)
     score <- score_fit(dat, out$fit, ref)
-    rows[[length(rows) + 1L]] <- data.frame(
-      scenario = scenario,
-      method = method,
-      elapsed = out$elapsed,
-      float64 = score$float64,
-      pred_loss = score$pred_loss,
-      coef_diff = score$coef_diff,
-      max_pred_delta = score$max_pred_delta,
-      beta_dtype = score$beta_dtype
+    rows[[length(rows) + 1L]] <- cbind(
+      data.frame(
+        scenario = scenario,
+        method = method,
+        elapsed = out$elapsed
+      ),
+      score
     )
   }
 }
