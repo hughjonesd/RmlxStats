@@ -278,3 +278,116 @@ test_that("mlxs_glmnet stays finite on correlated gaussian designs", {
 
   expect_true(all(is.finite(beta_hat)))
 })
+
+test_that("mlxs_glmnet stores paths in MLX and methods can return base or MLX", {
+  set.seed(20260514)
+  x <- matrix(rnorm(80 * 6), nrow = 80)
+  y <- drop(x[, 1] - 0.5 * x[, 2] + rnorm(80))
+  lambda <- c(0.2, 0.05)
+
+  fit <- mlxs_glmnet(
+    x,
+    y,
+    family = mlxs_gaussian(),
+    lambda = lambda,
+    maxit = 80,
+    tol = 1e-8,
+    tol_f64 = 1e6
+  )
+
+  expect_true(inherits(fit$beta, "mlx"))
+  expect_true(inherits(fit$a0, "mlx"))
+  expect_true(fit$float64)
+  expect_equal(fit$float64_reason, "tol_f64")
+
+  coef_base <- coef(fit)
+  coef_mlx <- coef(fit, output = "mlx")
+  pred_base <- predict(fit, x[1:5, , drop = FALSE])
+  pred_mlx <- predict(fit, x[1:5, , drop = FALSE], output = "mlx")
+
+  expect_type(coef_base, "double")
+  expect_equal(dim(coef_base), c(ncol(x) + 1L, length(lambda)))
+  expect_true(inherits(coef_mlx, "mlx"))
+  expect_type(pred_base, "double")
+  expect_equal(dim(pred_base), c(5L, length(lambda)))
+  expect_true(inherits(pred_mlx, "mlx"))
+  expect_equal(as.matrix(pred_mlx), pred_base, tolerance = 1e-10)
+})
+
+test_that("mlxs_glmnet switches gaussian Gram path to float64", {
+  set.seed(20260515)
+  x <- matrix(rnorm(320 * 5), nrow = 320)
+  y <- drop(x[, 1] + rnorm(320))
+
+  fit <- mlxs_glmnet(
+    x,
+    y,
+    family = mlxs_gaussian(),
+    nlambda = 10,
+    maxit = 80,
+    tol = 1e-8,
+    tol_f64 = 1e6
+  )
+
+  expect_true(fit$float64)
+  expect_equal(Rmlx::mlx_dtype(fit$beta), "float64")
+  expect_output(print(fit), "MLX elastic net fit")
+})
+
+test_that("mlxs_glmnet switches binomial path to float64", {
+  set.seed(20260516)
+  x <- matrix(rnorm(100 * 8), nrow = 100)
+  prob <- plogis(0.8 * x[, 1] - 0.5 * x[, 2])
+  y <- rbinom(100, size = 1, prob = prob)
+
+  fit <- mlxs_glmnet(
+    x,
+    y,
+    family = mlxs_binomial(),
+    nlambda = 4,
+    maxit = 80,
+    tol = 1e-8,
+    tol_f64 = 1e6
+  )
+
+  expect_true(fit$float64)
+  expect_equal(Rmlx::mlx_dtype(fit$beta), "float64")
+  expect_true(all(predict(fit, x[1:6, , drop = FALSE], type = "class") %in%
+    c(0, 1)))
+})
+
+test_that("mlxs_glmnet handles float64 MLX input immediately on CPU", {
+  set.seed(20260517)
+  x <- matrix(rnorm(60 * 5), nrow = 60)
+  y <- drop(x[, 1] + rnorm(60))
+
+  Rmlx::local_device("cpu")
+  x64 <- Rmlx::as_mlx(x, dtype = "float64")
+
+  expect_warning(
+    fit <- mlxs_glmnet(
+      x64,
+      y,
+      family = mlxs_gaussian(),
+      lambda = c(0.1, 0.02),
+      maxit = 50,
+      tol = 1e-8,
+      tol_f64 = 1e-6
+    ),
+    "float64 MLX input"
+  )
+
+  expect_true(fit$float64)
+  expect_equal(fit$float64_reason, "input")
+  expect_equal(Rmlx::mlx_dtype(fit$beta), "float64")
+})
+
+test_that("mlxs_glmnet validates tol_f64", {
+  x <- matrix(rnorm(40), nrow = 10)
+  y <- rnorm(10)
+
+  expect_error(
+    mlxs_glmnet(x, y, tol = 1e-6, tol_f64 = 1e-6),
+    "tol_f64 must be greater than tol"
+  )
+})

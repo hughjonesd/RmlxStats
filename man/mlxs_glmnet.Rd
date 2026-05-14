@@ -16,13 +16,14 @@ mlxs_glmnet(
   intercept = TRUE,
   use_strong_rules = TRUE,
   maxit = 1000,
-  tol = 1e-06
+  tol = 1e-08,
+  tol_f64 = 1e-06
 )
 }
 \arguments{
-\item{x}{Numeric matrix of predictors (observations in rows).}
+\item{x}{Numeric matrix of predictors.}
 
-\item{y}{Numeric response vector (for binomial, values must be 0/1).}
+\item{y}{Numeric response vector.}
 
 \item{family}{MLX-aware family object, e.g. \code{\link[=mlxs_gaussian]{mlxs_gaussian()}} or
 \code{\link[=mlxs_binomial]{mlxs_binomial()}}.}
@@ -49,6 +50,9 @@ the computation.}
 \item{maxit}{Maximum proximal-gradient iterations per lambda value.}
 
 \item{tol}{Convergence tolerance on the coefficient updates.}
+
+\item{tol_f64}{Update tolerance at which fitting switches to CPU float64.
+Set to \code{NULL} to disable the switch.}
 }
 \value{
 An object of class \code{mlxs_glmnet} containing the fitted coefficient

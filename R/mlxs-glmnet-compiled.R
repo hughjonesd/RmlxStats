@@ -8,7 +8,8 @@
                                         thresh,
                                         ridge_penalty,
                                         n_steps) {
-  delta_max <- Rmlx::mlx_scalar(0)
+  dtype <- Rmlx::mlx_dtype(beta_mlx)
+  delta_max <- Rmlx::mlx_scalar(0, dtype = dtype)
 
   for (i in seq_len(n_steps)) {
     grad_mlx <- crossprod(x_mlx, residual_mlx) / n_obs
@@ -43,7 +44,8 @@
                                              thresh,
                                              ridge_penalty,
                                              n_steps) {
-  delta_max <- Rmlx::mlx_scalar(0)
+  dtype <- Rmlx::mlx_dtype(beta_mlx)
+  delta_max <- Rmlx::mlx_scalar(0, dtype = dtype)
 
   for (i in seq_len(n_steps)) {
     grad_mlx <- gram_mlx %*% z_mlx - xy_mlx
@@ -82,8 +84,10 @@
                                         ridge_penalty,
                                         n_steps,
                                         fit_intercept) {
-  delta_max <- Rmlx::mlx_scalar(0)
-  intercept_delta_max <- Rmlx::mlx_scalar(0)
+  dtype <- Rmlx::mlx_dtype(beta_mlx)
+  zero_mlx <- Rmlx::mlx_scalar(0, dtype = dtype)
+  delta_max <- zero_mlx
+  intercept_delta_max <- zero_mlx
 
   for (i in seq_len(n_steps)) {
     grad_mlx <- crossprod(x_mlx, residual_mlx) / n_obs

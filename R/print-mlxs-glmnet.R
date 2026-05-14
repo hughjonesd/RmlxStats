@@ -5,6 +5,10 @@ print.mlxs_glmnet <- function(
   digits = getOption("digits"),
   ...
 ) {
+  if (isTRUE(x$float64)) {
+    Rmlx::local_device("cpu")
+  }
+
   cat(
     "MLX elastic net fit (family = ",
     x$family,
