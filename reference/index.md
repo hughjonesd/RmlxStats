@@ -26,13 +26,19 @@
   [`tidy(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`glance(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`augment(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
+  [`estfun(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
+  [`hatvalues(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
+  [`bread(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   : mlxs_lm method utilities
 
 ## Generalized Linear Models
 
 - [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
   : MLX-backed generalized linear model
+- [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md)
+  : Control parameters
 - [`coef(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  [`weights(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`predict(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`fitted(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`residuals(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
@@ -49,6 +55,9 @@
   [`tidy(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`glance(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`augment(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  [`estfun(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  [`hatvalues(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  [`bread(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   : mlxs_glm method utilities
 
 ## Elastic Net Models

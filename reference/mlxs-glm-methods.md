@@ -10,6 +10,9 @@ by delegating to equivalent base `glm` behaviour where helpful.
 coef(object, ...)
 
 # S3 method for class 'mlxs_glm'
+weights(object, type = c("prior", "working"), ...)
+
+# S3 method for class 'mlxs_glm'
 predict(
   object,
   newdata = NULL,
@@ -71,11 +74,20 @@ augment(
   output = c("data.frame", "mlx"),
   ...
 )
+
+# S3 method for class 'mlxs_glm'
+estfun(x, ..., output = c("matrix", "mlx"))
+
+# S3 method for class 'mlxs_glm'
+hatvalues(model, ..., output = c("matrix", "mlx"))
+
+# S3 method for class 'mlxs_glm'
+bread(x, ...)
 ```
 
 ## Arguments
 
-- object:
+- object, model:
 
   An `mlxs_glm` model fit.
 
@@ -83,14 +95,14 @@ augment(
 
   Additional arguments passed to underlying methods.
 
-- newdata:
-
-  Optional data frame used for prediction.
-
 - type:
 
   Character string indicating the scale of the prediction or residuals
   to return.
+
+- newdata:
+
+  Optional data frame used for prediction.
 
 - se.fit:
 

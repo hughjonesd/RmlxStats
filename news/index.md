@@ -2,11 +2,23 @@
 
 ## RmlxStats (development version)
 
+- [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
+  now moves to float64 on the cpu where necessary to compute more
+  accurate estimates.
+- New
+  [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md)
+  function.
 - [`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md)
   and
   [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
   now reject rank-deficient model matrices with a clear error rather
   than returning unstable aliased coefficients.
+- New `bread()`, `estfun()` and
+  [`hatvalues()`](https://rdrr.io/r/stats/influence.measures.html)
+  methods for `mlxs_lm` to allow for sandwich-style robust standard
+  errors.
+- More `mlxs_lm` methods now return base R objects by default,
+  controllable via the `output` argument.
 
 ## RmlxStats 0.2.0
 

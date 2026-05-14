@@ -2,7 +2,7 @@
 
 Fit generalized linear models using iterative reweighted least squares
 (IRLS) with MLX providing the heavy lifting for weighted least squares
-solves.
+solves. Final convergence is done at double precision on the cpu.
 
 ## Usage
 
@@ -36,6 +36,7 @@ mlxs_glm(
   [`mlxs_gaussian()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_gaussian.md),
   [`mlxs_binomial()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_binomial.md),
   [`mlxs_poisson()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_poisson.md)).
+  You can use `"gaussian"` etc.
 
 - data:
 
@@ -74,7 +75,9 @@ mlxs_glm(
 - control:
 
   Optional list of control parameters passed to
-  [`stats::glm.control()`](https://rdrr.io/r/stats/glm.control.html).
+  [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md).
+  Control parameters can include `epsilon`, `epsilon_f64`, `maxit` and
+  `trace`.
 
 - ...:
 
@@ -87,10 +90,7 @@ mlxs_glm(
 
 An object of class `c("mlxs_glm", "mlxs_model")` containing elements
 similar to the result of
-[`stats::glm()`](https://rdrr.io/r/stats/glm.html). Computations use
-single-precision MLX arrays, so results typically agree with
-[`stats::glm()`](https://rdrr.io/r/stats/glm.html) to around 1e-6 unless
-a tighter tolerance is supplied via `control`. Unlike
+[`stats::glm()`](https://rdrr.io/r/stats/glm.html). Unlike
 [`stats::glm()`](https://rdrr.io/r/stats/glm.html), rank-deficient model
 matrices are rejected rather than fit with aliased coefficients.
 
@@ -101,7 +101,6 @@ fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
 coef(fit)
 #> mlx array [3 x 1]
 #>   dtype: float32
-#>   device: gpu
 #>   values:
 #>             [,1]
 #> [1,] 34.66099167

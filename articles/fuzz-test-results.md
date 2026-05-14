@@ -13,9 +13,6 @@ Rmlx doesn’t yet support float64 at all. That limits our precision. This
 page should help us figure out how much that affects performance.
 
 - What about diagnostics?
-- What about
-  [`mlxs_cv_glmnet()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_cv_glmnet.md)?
-  Need to write the tests first….
 
 ``` r
 
@@ -37,8 +34,11 @@ set_theme(fuzz_theme)
 
 fuzz <- read_csv(here("tests/testthat/fuzz-results/github-macos-26/fuzz-results.csv"))
 
+chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
-  fuzz |> filter(branch == "master", datetime_utc == max(datetime_utc)) 
+  fuzz |> 
+    filter(tier %in% chosen_tiers) |> 
+    filter(branch == "master", datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -48,7 +48,7 @@ prettify <- function(x) {
 fuzz <- fuzz |> 
   mutate(
     agg = replace_values(aggregation, "value" ~ ""),
-    Measure = if_else(agg == "", target, paste0(agg, "(", target, ")")),
+    Target = if_else(agg == "", target, paste0(agg, "(", target, ")")),
     Case_type = prettify(case_type),
     Scenario = paste(prettify(scenario), paste("n", n), paste("p", p), sep = " / ")
   ) 
@@ -58,14 +58,79 @@ date <- Sys.Date()
 commit <- system("git rev-parse --short HEAD", intern = TRUE)
 branch <- system("git branch --show-current", intern = TRUE)
 rmlx_version <- packageVersion("Rmlx")
+tier <- latest(fuzz)$tier[1]
 ```
 
-| Metadata     | Metadata   |
+| Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-03 |
-| Commit       | 773a23d    |
+| Generated on | 2026-05-14 |
+| Commit       | bb9f3a5    |
 | Branch       | master     |
-| Rmlx version | 0.2.3      |
+| Rmlx version | 0.3.0.9000 |
+| Tier         | fast       |
+
+### History
+
+``` r
+
+# lm-det: not sure?
+# lm-mc: monte carlo bias and ci coverage with SEs
+# glm-det: aic and fitted errors; 
+# glm-mc: mc bias and ci as for lm-mc; 
+# glmnet-det: prediction errors
+# cv-glmnet: out of fold predictions
+# prcomp-det: subspace and reconstruction error
+# prcomp-mc: same
+
+history_theme <- theme(panel.grid = element_blank(), 
+                       panel.grid.major.y = element_line(
+                         colour = "grey95", linewidth = 0.5))
+
+fuzz |> 
+  filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se),
+                    position = position_dodge(0.5), size = 0.2) +
+    geom_line(aes(linetype = tier)) + 
+    facet_grid(rows = vars(Scenario)) +
+    history_theme
+```
+
+    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+    ## Warning: Removed 45 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+    ## Warning: Removed 45 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-1-1.png)
+
+``` r
+
+fuzz |> 
+  filter(suite == "mlxs-lm-monte-carlo", measure == "coverage") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se), size = 0.2,
+                    position = position_dodge(0.5)) +
+    geom_line(aes(linetype = tier)) + 
+    facet_grid(rows = vars(Scenario)) +
+    history_theme
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-2-1.png)
 
 ### `mlxs_lm`
 
@@ -98,7 +163,7 @@ cols <- palette()[1:6]
 names(cols) <- c("max(vcov)", "max(standard_error)", "residual_sigma",
                  "r_squared", "max(fitted)", "max(coefficient)")
 fuzz_lm_det |> 
-  ggplot(aes(y = Measure, x = value, color = Measure)) + 
+  ggplot(aes(y = Target, x = value, color = Target)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed") + 
     geom_point() + 
     facet_wrap(vars(Case_type, Scenario), axes = "all_x") + 
@@ -109,7 +174,7 @@ fuzz_lm_det |>
     labs(x = "Error (log scale)")
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-1-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png)
 
 #### Monte Carlo tests
 
@@ -150,6 +215,7 @@ fuzz_lm_mc <- latest(fuzz) |>
 ``` r
 
 fuzz_lm_mc |> 
+  filter(measure %in% c("bias", "coverage")) |> 
   drop_na(value_se) |> 
   mutate(
     Measure = paste0(measure, " (", term, ")"),
@@ -170,7 +236,7 @@ fuzz_lm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
 
 ##### Standard errors
 
@@ -186,24 +252,26 @@ stopifnot(n_distinct(bootstrap_B) == 1)
 
 fuzz_lm_mc |> 
   drop_na(bootstrap_B) |> 
-  filter(measure == "standard_error_ratio") |> 
+  filter(measure == "standard_error") |> 
   mutate(
     `s.e. type` = replace_values(source, "model" ~ "normal theory")
   ) |> 
   ggplot(aes(y = term, x = value, colour = `s.e. type`)) + 
-    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey30") +
-    geom_point() +
+    geom_pointrange(aes(xmin = value - 1.96 * value_se, xmax = value + 1.96 * value_se),
+                    position = position_dodge2(0.25)) +
     facet_wrap(vars(Scenario)) +
     labs(
-      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory s.e. ratios for non-normal error term"),
-      x = "s.e. ratio"
+      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory standard errors with non-normal errors"),
+      subtitle = paste0("Empirical s.e.s are calculated over multiple Monte Carlo runs.\n",
+                        "Lines are Monte Carlo standard errors x 1.96 of the s.e. itself"),
+      x = "Coefficient s.e."
     ) + 
     theme(
       legend.position = "bottom"
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-4-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png)
 
 ### `mlxs_glm`
 
@@ -233,10 +301,10 @@ fuzz_glm_det <- latest(fuzz) |>
 ``` r
 
 cols_glm <- palette()[1:6]
-names(cols_glm) <- unique(fuzz_glm_det$Measure)
+names(cols_glm) <- unique(fuzz_glm_det$Target)
 
 fuzz_glm_det |> 
-  ggplot(aes(y = Measure, x = value, colour = Measure)) + 
+  ggplot(aes(y = Target, x = value, colour = Target)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point() +
     facet_grid(rows = vars(Scenario), cols = vars(family), 
@@ -255,7 +323,7 @@ fuzz_glm_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
 
 #### Monte Carlo tests
 
@@ -299,7 +367,32 @@ fuzz_glm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
+
+##### Standard errors
+
+``` r
+
+fuzz_glm_mc |> 
+  filter(measure == "standard_error") |> 
+  mutate(
+    Scenario = paste0(Scenario, " (", family, ")"),
+    Source = replace_values(source, "model" ~ "normal theory")
+  ) |> 
+  ggplot(aes(y = term, x = value, colour = Source)) +
+    geom_point(position = position_dodge2(0.5)) +
+    facet_wrap(vars(Scenario), scales = "free_x", axes = "all_x") + 
+    scale_colour_manual(values = c("bootstrap" = "green3", 
+                                   "normal theory" = "orange2", "empirical" = "black")) +
+    theme(legend.position = "bottom") +
+    labs(
+      title = "Standard errors, mlx estimates versus empirical Monte Carlo",
+      subtitle = "Empirical s.e.s are the standard deviation of the estimate across MC repetitions",
+      x = "Standard error"
+    )
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-11-1.png)
 
 ### `mlxs_glmnet`
 
@@ -312,25 +405,65 @@ fuzz_glmnet_det <- latest(fuzz) |>
   select(-suite, -case_type, -nreps, -(rank:bootstrap_B))
 ```
 
-- There’s a bias measure but no confint for it, also a RMSE
-- Then prediction loss of mlxs_glmnet, glmnet and an “oracle” (which is
-  what?)
-- Then various measures/ratios against either truth or glmnet
-  - “risk” delta against the oracle
-  - “loss” and “loss ratio” against the glmnet reference
-  - here again, a simple statistic and description might help more than
-    these abstract terms
-- Then precision and recall of support recovery (i.e. which variables
-  did we decide were non-zero, versus the truth)
-- All of this is made at fixed lambdas. So as absolute statistics, are
-  these much use? Isn’t this “along the path” and we care more about the
-  final value?
-  - How were the lambdas selected?
-  - Why are there different lambda_idx values for different outcomes?
-- Alpha is usually 1, but sometimes 0.5… er… what is alpha?
+We measure prediction accuracy against a test set, with the oracle being
+the true d.g.p. (i.e. if you know that, how well do you predict the test
+set?) We compare glmnet::glmnet as a reference.
 
-We measure precision and recall of the active set (i.e. variables with a
-non-zero beta), at selected lambda values on the fitted path.
+``` r
+
+fuzz_glmnet_det |> 
+  filter(target == "prediction", measure == "loss") |> 
+  mutate(
+    `Lambda index` = as.factor(lambda_index),
+    Source = replace_values(source, "oracle" ~ "True d.g.p.", "reference" ~ "glmnet")
+  ) |> 
+  ggplot(aes(y = Scenario, x = value, colour = Source, shape = `Lambda index`)) +
+    geom_point(position = position_dodge2(0.75, padding = 0.2)) + 
+    facet_grid(cols = vars(family), scales = "free_x") + 
+    scale_x_log10() + 
+    scale_colour_manual(values = c("True d.g.p." = "black", "mlx" = "orange", 
+                                   "glmnet" = "seagreen")) +
+    theme(legend.position = "bottom", legend.box = "vertical") +
+    labs(
+      x = "Loss (log scale)",
+      title = "Prediction error (mse or loglikelihood) on test set"
+    )
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png)
+
+We also check values of our objective function (within the training
+set). If we do worse than glmnet (positive values of e.g. 0.1 or more)
+that suggests we should check performance of the algorithm - we’re not
+maximizing what we are trying to maximize.
+
+``` r
+
+fuzz_glmnet_det |> 
+  filter(measure=="delta", target=="objective") |> 
+  mutate(
+    `Lambda index` = as.factor(lambda_index),
+    better = value <= 0
+  ) |> 
+  ggplot(aes(y = Scenario, x = value, shape = `Lambda index`, colour = better)) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "grey30") +
+    geom_point(position = position_dodge2(0.5)) + 
+    facet_grid(cols = vars(family), scales = "free_x") + 
+    scale_colour_manual(values = c("TRUE" = "green4", "FALSE" = "red"), 
+                        guide = "none") +
+    theme(legend.position = "bottom") +
+    labs(
+      x = "Objective delta",
+      title = "Achieved objective delta against glmnet::glmnet",
+      subtitle = paste0("The objective to minimize is training loss plus a lambda penalty.\n",
+                        "Positive values: worse than glmnet; negative: better.")
+    )
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-14-1.png)
+
+Lastly, we measure precision and recall of the active set (i.e.
+variables with a non-zero beta).
 
 - Precision: out of all variables identified by the fit as active, what
   proportion were truly active?
@@ -352,10 +485,10 @@ fuzz_glmnet_det |>
     theme(legend.position = "bottom")
 ```
 
-    ## Warning: Removed 13 rows containing missing values or values outside the scale range
+    ## Warning: Removed 15 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
 
 We also examine quality of predictions for an out-of-sample test set.The
 loss statistic is mean squared prediction error for Gaussian fits, or
@@ -397,18 +530,38 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-11-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-16-1.png)
 
 #### Monte Carlo tests
-
-- These are monte carlo tests with just 5 repetitions
-- Not sure what they are for, meh
 
 ``` r
 
 fuzz_glmnet_mc <- latest(fuzz) |> 
   filter(suite == "mlxs-glmnet-monte-carlo") |> 
   select(-suite, -case_type, -(rank:term))
+```
+
+These are only run on the “full” tier.
+
+``` r
+
+if (tier == "full") {
+  fuzz_glmnet_mc |> 
+    filter(target == "prediction") |> 
+    mutate(
+      Source = replace_values(source, "reference" ~ "glmnet")
+    ) |> 
+    ggplot(aes(y = Source, x = value, colour = Source)) + 
+      geom_pointrange(aes(xmin = value - 1.96 * value_se, 
+                          xmax = value + 1.96 * value_se)) +
+      scale_colour_manual(values = c("mlx" = "orange", "glmnet" = "seagreen")) +
+      coord_cartesian(xlim = c(0, 0.05)) +
+      labs(
+        title = "Prediction loss for mlxs_glmnet and glmnet",
+        subtitle = paste(fuzz_glmnet_mc$nreps[1], "Monte Carlo reps. Lines show Monte Carlo s.e.s"),
+        x = "Loss"
+      )
+}
 ```
 
 ### `mlxs_cv_glmnet`
@@ -447,13 +600,13 @@ fuzz_cv_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-14-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-20-1.png)
 
 ``` r
 
 fuzz_cv_glmnet_det |> 
   filter(measure == "error", target != "out_of_fold_prediction") |> 
-  ggplot(aes(y = Measure, x = value)) + 
+  ggplot(aes(y = Target, x = value)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") + 
     geom_point() +
     facet_wrap(vars(Scenario)) +
@@ -467,7 +620,7 @@ fuzz_cv_glmnet_det |>
     ## Warning in scale_x_log10(labels = scales::label_math(format = log10)):
     ## log-10 transformation introduced infinite values.
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-21-1.png)
 
 ### `mlxs_prcomp`
 
@@ -507,12 +660,12 @@ Metrics include:
 ``` r
 
 fuzz_prcomp_det |> 
-  filter(measure != "diagnostic", Measure != "reconstruction",
+  filter(measure != "diagnostic", Target != "reconstruction",
          case_type != "metamorphic") |> 
   mutate(
     Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
   ) |> 
-  ggplot(aes(y = Measure, x = value, colour = method)) + 
+  ggplot(aes(y = Target, x = value, colour = method)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point(position = position_dodge2(width = 0.5)) +
     facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +
@@ -528,7 +681,7 @@ fuzz_prcomp_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png)
 
 #### Monte Carlo tests
 
@@ -546,11 +699,11 @@ fuzz_prcomp_mc <- latest(fuzz) |>
 ``` r
 
 fuzz_prcomp_mc |> 
-  filter(measure != "diagnostic", Measure != "mean(reconstruction)") |> 
+  filter(measure != "diagnostic", Target != "mean(reconstruction)") |> 
   mutate(
     Rank = paste0("Rank ", rank, " (true ", rank_true, ", noise ", noise_sd, ")")
   ) |> 
-  ggplot(aes(y = Measure, x = value)) + 
+  ggplot(aes(y = Target, x = value)) + 
     geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey30") +
     geom_point(position = position_dodge2(width = 0.5)) +
     facet_wrap(vars(Scenario, Rank), axes = "all_x", scales = "free_x", ncol = 2) +
@@ -562,4 +715,4 @@ fuzz_prcomp_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-19-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png)

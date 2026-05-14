@@ -20,6 +20,8 @@
 
 - **James Yang**. Contributor.
 
+- **Achim Zeileis**. Contributor.
+
 ## Citation
 
 Source:

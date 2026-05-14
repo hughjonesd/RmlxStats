@@ -5,8 +5,6 @@
 <url><loc>https://hughjonesd.github.io/RmlxStats/articles/fuzz-test-results.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/articles/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/authors.html</loc></url>
-<url><loc>https://hughjonesd.github.io/RmlxStats/fuzz-test-notes.html</loc></url>
-<url><loc>https://hughjonesd.github.io/RmlxStats/fuzz-testing-stats-libraries.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/news/index.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.html</loc></url>
@@ -20,6 +18,7 @@
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_cv_glmnet.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_gaussian.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.html</loc></url>
+<url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_glmnet.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.html</loc></url>
 <url><loc>https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm_fit.html</loc></url>

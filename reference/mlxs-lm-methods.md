@@ -6,7 +6,7 @@ These helpers provide the familiar S3 surface for `mlxs_lm` fits.
 
 ``` r
 # S3 method for class 'mlxs_lm'
-coef(object, ...)
+coef(object, ..., output = c("vector", "mlx"))
 
 # S3 method for class 'mlxs_lm'
 predict(object, newdata = NULL, ...)
@@ -71,17 +71,32 @@ augment(
   output = c("data.frame", "mlx"),
   ...
 )
+
+# S3 method for class 'mlxs_lm'
+estfun(x, ..., output = c("matrix", "mlx"))
+
+# S3 method for class 'mlxs_lm'
+hatvalues(model, ..., output = c("matrix", "mlx"))
+
+# S3 method for class 'mlxs_lm'
+bread(x, ...)
 ```
 
 ## Arguments
 
-- object:
+- object, model:
 
   An `mlxs_lm` model fit.
 
 - ...:
 
   Additional arguments passed to underlying methods.
+
+- output:
+
+  Character string; return format ("data.frame", "matrix", "vector" or
+  "mlx"). To make methods from other packages work, the usual default is
+  to return a base R object.
 
 - newdata:
 
@@ -127,7 +142,3 @@ augment(
 - se_fit:
 
   Logical; should standard errors of fit be included?
-
-- output:
-
-  Character string; return format ("data.frame" or "mlx").
