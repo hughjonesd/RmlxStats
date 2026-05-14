@@ -35,8 +35,8 @@
 #' @param family MLX-aware family object, e.g. [mlxs_gaussian()] or
 #'   [mlxs_binomial()].
 #' @param ... Additional arguments passed to [mlxs_glmnet()], such as `alpha`,
-#'   `nlambda`, `lambda_min_ratio`, `standardize`, `intercept`, `maxit`, and
-#'   `tol`.
+#'   `nlambda`, `lambda_min_ratio`, `standardize`, `intercept`, `maxit`, `tol`,
+#'   and `tol_f64`.
 #' @return An object of class `mlxs_cv_glmnet`.
 #' @export
 mlxs_cv_glmnet <- function(x,
@@ -98,7 +98,6 @@ mlxs_cv_glmnet <- function(x,
 
   type.measure <- .mlxs_cv_glmnet_normalize_measure(type.measure, family_name)
 
-  x <- as.matrix(x)
   y <- as.numeric(y)
   n_obs <- nrow(x)
   if (n_obs != length(y)) {
@@ -129,8 +128,9 @@ mlxs_cv_glmnet <- function(x,
   cvraw <- matrix(NA_real_, nrow = nfolds, ncol = n_lambda)
   if (keep) {
     fit_preval <- matrix(NA_real_, nrow = n_obs, ncol = n_lambda)
+    x_rownames <- if (inherits(x, "mlx")) NULL else rownames(x)
     dimnames(fit_preval) <- list(
-      rownames(x),
+      x_rownames,
       paste0("s", seq_len(n_lambda) - 1L)
     )
   } else {
@@ -181,7 +181,7 @@ mlxs_cv_glmnet <- function(x,
     cvsd = cvsd,
     cvup = cvup,
     cvlo = cvlo,
-    nzero = colSums(abs(glmnet_fit$beta) > 0),
+    nzero = colSums(abs(as.matrix(glmnet_fit$beta)) > 0),
     call = match.call(),
     name = stats::setNames(
       .mlxs_cv_glmnet_measure_name(type.measure, family_name),
@@ -319,15 +319,85 @@ mlxs_cv_glmnet <- function(x,
   )
 }
 
-.mlxs_glmnet_select_path <- function(object, s = NULL, exact = FALSE) {
+.mlxs_glmnet_select_path <- function(object,
+                                     s = NULL,
+                                     exact = FALSE,
+                                     output = c("matrix", "mlx")) {
+  output <- match.arg(output)
+  .mlxs_glmnet_use_object_device(object)
   if (isTRUE(exact)) {
     stop("exact = TRUE is not implemented for mlxs_glmnet methods.",
          call. = FALSE)
   }
 
+  lambda <- as.numeric(object$lambda)
+
+  if (identical(output, "mlx")) {
+    if (is.null(s)) {
+      return(list(
+        beta = object$beta,
+        a0 = t(object$a0),
+        lambda = lambda,
+        names = paste0("s", seq_along(lambda) - 1L)
+      ))
+    }
+
+    s_names <- names(s)
+    s <- as.numeric(s)
+    if (anyNA(s)) {
+      stop("s cannot contain NA values.", call. = FALSE)
+    }
+
+    log_lambda <- log(lambda)
+    log_s <- log(s)
+    beta_cols <- vector("list", length(s))
+    a0_cols <- vector("list", length(s))
+
+    for (j in seq_along(s)) {
+      if (log_s[j] >= log_lambda[1L]) {
+        beta_cols[[j]] <- object$beta[, 1L, drop = FALSE]
+        a0_cols[[j]] <- object$a0[1L, , drop = FALSE]
+        next
+      }
+      if (log_s[j] <= log_lambda[length(log_lambda)]) {
+        last <- length(log_lambda)
+        beta_cols[[j]] <- object$beta[, last, drop = FALSE]
+        a0_cols[[j]] <- object$a0[last, , drop = FALSE]
+        next
+      }
+
+      right <- which(log_lambda <= log_s[j])[1L]
+      left <- right - 1L
+      if (isTRUE(all.equal(log_s[j], log_lambda[left], tolerance = 1e-12))) {
+        beta_cols[[j]] <- object$beta[, left, drop = FALSE]
+        a0_cols[[j]] <- object$a0[left, , drop = FALSE]
+        next
+      }
+      if (isTRUE(all.equal(log_s[j], log_lambda[right], tolerance = 1e-12))) {
+        beta_cols[[j]] <- object$beta[, right, drop = FALSE]
+        a0_cols[[j]] <- object$a0[right, , drop = FALSE]
+        next
+      }
+
+      weight_left <- (log_s[j] - log_lambda[right]) /
+        (log_lambda[left] - log_lambda[right])
+      weight_right <- 1 - weight_left
+      beta_cols[[j]] <- object$beta[, left, drop = FALSE] * weight_left +
+        object$beta[, right, drop = FALSE] * weight_right
+      a0_cols[[j]] <- object$a0[left, , drop = FALSE] * weight_left +
+        object$a0[right, , drop = FALSE] * weight_right
+    }
+
+    return(list(
+      beta = do.call(cbind, beta_cols),
+      a0 = do.call(cbind, a0_cols),
+      lambda = s,
+      names = s_names
+    ))
+  }
+
   beta <- as.matrix(object$beta)
   a0 <- as.numeric(object$a0)
-  lambda <- as.numeric(object$lambda)
 
   if (is.null(s)) {
     return(list(
@@ -387,16 +457,33 @@ mlxs_cv_glmnet <- function(x,
 }
 
 #' @export
-coef.mlxs_glmnet <- function(object, s = NULL, exact = FALSE, ...) {
-  selected <- .mlxs_glmnet_select_path(object, s = s, exact = exact)
-  coef_mat <- rbind("(Intercept)" = selected$a0, selected$beta)
-  beta_names <- rownames(object$beta)
+coef.mlxs_glmnet <- function(object,
+                             s = NULL,
+                             exact = FALSE,
+                             ...,
+                             output = c("matrix", "mlx")) {
+  output <- match.arg(output)
+  .mlxs_glmnet_use_object_device(object)
+  selected <- .mlxs_glmnet_select_path(
+    object,
+    s = s,
+    exact = exact,
+    output = output
+  )
+  coef_mat <- rbind(selected$a0, selected$beta)
+  beta_names <- object$feature_names
   if (is.null(beta_names)) {
     beta_names <- paste0("V", seq_len(nrow(object$beta)))
   }
-  rownames(coef_mat)[-1L] <- beta_names
-
   col_names <- selected$names
+
+  if (identical(output, "mlx")) {
+    attr(coef_mat, "coef_names") <- c("(Intercept)", beta_names)
+    attr(coef_mat, "lambda_names") <- col_names
+    return(coef_mat)
+  }
+
+  rownames(coef_mat) <- c("(Intercept)", beta_names)
   if (is.null(col_names) || !length(col_names)) {
     col_names <- paste0("s", seq_len(ncol(coef_mat)) - 1L)
   }
@@ -413,26 +500,58 @@ predict.mlxs_glmnet <- function(object,
                                   "nonzero", "class"
                                 ),
                                 exact = FALSE,
-                                ...) {
+                                ...,
+                                output = c("matrix", "mlx")) {
   type <- match.arg(type)
+  output <- match.arg(output)
+  .mlxs_glmnet_use_object_device(object)
 
   if (type == "coefficients") {
-    return(coef(object, s = s, exact = exact, ...))
+    return(coef(object, s = s, exact = exact, ..., output = output))
   }
 
-  selected <- .mlxs_glmnet_select_path(object, s = s, exact = exact)
+  selected <- .mlxs_glmnet_select_path(
+    object,
+    s = s,
+    exact = exact,
+    output = output
+  )
   if (type == "nonzero") {
+    selected_host <- if (identical(output, "matrix")) {
+      selected
+    } else {
+      .mlxs_glmnet_select_path(object, s = s, exact = exact, output = "matrix")
+    }
     return(lapply(seq_len(ncol(selected$beta)), function(j) {
-      which(abs(selected$beta[, j]) > 0)
+      which(abs(selected_host$beta[, j]) > 0)
     }))
   }
 
-  newx <- as.matrix(newx)
   if (ncol(newx) != nrow(object$beta)) {
     stop("newx must have the same number of columns as the fitted x.",
          call. = FALSE)
   }
 
+  if (identical(output, "mlx")) {
+    newx <- Rmlx::as_mlx(newx, dtype = Rmlx::mlx_dtype(selected$beta))
+    eta <- newx %*% selected$beta +
+      Rmlx::mlx_ones(
+        c(nrow(newx), 1L),
+        dtype = Rmlx::mlx_dtype(selected$beta)
+      ) %*% selected$a0
+
+    if (type == "link" || object$family == "gaussian") {
+      return(eta)
+    }
+
+    response <- 1 / (1 + exp(-eta))
+    if (type == "class") {
+      return(Rmlx::mlx_where(response >= 0.5, 1, 0))
+    }
+    return(response)
+  }
+
+  newx <- as.matrix(newx)
   eta <- newx %*% selected$beta +
     matrix(selected$a0, nrow = nrow(newx), ncol = length(selected$a0),
            byrow = TRUE)
@@ -450,6 +569,13 @@ predict.mlxs_glmnet <- function(object,
     return(ifelse(response >= 0.5, 1, 0))
   }
   response
+}
+
+.mlxs_glmnet_use_object_device <- function(object) {
+  if (isTRUE(object$float64)) {
+    Rmlx::local_device("cpu", .local_envir = parent.frame())
+  }
+  invisible(TRUE)
 }
 
 .mlxs_cv_glmnet_resolve_s <- function(object, s) {

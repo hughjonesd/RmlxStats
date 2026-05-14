@@ -269,3 +269,32 @@ test_that("mlxs_cv_glmnet rejects unsupported arguments", {
     "not implemented"
   )
 })
+
+test_that("mlxs_cv_glmnet works with MLX-backed glmnet fits", {
+  set.seed(20260518)
+  n <- 48
+  p <- 6
+  x <- matrix(rnorm(n * p), nrow = n)
+  y <- drop(x[, 1] - x[, 2] + rnorm(n))
+  foldid <- rep(1:4, length.out = n)
+
+  fit <- mlxs_cv_glmnet(
+    x,
+    y,
+    family = mlxs_gaussian(),
+    nlambda = 5,
+    foldid = foldid,
+    maxit = 80,
+    tol = 1e-8,
+    tol_f64 = 1e6,
+    keep = TRUE
+  )
+
+  expect_true(inherits(fit$glmnet.fit$beta, "mlx"))
+  expect_true(fit$glmnet.fit$float64)
+  expect_type(coef(fit), "double")
+  expect_type(predict(fit, x[1:4, , drop = FALSE]), "double")
+  expect_true(inherits(coef(fit, output = "mlx"), "mlx"))
+  expect_output(print(fit$glmnet.fit), "MLX elastic net fit")
+  expect_output(print(fit), "MLX cross-validated")
+})

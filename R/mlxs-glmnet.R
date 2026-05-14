@@ -9,8 +9,8 @@
 #'  as of April 2026, `mlxs_glmnet()` gets competitive at n x p = 5,000,000 
 #'  or greater.
 #'
-#' @param x Numeric matrix of predictors (observations in rows).
-#' @param y Numeric response vector (for binomial, values must be 0/1).
+#' @param x Numeric matrix of predictors.
+#' @param y Numeric response vector.
 #' @param family MLX-aware family object, e.g. [mlxs_gaussian()] or
 #'   [mlxs_binomial()].
 #' @param alpha Elastic-net mixing parameter (1 = lasso, currently alpha must
@@ -27,6 +27,8 @@
 #'   the computation.
 #' @param maxit Maximum proximal-gradient iterations per lambda value.
 #' @param tol Convergence tolerance on the coefficient updates.
+#' @param tol_f64 Update tolerance at which fitting switches to CPU float64.
+#'   Set to `NULL` to disable the switch.
 #' @return An object of class `mlxs_glmnet` containing the fitted coefficient
 #'   path, intercepts, lambda sequence, and scaling information.
 #' @export
@@ -41,7 +43,9 @@ mlxs_glmnet <- function(x,
                         intercept = TRUE,
                         use_strong_rules = TRUE,
                         maxit = 1000,
-                        tol = 1e-6) {
+                        tol = 1e-8,
+                        tol_f64 = 1e-6) {
+  tol_f64_supplied <- !missing(tol_f64)
   family_name <- family$family
   if (!family_name %in% c("gaussian", "binomial", "quasibinomial")) {
     stop("mlxs_glmnet() currently supports gaussian and binomial families.",
@@ -51,19 +55,35 @@ mlxs_glmnet <- function(x,
     stop("alpha must be > 0 for the current MLX elastic-net implementation.",
          call. = FALSE)
   }
+  if (!tol_f64_supplied && !is.null(tol_f64) && tol_f64 <= tol) {
+    tol_f64 <- NULL
+  }
+  if (tol_f64_supplied && !is.null(tol_f64) && tol_f64 <= tol) {
+    stop("tol_f64 must be greater than tol, or NULL.", call. = FALSE)
+  }
 
-  x <- as.matrix(x)
-  y <- as.numeric(y)
-  if (nrow(x) != length(y)) {
+  input_f64 <- .mlxs_glmnet_is_float64(x) || .mlxs_glmnet_is_float64(y)
+  if (input_f64) {
+    warning(
+      "float64 MLX input detected; running mlxs_glmnet() on CPU float64.",
+      call. = FALSE
+    )
+    .mlxs_glmnet_enter_f64()
+  }
+
+  y_host <- as.numeric(y)
+  if (nrow(x) != length(y_host)) {
     stop("x and y must have the same number of observations.", call. = FALSE)
   }
 
   n_obs <- nrow(x)
   n_pred <- ncol(x)
   chunk_size <- 8L
+  feature_names <- if (inherits(x, "mlx")) NULL else colnames(x)
 
   design <- .mlxs_glmnet_prepare_design(x, standardize = standardize,
-                                        intercept = intercept)
+                                        intercept = intercept,
+                                        float64 = input_f64)
   x_mlx <- design$x
   x_center <- design$x_center
   x_scale <- design$x_scale
@@ -71,7 +91,7 @@ mlxs_glmnet <- function(x,
   if (family_name == "gaussian") {
     fit <- .mlxs_glmnet_fit_gaussian(
       x_mlx = x_mlx,
-      y = y,
+      y = y_host,
       alpha = alpha,
       lambda = lambda,
       nlambda = nlambda,
@@ -79,12 +99,14 @@ mlxs_glmnet <- function(x,
       intercept = intercept,
       maxit = maxit,
       tol = tol,
-      chunk_size = chunk_size
+      tol_f64 = tol_f64,
+      chunk_size = chunk_size,
+      force_float64 = input_f64
     )
   } else {
     fit <- .mlxs_glmnet_fit_binomial(
       x_mlx = x_mlx,
-      y = y,
+      y = y_host,
       alpha = alpha,
       lambda = lambda,
       nlambda = nlambda,
@@ -92,13 +114,18 @@ mlxs_glmnet <- function(x,
       intercept = intercept,
       maxit = maxit,
       tol = tol,
-      chunk_size = chunk_size
+      tol_f64 = tol_f64,
+      chunk_size = chunk_size,
+      force_float64 = input_f64
     )
   }
 
   n_lambda <- length(fit$lambda)
   beta_store_mlx <- fit$beta
   intercept_store_mlx <- fit$intercept
+  if (isTRUE(fit$float64)) {
+    .mlxs_glmnet_enter_f64()
+  }
 
   beta_unscaled_mlx <- beta_store_mlx / x_scale
   if (intercept) {
@@ -110,13 +137,9 @@ mlxs_glmnet <- function(x,
     intercept_unscaled_mlx <- intercept_store_mlx
   }
 
-  beta_unscaled <- as.matrix(beta_unscaled_mlx)
-  intercept_unscaled <- as.numeric(intercept_unscaled_mlx)
-
-  rownames(beta_unscaled) <- colnames(x)
   result <- list(
-    a0 = intercept_unscaled,
-    beta = beta_unscaled,
+    a0 = intercept_unscaled_mlx,
+    beta = beta_unscaled_mlx,
     lambda = fit$lambda,
     alpha = alpha,
     family = family_name,
@@ -125,6 +148,10 @@ mlxs_glmnet <- function(x,
     use_strong_rules = use_strong_rules,
     x_center = x_center,
     x_scale = x_scale,
+    feature_names = feature_names,
+    float64 = isTRUE(fit$float64),
+    float64_lambda_index = fit$float64_lambda_index,
+    float64_reason = fit$float64_reason,
     call = match.call()
   )
 
@@ -134,8 +161,9 @@ mlxs_glmnet <- function(x,
 
 .mlxs_glmnet_prepare_design <- function(x,
                                         standardize,
-                                        intercept) {
-  x_mlx <- Rmlx::as_mlx(x)
+                                        intercept,
+                                        float64 = FALSE) {
+  x_mlx <- .mlxs_glmnet_as_mlx(x, float64 = float64)
   n_pred <- ncol(x)
 
   if (standardize || intercept) {
@@ -149,10 +177,16 @@ mlxs_glmnet <- function(x,
   }
 
   if (is.null(x_center)) {
-    x_center <- Rmlx::mlx_zeros(c(1L, n_pred))
+    x_center <- Rmlx::mlx_zeros(
+      c(1L, n_pred),
+      dtype = Rmlx::mlx_dtype(x_mlx)
+    )
   }
   if (is.null(x_scale)) {
-    x_scale <- Rmlx::mlx_ones(c(1L, n_pred))
+    x_scale <- Rmlx::mlx_ones(
+      c(1L, n_pred),
+      dtype = Rmlx::mlx_dtype(x_mlx)
+    )
   }
 
   list(
@@ -171,7 +205,9 @@ mlxs_glmnet <- function(x,
                                       intercept,
                                       maxit,
                                       tol,
-                                      chunk_size) {
+                                      tol_f64,
+                                      chunk_size,
+                                      force_float64) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
   n_lambda <- if (is.null(lambda)) nlambda else length(lambda)
@@ -193,7 +229,9 @@ mlxs_glmnet <- function(x,
       intercept = intercept,
       maxit = maxit,
       tol = tol,
-      chunk_size = chunk_size
+      tol_f64 = tol_f64,
+      chunk_size = chunk_size,
+      force_float64 = force_float64
     ))
   }
 
@@ -207,7 +245,9 @@ mlxs_glmnet <- function(x,
     intercept = intercept,
     maxit = maxit,
     tol = tol,
-    chunk_size = chunk_size
+    tol_f64 = tol_f64,
+    chunk_size = chunk_size,
+    force_float64 = force_float64
   )
 }
 
@@ -220,11 +260,16 @@ mlxs_glmnet <- function(x,
                                             intercept,
                                             maxit,
                                             tol,
-                                            chunk_size) {
+                                            tol_f64,
+                                            chunk_size,
+                                            force_float64) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
   y_mean <- if (intercept) mean(y) else 0
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+  y_mlx <- Rmlx::mlx_reshape(
+    .mlxs_glmnet_as_mlx(y - y_mean, float64 = force_float64),
+    c(n_obs, 1L)
+  )
   shape_sig <- paste(n_obs, n_pred, sep = "x")
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
@@ -238,11 +283,23 @@ mlxs_glmnet <- function(x,
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  if (force_float64) {
+    intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+    beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+    eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64")
+    residual_mlx <- Rmlx::mlx_cast(residual_mlx, dtype = "float64")
+    beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+    intercept_store_mlx <- Rmlx::mlx_cast(intercept_store_mlx,
+                                          dtype = "float64")
+  }
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   base_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
   n_obs_mlx <- Rmlx::as_mlx(n_obs)
   zero_mlx <- Rmlx::as_mlx(0)
+  float64 <- force_float64
+  float64_lambda_index <- if (force_float64) 0L else NA_integer_
+  float64_reason <- if (force_float64) "input" else NA_character_
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
@@ -256,22 +313,37 @@ mlxs_glmnet <- function(x,
     remaining <- maxit
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_get_compiled_chunk(
-        "gaussian",
-        n_steps,
-        shape_sig = shape_sig
-      )(
-        x_mlx,
-        beta_mlx,
-        eta_mlx,
-        residual_mlx,
-        y_mlx,
-        n_obs_mlx,
-        step_mlx,
-        thresh_mlx,
-        ridge_penalty_mlx,
-        zero_mlx
-      )
+      if (float64) {
+        state <- .mlxs_glmnet_gaussian_chunk(
+          x_mlx,
+          beta_mlx,
+          eta_mlx,
+          residual_mlx,
+          y_mlx,
+          n_obs,
+          step,
+          thresh,
+          ridge_penalty,
+          n_steps
+        )
+      } else {
+        state <- .mlxs_glmnet_get_compiled_chunk(
+          "gaussian",
+          n_steps,
+          shape_sig = shape_sig
+        )(
+          x_mlx,
+          beta_mlx,
+          eta_mlx,
+          residual_mlx,
+          y_mlx,
+          n_obs_mlx,
+          step_mlx,
+          thresh_mlx,
+          ridge_penalty_mlx,
+          zero_mlx
+        )
+      }
 
       beta_mlx <- state$beta
       eta_mlx <- state$eta
@@ -280,6 +352,28 @@ mlxs_glmnet <- function(x,
 
       if (as.logical(state$delta_max < tol)) {
         break
+      }
+      if (!float64 && !is.null(tol_f64) &&
+          as.logical(state$delta_max < tol_f64)) {
+        .mlxs_glmnet_enter_f64()
+        x_mlx <- Rmlx::mlx_cast(x_mlx, dtype = "float64")
+        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64")
+        gram_mlx <- crossprod(x_mlx) / n_obs
+        base_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
+        step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
+        thresh <- lambda_val * alpha * step
+        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+        eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64")
+        residual_mlx <- Rmlx::mlx_cast(residual_mlx, dtype = "float64")
+        beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+        intercept_store_mlx <- Rmlx::mlx_cast(
+          intercept_store_mlx,
+          dtype = "float64"
+        )
+        intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+        float64 <- TRUE
+        float64_lambda_index <- idx
+        float64_reason <- "tol_f64"
       }
     }
 
@@ -300,7 +394,10 @@ mlxs_glmnet <- function(x,
   list(
     beta = beta_store_mlx,
     intercept = intercept_store_mlx,
-    lambda = lambda
+    lambda = lambda,
+    float64 = float64,
+    float64_lambda_index = float64_lambda_index,
+    float64_reason = float64_reason
   )
 }
 
@@ -313,11 +410,16 @@ mlxs_glmnet <- function(x,
                                            intercept,
                                            maxit,
                                            tol,
-                                           chunk_size) {
+                                           tol_f64,
+                                           chunk_size,
+                                           force_float64) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
   y_mean <- if (intercept) mean(y) else 0
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+  y_mlx <- Rmlx::mlx_reshape(
+    .mlxs_glmnet_as_mlx(y - y_mean, float64 = force_float64),
+    c(n_obs, 1L)
+  )
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
@@ -337,11 +439,22 @@ mlxs_glmnet <- function(x,
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  if (force_float64) {
+    beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+    z_mlx <- Rmlx::mlx_cast(z_mlx, dtype = "float64")
+    beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+    intercept_store_mlx <- Rmlx::mlx_cast(intercept_store_mlx,
+                                          dtype = "float64")
+    intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+  }
   gram_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
   effective_maxit <- min(maxit, 200L)
   zero_mlx <- Rmlx::as_mlx(0)
   one_mlx <- Rmlx::as_mlx(1)
   four_mlx <- Rmlx::as_mlx(4)
+  float64 <- force_float64
+  float64_lambda_index <- if (force_float64) 0L else NA_integer_
+  float64_reason <- if (force_float64) "input" else NA_character_
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
@@ -358,23 +471,37 @@ mlxs_glmnet <- function(x,
 
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_get_compiled_chunk(
-        "gaussian_gram",
-        n_steps,
-        shape_sig = shape_sig
-      )(
-        gram_mlx,
-        xy_mlx,
-        beta_mlx,
-        z_mlx,
-        t_prev_mlx,
-        step_mlx,
-        thresh_mlx,
-        ridge_penalty_mlx,
-        zero_mlx,
-        one_mlx,
-        four_mlx
-      )
+      if (float64) {
+        state <- .mlxs_glmnet_gaussian_gram_chunk(
+          gram_mlx,
+          xy_mlx,
+          beta_mlx,
+          z_mlx,
+          t_prev_mlx,
+          step,
+          thresh,
+          ridge_penalty,
+          n_steps
+        )
+      } else {
+        state <- .mlxs_glmnet_get_compiled_chunk(
+          "gaussian_gram",
+          n_steps,
+          shape_sig = shape_sig
+        )(
+          gram_mlx,
+          xy_mlx,
+          beta_mlx,
+          z_mlx,
+          t_prev_mlx,
+          step_mlx,
+          thresh_mlx,
+          ridge_penalty_mlx,
+          zero_mlx,
+          one_mlx,
+          four_mlx
+        )
+      }
 
       beta_mlx <- state$beta
       z_mlx <- state$z
@@ -383,6 +510,29 @@ mlxs_glmnet <- function(x,
 
       if (as.logical(state$delta_max < tol)) {
         break
+      }
+      if (!float64 && !is.null(tol_f64) &&
+          as.logical(state$delta_max < tol_f64)) {
+        .mlxs_glmnet_enter_f64()
+        x_mlx <- Rmlx::mlx_cast(x_mlx, dtype = "float64")
+        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64")
+        gram_mlx <- crossprod(x_mlx) / n_obs
+        xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
+        gram_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
+        step <- 1 / (gram_lipschitz + ridge_penalty)
+        thresh <- lambda_val * alpha * step
+        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+        z_mlx <- Rmlx::mlx_cast(z_mlx, dtype = "float64")
+        t_prev_mlx <- Rmlx::mlx_cast(t_prev_mlx, dtype = "float64")
+        beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+        intercept_store_mlx <- Rmlx::mlx_cast(
+          intercept_store_mlx,
+          dtype = "float64"
+        )
+        intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+        float64 <- TRUE
+        float64_lambda_index <- idx
+        float64_reason <- "tol_f64"
       }
     }
 
@@ -403,7 +553,10 @@ mlxs_glmnet <- function(x,
   list(
     beta = beta_store_mlx,
     intercept = intercept_store_mlx,
-    lambda = lambda
+    lambda = lambda,
+    float64 = float64,
+    float64_lambda_index = float64_lambda_index,
+    float64_reason = float64_reason
   )
 }
 
@@ -416,14 +569,19 @@ mlxs_glmnet <- function(x,
                                       intercept,
                                       maxit,
                                       tol,
-                                      chunk_size) {
+                                      tol_f64,
+                                      chunk_size,
+                                      force_float64) {
   if (!all(y %in% c(0, 1))) {
     stop("Binomial family requires a 0/1 response.", call. = FALSE)
   }
 
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
+  y_mlx <- Rmlx::mlx_reshape(
+    .mlxs_glmnet_as_mlx(y, float64 = force_float64),
+    c(n_obs, 1L)
+  )
   ones_mlx <- Rmlx::mlx_ones(c(n_obs, 1L))
   shape_sig <- paste(n_obs, n_pred, fit_intercept = intercept, sep = "x")
 
@@ -448,6 +606,19 @@ mlxs_glmnet <- function(x,
   base_lipschitz <- 0.25 * max(col_sq_sums) / n_obs
   n_obs_mlx <- Rmlx::as_mlx(n_obs)
   zero_mlx <- Rmlx::as_mlx(0)
+  if (force_float64) {
+    ones_mlx <- Rmlx::mlx_cast(ones_mlx, dtype = "float64")
+    intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+    beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+    eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64")
+    residual_mlx <- Rmlx::mlx_cast(residual_mlx, dtype = "float64")
+    beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+    intercept_store_mlx <- Rmlx::mlx_cast(intercept_store_mlx,
+                                          dtype = "float64")
+  }
+  float64 <- force_float64
+  float64_lambda_index <- if (force_float64) 0L else NA_integer_
+  float64_reason <- if (force_float64) "input" else NA_character_
 
   for (idx in seq_along(lambda)) {
     lambda_val <- lambda[idx]
@@ -461,25 +632,43 @@ mlxs_glmnet <- function(x,
     remaining <- maxit
     while (remaining > 0L) {
       n_steps <- min(chunk_size, remaining)
-      state <- .mlxs_glmnet_get_compiled_chunk(
-        "binomial",
-        n_steps,
-        fit_intercept = intercept,
-        shape_sig = shape_sig
-      )(
-        x_mlx,
-        beta_mlx,
-        intercept_mlx,
-        eta_mlx,
-        residual_mlx,
-        y_mlx,
-        ones_mlx,
-        n_obs_mlx,
-        step_mlx,
-        thresh_mlx,
-        ridge_penalty_mlx,
-        zero_mlx
-      )
+      if (float64) {
+        state <- .mlxs_glmnet_binomial_chunk(
+          x_mlx,
+          beta_mlx,
+          intercept_mlx,
+          eta_mlx,
+          residual_mlx,
+          y_mlx,
+          ones_mlx,
+          n_obs,
+          step,
+          thresh,
+          ridge_penalty,
+          n_steps,
+          intercept
+        )
+      } else {
+        state <- .mlxs_glmnet_get_compiled_chunk(
+          "binomial",
+          n_steps,
+          fit_intercept = intercept,
+          shape_sig = shape_sig
+        )(
+          x_mlx,
+          beta_mlx,
+          intercept_mlx,
+          eta_mlx,
+          residual_mlx,
+          y_mlx,
+          ones_mlx,
+          n_obs_mlx,
+          step_mlx,
+          thresh_mlx,
+          ridge_penalty_mlx,
+          zero_mlx
+        )
+      }
 
       beta_mlx <- state$beta
       intercept_mlx <- state$intercept
@@ -490,6 +679,30 @@ mlxs_glmnet <- function(x,
       if (as.logical(state$delta_max < tol) &&
           as.logical(state$intercept_delta_max < tol)) {
         break
+      }
+      if (!float64 && !is.null(tol_f64) &&
+          as.logical(state$delta_max < tol_f64) &&
+          as.logical(state$intercept_delta_max < tol_f64)) {
+        .mlxs_glmnet_enter_f64()
+        x_mlx <- Rmlx::mlx_cast(x_mlx, dtype = "float64")
+        y_mlx <- Rmlx::mlx_cast(y_mlx, dtype = "float64")
+        ones_mlx <- Rmlx::mlx_cast(ones_mlx, dtype = "float64")
+        col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
+        base_lipschitz <- 0.25 * max(col_sq_sums) / n_obs
+        step <- 1 / (base_lipschitz + lambda_val * (1 - alpha))
+        thresh <- lambda_val * alpha * step
+        beta_mlx <- Rmlx::mlx_cast(beta_mlx, dtype = "float64")
+        intercept_mlx <- Rmlx::mlx_cast(intercept_mlx, dtype = "float64")
+        eta_mlx <- Rmlx::mlx_cast(eta_mlx, dtype = "float64")
+        residual_mlx <- Rmlx::mlx_cast(residual_mlx, dtype = "float64")
+        beta_store_mlx <- Rmlx::mlx_cast(beta_store_mlx, dtype = "float64")
+        intercept_store_mlx <- Rmlx::mlx_cast(
+          intercept_store_mlx,
+          dtype = "float64"
+        )
+        float64 <- TRUE
+        float64_lambda_index <- idx
+        float64_reason <- "tol_f64"
       }
     }
 
@@ -510,7 +723,10 @@ mlxs_glmnet <- function(x,
   list(
     beta = beta_store_mlx,
     intercept = intercept_store_mlx,
-    lambda = lambda
+    lambda = lambda,
+    float64 = float64,
+    float64_lambda_index = float64_lambda_index,
+    float64_reason = float64_reason
   )
 }
 
@@ -545,4 +761,20 @@ mlxs_glmnet <- function(x,
 
 .mlxs_soft_threshold <- function(z, thresh) {
   sign(z) * Rmlx::mlx_maximum(abs(z) - thresh, 0)
+}
+
+.mlxs_glmnet_is_float64 <- function(x) {
+  inherits(x, "mlx") && identical(Rmlx::mlx_dtype(x), "float64")
+}
+
+.mlxs_glmnet_as_mlx <- function(x, float64 = FALSE) {
+  if (isTRUE(float64)) {
+    return(Rmlx::as_mlx(x, dtype = "float64"))
+  }
+  Rmlx::as_mlx(x)
+}
+
+.mlxs_glmnet_enter_f64 <- function(.local_envir = parent.frame()) {
+  Rmlx::local_device("cpu", .local_envir = .local_envir)
+  invisible(TRUE)
 }

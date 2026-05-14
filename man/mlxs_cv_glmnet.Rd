@@ -60,8 +60,8 @@ observation.}
 \code{\link[=mlxs_binomial]{mlxs_binomial()}}.}
 
 \item{...}{Additional arguments passed to \code{\link[=mlxs_glmnet]{mlxs_glmnet()}}, such as \code{alpha},
-\code{nlambda}, \code{lambda_min_ratio}, \code{standardize}, \code{intercept}, \code{maxit}, and
-\code{tol}.}
+\code{nlambda}, \code{lambda_min_ratio}, \code{standardize}, \code{intercept}, \code{maxit}, \code{tol},
+and \code{tol_f64}.}
 }
 \value{
 An object of class \code{mlxs_cv_glmnet}.
