@@ -209,6 +209,16 @@ mlxs_cv_glmnet <- function(x,
   result
 }
 
+#' Normalize a cross-validation loss name
+#'
+#' Internal validation step used near the start of [mlxs_cv_glmnet()]. It maps
+#' `"default"` to the family-specific loss and rejects measures that are not
+#' implemented for the current family.
+#'
+#' @param type.measure Requested loss name.
+#' @param family_name Name from the MLXS family object.
+#' @return Character scalar loss name used by scoring helpers.
+#' @noRd
 .mlxs_cv_glmnet_normalize_measure <- function(type.measure, family_name) {
   if (type.measure == "default") {
     if (family_name == "gaussian") {
@@ -240,6 +250,15 @@ mlxs_cv_glmnet <- function(x,
   type.measure
 }
 
+#' User-facing label for a cross-validation loss
+#'
+#' Converts the normalized loss name into the label stored on the
+#' `mlxs_cv_glmnet` result and printed by methods.
+#'
+#' @param type.measure Normalized loss name.
+#' @param family_name Name from the MLXS family object.
+#' @return Character scalar label.
+#' @noRd
 .mlxs_cv_glmnet_measure_name <- function(type.measure, family_name) {
   if (type.measure == "mse") {
     return("Mean-Squared Error")
@@ -256,6 +275,19 @@ mlxs_cv_glmnet <- function(x,
   "Binomial Deviance"
 }
 
+#' Create or validate fold assignments
+#'
+#' Internal fold setup for [mlxs_cv_glmnet()]. User-supplied fold ids are
+#' remapped to contiguous integers; generated binomial folds are stratified by
+#' class to avoid systematic empty-class holdouts when possible.
+#'
+#' @param y Numeric response vector.
+#' @param n_obs Number of observations.
+#' @param nfolds Requested number of folds.
+#' @param foldid Optional user-supplied fold ids.
+#' @param family_name Name from the MLXS family object.
+#' @return Integer vector of fold assignments in `seq_len(nfolds)`.
+#' @noRd
 .mlxs_cv_glmnet_foldid <- function(y,
                                    n_obs,
                                    nfolds,
@@ -296,6 +328,17 @@ mlxs_cv_glmnet <- function(x,
   sample(rep(seq_len(nfolds), length.out = n_obs))
 }
 
+#' Score glmnet holdout predictions
+#'
+#' Per-fold scoring helper used by [mlxs_cv_glmnet()]. It returns one loss value
+#' per holdout observation and lambda so the caller can aggregate across folds.
+#'
+#' @param y Holdout response vector.
+#' @param pred Matrix-like holdout predictions, one column per lambda.
+#' @param family_name Name from the MLXS family object.
+#' @param type.measure Normalized loss name.
+#' @return Numeric matrix of losses with rows matching `y`.
+#' @noRd
 .mlxs_cv_glmnet_loss <- function(y, pred, family_name, type.measure) {
   pred <- as.matrix(pred)
 
@@ -319,6 +362,17 @@ mlxs_cv_glmnet <- function(x,
   )
 }
 
+#' Select or interpolate glmnet path values
+#'
+#' Shared path resolver for `coef()` and `predict()` methods. It extracts the
+#' full path when `s` is `NULL`, otherwise it interpolates coefficients and
+#' intercepts on the log-lambda scale.
+#'
+#' @param object Fitted `mlxs_glmnet` object.
+#' @param s Optional lambda values to extract.
+#' @param exact Logical; currently unsupported.
+#' @return List with selected `beta`, `a0`, `lambda`, and column `names`.
+#' @noRd
 .mlxs_glmnet_select_path <- function(object, s = NULL, exact = FALSE) {
   if (isTRUE(exact)) {
     stop("exact = TRUE is not implemented for mlxs_glmnet methods.",

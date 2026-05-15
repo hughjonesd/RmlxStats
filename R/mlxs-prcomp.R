@@ -141,6 +141,18 @@ mlxs_prcomp <- function(x,
   result
 }
 
+#' Fit exact PCA from scaled MLX data
+#'
+#' Internal exact decomposition path for [mlxs_prcomp()]. It uses the feature
+#' covariance matrix when observations are not fewer than predictors and
+#' delegates to the wide-data path otherwise.
+#'
+#' @param x_scaled Centered/scaled MLX data matrix.
+#' @param rank_limit Maximum number of components to retain.
+#' @param tol Optional relative standard-deviation cutoff.
+#' @param retx Logical; compute and return scores.
+#' @return List from `.mlxs_prcomp_finalize()`.
+#' @noRd
 .mlxs_prcomp_exact <- function(x_scaled,
                                rank_limit,
                                tol,
@@ -182,6 +194,15 @@ mlxs_prcomp <- function(x,
   )
 }
 
+#' Fit exact PCA for wide MLX data
+#'
+#' Exact decomposition path for `n < p` inputs. It eigendecomposes the
+#' observation Gram matrix, reconstructs rotations, and falls back to SVD if
+#' near-zero singular values would make reconstruction unstable.
+#'
+#' @inheritParams .mlxs_prcomp_exact
+#' @return List from `.mlxs_prcomp_finalize()`.
+#' @noRd
 .mlxs_prcomp_exact_wide <- function(x_scaled,
                                     rank_limit,
                                     tol,
@@ -242,6 +263,14 @@ mlxs_prcomp <- function(x,
   )
 }
 
+#' Fit exact PCA via SVD
+#'
+#' Stability fallback for exact PCA when wide-data eigen reconstruction would
+#' divide by nearly zero singular values.
+#'
+#' @inheritParams .mlxs_prcomp_exact
+#' @return List from `.mlxs_prcomp_finalize()`.
+#' @noRd
 .mlxs_prcomp_exact_svd <- function(x_scaled,
                                    rank_limit,
                                    tol,
@@ -267,6 +296,18 @@ mlxs_prcomp <- function(x,
   )
 }
 
+#' Fit randomized truncated PCA
+#'
+#' Randomized decomposition path for [mlxs_prcomp()] when the requested rank is
+#' smaller than full rank. It sketches a subspace, optionally applies power
+#' iterations, and solves the smaller covariance problem.
+#'
+#' @inheritParams .mlxs_prcomp_exact
+#' @param oversample Extra sketch dimensions beyond `rank_limit`.
+#' @param n_iter Number of power iterations.
+#' @param seed Seed for the random projection matrix.
+#' @return List from `.mlxs_prcomp_finalize()`.
+#' @noRd
 .mlxs_prcomp_randomized <- function(x_scaled,
                                     rank_limit,
                                     tol,
@@ -331,6 +372,20 @@ mlxs_prcomp <- function(x,
   }
 })
 
+#' Finalize an MLXS PCA fit
+#'
+#' Shared result assembly for exact and randomized PCA paths. It applies a
+#' deterministic sign convention, handles zero-rank fits, and returns the common
+#' internal structure consumed by [mlxs_prcomp()].
+#'
+#' @param sdev MLX vector of component standard deviations.
+#' @param rotation MLX loading matrix.
+#' @param scores Optional MLX score matrix.
+#' @param n_obs Number of observations.
+#' @param n_features Number of features.
+#' @param method Method label, `"exact"` or `"randomized"`.
+#' @return List with `sdev`, `rotation`, optional `x`, `rank`, and `method`.
+#' @noRd
 .mlxs_prcomp_finalize <- function(sdev,
                                   rotation,
                                   scores,
@@ -364,12 +419,30 @@ mlxs_prcomp <- function(x,
   )
 }
 
+#' Determine deterministic PCA component signs
+#'
+#' Finds the largest-magnitude loading in each component and uses its sign to
+#' orient rotations and scores consistently across decomposition paths.
+#'
+#' @param rotation MLX loading matrix.
+#' @return MLX row vector of signs, one per component.
+#' @noRd
 .mlxs_prcomp_column_signs <- function(rotation) {
   max_idx <- Rmlx::mlx_argmax(abs(rotation), axis = 1L, drop = FALSE)
   signs <- Rmlx::mlx_take_along_axis(sign(rotation), max_idx, axis = 1L)
   signs + (signs == 0)
 }
 
+#' Count retained PCA components
+#'
+#' Applies the requested rank limit and optional `tol` cutoff to the full vector
+#' of component standard deviations.
+#'
+#' @param sdev_all MLX vector of all available standard deviations.
+#' @param rank_limit Maximum component count.
+#' @param tol Optional relative cutoff against the leading standard deviation.
+#' @return Integer number of components to retain.
+#' @noRd
 .mlxs_prcomp_keep_count <- function(sdev_all, rank_limit, tol) {
   keep <- rank_limit
   if (!is.null(tol) && keep > 0L) {
@@ -427,6 +500,17 @@ mlxs_prcomp <- function(x,
   as.numeric(seed)
 }
 
+#' Convert PCA center or scale metadata to MLX
+#'
+#' Normalizes the attributes returned by `scale()` so prediction can apply the
+#' same preprocessing on device. A `FALSE` return value preserves the `prcomp`
+#' convention for no centering or no scaling.
+#'
+#' @param value Center or scale attribute from `scale()`.
+#' @param n_pred Number of feature columns.
+#' @param x_scaled Scaled MLX data matrix, used to match dtype.
+#' @return `FALSE` or a one-row MLX matrix.
+#' @noRd
 .mlxs_prcomp_param_to_mlx <- function(value, n_pred, x_scaled) {
   if (is.null(value)) {
     return(FALSE)
@@ -442,6 +526,17 @@ mlxs_prcomp <- function(x,
   )
 }
 
+#' Generate deterministic MLX standard-normal values
+#'
+#' Random projection helper for randomized PCA. It builds uniform values from
+#' MLX PRNG key bits and applies a Box-Muller transform, keeping the projection
+#' matrix in the requested dtype.
+#'
+#' @param dim Integer dimensions of the random matrix.
+#' @param seed Numeric seed.
+#' @param dtype Target MLX dtype.
+#' @return MLX matrix of standard-normal values.
+#' @noRd
 .mlxs_prcomp_random_normal <- function(dim, seed, dtype) {
   if (identical(dtype, "float64")) Rmlx::mlx_local_device("cpu")
   base_key <- Rmlx::mlx_key(seed)
@@ -478,6 +573,15 @@ mlxs_prcomp <- function(x,
 #' @name mlxs-prcomp-methods
 NULL
 
+#' Convert an MLXS PCA fit to base `prcomp`
+#'
+#' Adapter used by presentation methods that delegate to base R. It materializes
+#' MLX arrays on the host and restores dimnames before assigning class
+#' `"prcomp"`.
+#'
+#' @param x Fitted `mlxs_prcomp` object.
+#' @return Host-backed object of class `"prcomp"`.
+#' @noRd
 .mlxs_prcomp_as_prcomp <- function(x) {
   rotation <- as.matrix(x$rotation)
   dimnames(rotation) <- list(x$feature_names, x$component_names)
@@ -499,6 +603,15 @@ NULL
   result
 }
 
+#' Convert PCA metadata to a host vector
+#'
+#' Helper for the base-`prcomp` adapter. It preserves `FALSE` for absent center
+#' or scale metadata and names numeric vectors when feature names are available.
+#'
+#' @param x `FALSE` or MLX array containing center/scale values.
+#' @param names Optional feature names.
+#' @return `FALSE` or named numeric vector.
+#' @noRd
 .mlxs_prcomp_host_vector <- function(x, names) {
   if (identical(x, FALSE)) {
     return(FALSE)

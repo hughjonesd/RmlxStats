@@ -132,6 +132,17 @@ mlxs_glmnet <- function(x,
   result
 }
 
+#' Prepare an elastic-net design matrix
+#'
+#' Internal preprocessing step for [mlxs_glmnet()]. It converts predictors to
+#' MLX, applies optional centering and scaling, and returns the scaling metadata
+#' needed later to map coefficients back to the original predictor scale.
+#'
+#' @param x Numeric predictor matrix.
+#' @param standardize Logical; scale columns to unit scale.
+#' @param intercept Logical; center columns when fitting an intercept.
+#' @return List with MLX arrays `x`, `x_center`, and `x_scale`.
+#' @noRd
 .mlxs_glmnet_prepare_design <- function(x,
                                         standardize,
                                         intercept) {
@@ -162,6 +173,25 @@ mlxs_glmnet <- function(x,
   )
 }
 
+#' Fit a Gaussian elastic-net path
+#'
+#' Dispatcher used by [mlxs_glmnet()] after preprocessing. It chooses the dense
+#' residual-update solver or the Gram-matrix solver based on problem shape, then
+#' returns a standardized coefficient path.
+#'
+#' @param x_mlx Standardized MLX predictor matrix.
+#' @param y Numeric response vector.
+#' @param alpha Elastic-net mixing parameter.
+#' @param lambda Optional penalty path.
+#' @param nlambda Number of generated penalties when `lambda` is `NULL`.
+#' @param lambda_min_ratio Smallest generated penalty as a fraction of
+#'   `lambda_max`.
+#' @param intercept Logical; fit an intercept.
+#' @param maxit Maximum iterations per lambda.
+#' @param tol Coefficient-update convergence tolerance.
+#' @param chunk_size Number of proximal-gradient steps per compiled chunk.
+#' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
+#' @noRd
 .mlxs_glmnet_fit_gaussian <- function(x_mlx,
                                       y,
                                       alpha,
@@ -211,6 +241,15 @@ mlxs_glmnet <- function(x,
   )
 }
 
+#' Fit a dense Gaussian elastic-net path
+#'
+#' Proximal-gradient path solver that updates residuals in observation space.
+#' This is preferred for moderate or wide designs where forming and iterating on
+#' a Gram matrix is not advantageous.
+#'
+#' @inheritParams .mlxs_glmnet_fit_gaussian
+#' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
+#' @noRd
 .mlxs_glmnet_fit_gaussian_dense <- function(x_mlx,
                                             y,
                                             alpha,
@@ -304,6 +343,15 @@ mlxs_glmnet <- function(x,
   )
 }
 
+#' Fit a Gaussian elastic-net path using a Gram matrix
+#'
+#' Proximal-gradient path solver for tall problems. It precomputes `X'X` and
+#' `X'y`, then performs accelerated updates in coefficient space to reduce
+#' repeated passes over observations.
+#'
+#' @inheritParams .mlxs_glmnet_fit_gaussian
+#' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
+#' @noRd
 .mlxs_glmnet_fit_gaussian_gram <- function(x_mlx,
                                            y,
                                            alpha,
@@ -407,6 +455,16 @@ mlxs_glmnet <- function(x,
   )
 }
 
+#' Fit a binomial elastic-net path
+#'
+#' Logistic proximal-gradient path solver used by [mlxs_glmnet()] for binomial
+#' and quasibinomial families. The warm-started state is carried along the
+#' lambda path, with coefficient and intercept updates batched into compiled
+#' chunks.
+#'
+#' @inheritParams .mlxs_glmnet_fit_gaussian
+#' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
+#' @noRd
 .mlxs_glmnet_fit_binomial <- function(x_mlx,
                                       y,
                                       alpha,
@@ -514,6 +572,17 @@ mlxs_glmnet <- function(x,
   )
 }
 
+#' Compute the largest active elastic-net penalty
+#'
+#' Calculates the lambda at which all coefficients are zero for the current
+#' residual state. This anchors automatically generated lambda paths.
+#'
+#' @param x_mlx MLX predictor matrix.
+#' @param residual_mlx MLX residual or gradient-at-zero column vector.
+#' @param n_obs Number of observations.
+#' @param alpha Elastic-net mixing parameter.
+#' @return Numeric scalar lambda maximum.
+#' @noRd
 .mlxs_glmnet_lambda_max <- function(x_mlx, residual_mlx, n_obs, alpha) {
   z0_mlx <- crossprod(x_mlx, residual_mlx) / n_obs
   lambda_max <- max(abs(as.numeric(z0_mlx))) / max(alpha, 1e-8)
@@ -523,6 +592,17 @@ mlxs_glmnet <- function(x,
   lambda_max
 }
 
+#' Resolve an elastic-net lambda path
+#'
+#' Internal path helper shared by Gaussian and binomial solvers.
+#'
+#' @param lambda Optional user-supplied path.
+#' @param lambda_max Largest generated penalty.
+#' @param nlambda Number of generated path values.
+#' @param lambda_min_ratio Smallest generated penalty as a fraction of
+#'   `lambda_max`.
+#' @return Numeric lambda vector sorted decreasingly.
+#' @noRd
 .mlxs_glmnet_lambda_path <- function(lambda,
                                      lambda_max,
                                      nlambda,
@@ -535,6 +615,17 @@ mlxs_glmnet <- function(x,
   }
 }
 
+#' Choose the Gaussian elastic-net solver
+#'
+#' Heuristic used before fitting a Gaussian path to decide whether the tall-data
+#' Gram solver is likely to avoid enough observation-space work to be
+#' worthwhile.
+#'
+#' @param n_obs Number of observations.
+#' @param n_pred Number of predictors.
+#' @param n_lambda Number of lambda values in the path.
+#' @return Character scalar, either `"gram"` or `"dense"`.
+#' @noRd
 .mlxs_glmnet_choose_gaussian_solver <- function(n_obs, n_pred, n_lambda) {
   if (n_lambda >= 10L && n_pred <= 1024L && n_obs >= 50L * n_pred) {
     "gram"
@@ -543,6 +634,14 @@ mlxs_glmnet <- function(x,
   }
 }
 
+#' Soft-threshold MLX values
+#'
+#' Proximal operator for the lasso component of elastic-net updates.
+#'
+#' @param z MLX array of unpenalized update values.
+#' @param thresh Scalar or MLX array threshold.
+#' @return MLX array after elementwise soft-thresholding.
+#' @noRd
 .mlxs_soft_threshold <- function(z, thresh) {
   sign(z) * Rmlx::mlx_maximum(abs(z) - thresh, 0)
 }

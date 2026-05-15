@@ -112,6 +112,22 @@ mlxs_boot <- function(
   list(samples = samples, B = B, seed = seed)
 }
 
+#' Bootstrap coefficient summaries for fitted MLXS models
+#'
+#' Entry point used by model-summary code to compute bootstrap standard errors
+#' and percentile intervals. It dispatches to case or residual resampling after
+#' validating which combinations are supported for the fitted model type.
+#'
+#' @param object Fitted `mlxs_lm` or `mlxs_glm` object.
+#' @param fit_type Model family for the refit path, `"lm"` or `"glm"`.
+#' @param B Number of bootstrap replicates.
+#' @param seed Optional random seed.
+#' @param progress Logical; show a progress bar.
+#' @param method Bootstrap method, `"case"` or `"residual"`.
+#' @param level Confidence level for percentile intervals.
+#' @return List of bootstrap standard errors, confidence intervals, and
+#'   metadata.
+#' @noRd
 .mlxs_bootstrap_coefs <- function(
   object,
   fit_type = c("lm", "glm"),
@@ -141,6 +157,20 @@ mlxs_boot <- function(
   }
 }
 
+#' Case bootstrap an MLXS fitted model
+#'
+#' Resamples rows of the original model matrix, response, and optional weights,
+#' refits the model on each resample, and forwards the coefficient samples to
+#' the summary-statistic helper.
+#'
+#' @param object Fitted `mlxs_lm` or `mlxs_glm` object.
+#' @param fit_type Model family for the refit path, `"lm"` or `"glm"`.
+#' @param B Number of bootstrap replicates.
+#' @param seed Optional random seed.
+#' @param progress Logical; show a progress bar.
+#' @param level Confidence level for percentile intervals.
+#' @return List from `.mlxs_bootstrap_sample_stats()`.
+#' @noRd
 .mlxs_bootstrap_case <- function(object, fit_type, B, seed, progress, level) {
   mm <- stats::model.matrix(object$terms, object$model)
   design_mlx <- Rmlx::as_mlx(mm)
@@ -207,6 +237,20 @@ mlxs_boot <- function(
   )
 }
 
+#' Residual bootstrap an MLXS linear model
+#'
+#' Resamples centered residuals around the fitted values and reuses the original
+#' QR decomposition to solve each bootstrap coefficient vector without
+#' rebuilding the design matrix.
+#'
+#' @param object Fitted `mlxs_lm` object or Gaussian `mlxs_glm` object with QR
+#'   state.
+#' @param B Number of bootstrap replicates.
+#' @param seed Optional random seed.
+#' @param progress Logical; show a progress bar.
+#' @param level Confidence level for percentile intervals.
+#' @return List from `.mlxs_bootstrap_sample_stats()`.
+#' @noRd
 .mlxs_bootstrap_residual <- function(object, B, seed, progress, level) {
   coef_names <- .mlxs_coef_names(object)
   residuals_mlx <- object$residuals
@@ -243,6 +287,21 @@ mlxs_boot <- function(
   )
 }
 
+#' Summarize bootstrap coefficient samples
+#'
+#' Aggregates MLX coefficient draws into standard errors and percentile
+#' intervals. This is the final shared step for case and residual bootstrap
+#' workflows.
+#'
+#' @param sample_list List of MLX coefficient vectors.
+#' @param coef_names Coefficient names.
+#' @param B Number of bootstrap replicates.
+#' @param seed Optional random seed.
+#' @param method Bootstrap method label.
+#' @param level Confidence level for percentile intervals.
+#' @return List with MLX standard errors, host confidence-interval matrix, and
+#'   metadata.
+#' @noRd
 .mlxs_bootstrap_sample_stats <- function(
   sample_list,
   coef_names,
@@ -278,6 +337,14 @@ mlxs_boot <- function(
   )
 }
 
+#' Prepare one argument for MLX bootstrap resampling
+#'
+#' Normalizes vectors, matrices, and MLX arrays so [mlxs_boot()] can gather rows
+#' along the first dimension uniformly.
+#'
+#' @param x Object to resample.
+#' @return MLX array with vectors represented as one-column matrices.
+#' @noRd
 .mlxs_boot_prepare_arg <- function(x) {
   if (inherits(x, "mlx")) {
     dims <- Rmlx::mlx_shape(x)

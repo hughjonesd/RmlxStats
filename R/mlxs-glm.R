@@ -112,6 +112,16 @@ mlxs_glm_control <- function(
   list(epsilon = epsilon, epsilon_f64 = epsilon_f64, maxit = maxit, trace = trace)
 }
 
+#' Clamp fitted GLM means to the valid response range
+#'
+#' Internal safeguard used during IRLS after applying the inverse link. It keeps
+#' binomial and Poisson means away from exact boundary values before deviance,
+#' variance, and working-response calculations.
+#'
+#' @param mu MLX column vector of fitted means.
+#' @param family MLXS family object.
+#' @return MLX column vector, clipped when the family has constrained means.
+#' @noRd
 .mlxs_glm_clamp_mu <- function(mu, family) {
   fam <- family$family
   if (fam %in% c("binomial", "quasibinomial")) {
@@ -124,6 +134,21 @@ mlxs_glm_control <- function(
   mu
 }
 
+#' Construct weighted least-squares inputs for one IRLS step
+#'
+#' Converts the current GLM state into the working response and square-root
+#' weighted design used by [mlxs_lm_fit()]. This is the per-iteration bridge
+#' between the GLM update logic and the QR least-squares solver.
+#'
+#' @param X_mlx MLX design matrix.
+#' @param y_mlx MLX response column vector.
+#' @param eta_mlx Current linear predictor.
+#' @param mu_mlx Current fitted means.
+#' @param mu_eta_mlx Link derivative evaluated at `eta_mlx`.
+#' @param var_mu_mlx Variance function evaluated at `mu_mlx`.
+#' @param weights_sqrt_mlx Optional square-root prior weights.
+#' @return List with MLX arrays `z`, `w`, `x_w`, and `z_w`.
+#' @noRd
 .mlxs_glm_weighted_inputs_impl <- function(
   X_mlx,
   y_mlx,
@@ -179,6 +204,27 @@ mlxs_glm_control <- function(
   }
 })
 
+#' Run the GLM IRLS loop on MLX arrays
+#'
+#' Core optimizer for [mlxs_glm()] and bootstrap refits. Each iteration builds
+#' weighted least-squares inputs, solves them with [mlxs_lm_fit()], updates the
+#' linear predictor and mean, and switches to float64 CPU execution near
+#' convergence when requested by the control tolerances.
+#'
+#' @param X_mlx MLX design matrix.
+#' @param y_mlx MLX response column vector.
+#' @param family MLXS family object with link, variance, and deviance methods.
+#' @param weights_mlx Prior weights as an MLX column vector.
+#' @param weights_sqrt_mlx Square-root prior weights.
+#' @param beta_init,eta_init,mu_init Initial coefficient, predictor, and mean
+#'   state.
+#' @param control List from [mlxs_glm_control()].
+#' @param eps_mlx MLX scalar machine epsilon.
+#' @param trace Logical; emit iteration diagnostics.
+#' @param compile_step Logical; use the compiled weighted-input runner.
+#' @return List containing final MLX state (`beta`, `eta`, `mu`, residuals and
+#'   weights), convergence metadata, and the last QR decomposition.
+#' @noRd
 .mlxs_glm_run_irls <- function(
   X_mlx,
   y_mlx,
@@ -326,6 +372,25 @@ mlxs_glm_control <- function(
   )
 }
 
+#' Fit the core MLX GLM from prepared arrays
+#'
+#' Shared implementation used by [mlxs_glm()] and case-bootstrap GLM refits
+#' after formula processing has already produced a design matrix. It validates
+#' inputs, initializes family-specific starting values, runs IRLS, and assembles
+#' the model components consumed by S3 methods.
+#'
+#' @param design Numeric or MLX design matrix.
+#' @param response Numeric or MLX response column vector.
+#' @param weights_raw Optional numeric or MLX prior weights.
+#' @param family MLXS family object.
+#' @param control List from [mlxs_glm_control()].
+#' @param coef_start Optional starting coefficients.
+#' @param coef_names Optional coefficient names; required when `design` is MLX.
+#' @param has_intercept Optional logical indicating whether the design includes
+#'   an intercept column.
+#' @return Unclassed `mlxs_glm`-style list with coefficients, fitted values,
+#'   residual diagnostics, weights, family metadata, and QR state.
+#' @noRd
 .mlxs_glm_fit_core <- function(
   design,
   response,
