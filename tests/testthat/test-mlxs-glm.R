@@ -165,6 +165,31 @@ test_that("mlxs_glm pads binomial predictions with na.exclude", {
   expect_equal(mlx_response[keep], base_response[keep], tolerance = 1e-5)
 })
 
+test_that("mlxs_glm augment uses complete-case internals with na.exclude", {
+  data <- mtcars
+  data$mpg[1] <- NA_real_
+
+  fit <- mlxs_glm(gear ~ mpg, data = data, family = mlxs_gaussian())
+  base_fit <- glm(
+    gear ~ mpg,
+    data = data,
+    family = gaussian(),
+    na.action = stats::na.exclude
+  )
+
+  expect_output(print(fit), "Residual deviance")
+  expect_s3_class(summary(fit), "summary.mlxs_glm")
+  aug <- augment(fit)
+  expect_equal(nrow(aug), nrow(model.frame(fit)))
+  expect_equal(aug$.fitted, unname(fitted(base_fit)[-1]), tolerance = 1e-6)
+  expect_equal(
+    aug$.resid,
+    unname(residuals(base_fit, type = "response")[-1]),
+    tolerance = 1e-6
+  )
+  expect_equal(glance(fit)$deviance, base_fit$deviance, tolerance = 1e-6)
+})
+
 test_that("mlxs_glm rejects rank-deficient model matrices", {
   gaussian_data <- mtcars
   gaussian_data$disp_copy <- gaussian_data$disp

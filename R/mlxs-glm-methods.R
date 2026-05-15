@@ -432,11 +432,20 @@ augment.mlxs_glm <- function(
     stop("Standard errors for predictions are not implemented.", call. = FALSE)
   }
 
-  fitted_vals <- predict(x, newdata = newdata, type = type.predict)
-  resid_vals <- if (is.null(newdata)) {
-    residuals(x, type = type.residuals)
+  if (is.null(newdata)) {
+    fitted_vals <- if (type.predict == "response") {
+      x$fitted.values
+    } else {
+      x$linear.predictors
+    }
+    resid_vals <- if (type.residuals == "response") {
+      x$residuals
+    } else {
+      x$deviance.resid
+    }
   } else {
-    NULL
+    fitted_vals <- predict(x, newdata = newdata, type = type.predict)
+    resid_vals <- NULL
   }
 
   if (output == "mlx") {
