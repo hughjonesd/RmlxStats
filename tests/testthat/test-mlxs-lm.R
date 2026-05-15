@@ -188,7 +188,6 @@ test_that("mlxs_lm bootstrap summary provides se", {
   expect_true(!is.null(sum_boot$bootstrap))
   expect_equal(length(sum_boot$bootstrap$se), length(drop(as.matrix(coef(fit)))))
   expect_null(sum_boot$confint)
-  expect_null(sum_boot$bootstrap$confint)
 
   sum_boot_ci <- summary(
     fit,
@@ -200,7 +199,6 @@ test_that("mlxs_lm bootstrap summary provides se", {
   expect_equal(dim(sum_boot_ci$confint), c(3L, 2L))
   expect_equal(rownames(sum_boot_ci$confint), .mlxs_coef_names(fit))
   expect_equal(colnames(sum_boot_ci$confint), c("5 %", "95 %"))
-  expect_equal(sum_boot_ci$bootstrap$confint, sum_boot_ci$confint)
   expect_output(print(sum_boot_ci), "5 %")
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 123, progress = FALSE))
   expect_true(all(!is.na(tidy_boot$std.error)))

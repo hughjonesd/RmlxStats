@@ -100,25 +100,7 @@ mlxs_boot <- function(
   for (rep_idx in seq_len(B)) {
     idx <- sample.int(n_obs, n_obs, replace = TRUE)
     boot_args <- lapply(prepared, function(x) {
-      dims <- Rmlx::mlx_shape(x)
-      nd <- length(dims)
-      if (nd == 1L) {
-        x[idx, drop = FALSE]
-      } else if (nd == 2L) {
-        x[idx, , drop = FALSE]
-      } else if (nd == 3L) {
-        x[idx, , , drop = FALSE]
-      } else {
-        subs <- vector("list", nd)
-        subs[[1L]] <- idx
-        if (nd > 1L) {
-          for (i in 2:nd) {
-            subs[[i]] <- quote(expr = )
-          }
-        }
-        subs$drop <- FALSE
-        do.call(`[`, c(list(x), subs))
-      }
+      Rmlx::mlx_gather(x, idx, axes = 1L)
     })
     names(boot_args) <- names(prepared)
     samples[[rep_idx]] <- do.call(fun_eval, boot_args)

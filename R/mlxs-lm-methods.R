@@ -108,29 +108,11 @@ confint.mlxs_lm <- function(
 ) {
   coef_names <- .mlxs_coef_names(object)
   if (isTRUE(bootstrap)) {
-    if (!is.list(bootstrap_args)) {
-      stop("bootstrap_args must be a list.", call. = FALSE)
-    }
-    bootstrap_args <- utils::modifyList(
-      list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
-      bootstrap_args
+    names(bootstrap_args)[names(bootstrap_args) == "bootstrap_type"] <- "method"
+    bootstrap_info <- do.call(
+      .mlxs_bootstrap_coefs,
+      c(list(object = object, fit_type = "lm", level = level), bootstrap_args)
     )
-    bootstrap_type <- match.arg(
-      bootstrap_args$bootstrap_type,
-      c("case", "residual")
-    )
-    bootstrap_info <- .mlxs_bootstrap_coefs(
-      object,
-      fit_type = "lm",
-      B = bootstrap_args$B,
-      seed = bootstrap_args$seed,
-      progress = bootstrap_args$progress,
-      method = bootstrap_type,
-      level = level
-    )
-    if (missing(parm)) {
-      return(bootstrap_info$confint)
-    }
     return(bootstrap_info$confint[parm, , drop = FALSE])
   }
   cf <- coef(object)
@@ -352,31 +334,16 @@ summary.mlxs_lm <- function(
   level = 0.95,
   ...
 ) {
-  if (!is.list(bootstrap_args)) {
-    stop("bootstrap_args must be a list.", call. = FALSE)
-  }
-  bootstrap_args <- utils::modifyList(
-    list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
-    bootstrap_args
-  )
-  bootstrap_type <- match.arg(
-    bootstrap_args$bootstrap_type,
-    c("case", "residual")
-  )
   vc <- vcov(object)
   vc_mat <- as.matrix(vc)
   se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
   bootstrap_info <- NULL
   confint_mat <- NULL
   if (isTRUE(bootstrap)) {
-    bootstrap_info <- .mlxs_bootstrap_coefs(
-      object,
-      fit_type = "lm",
-      B = bootstrap_args$B,
-      seed = bootstrap_args$seed,
-      progress = bootstrap_args$progress,
-      method = bootstrap_type,
-      level = level
+    names(bootstrap_args)[names(bootstrap_args) == "bootstrap_type"] <- "method"
+    bootstrap_info <- do.call(
+      .mlxs_bootstrap_coefs,
+      c(list(object = object, fit_type = "lm", level = level), bootstrap_args)
     )
     se_mlx <- bootstrap_info$se
     if (isTRUE(confint)) {
@@ -453,6 +420,27 @@ print.mlxs_lm <- function(x, ...) {
   invisible(x)
 }
 
+.mlxs_summary_coef_table <- function(
+  estimate,
+  std_error,
+  confint = NULL,
+  statistic,
+  p_value,
+  stat_col,
+  p_col
+) {
+  stat_block <- cbind(statistic, p_value)
+  colnames(stat_block) <- c(stat_col, p_col)
+  do.call(
+    cbind,
+    c(
+      list(Estimate = estimate, `Std. Error` = std_error),
+      if (!is.null(confint)) list(confint) else list(),
+      list(stat_block)
+    )
+  )
+}
+
 #' @export
 #' @rdname mlxs-lm-methods
 print.summary.mlxs_lm <- function(x, ...) {
@@ -464,17 +452,14 @@ print.summary.mlxs_lm <- function(x, ...) {
   names(resid_quants) <- c("Min", "1Q", "Median", "3Q", "Max")
   print(resid_quants)
   cat("\nCoefficients:\n")
-  coef_table <- cbind(
-    Estimate = as.numeric(x$coef),
-    `Std. Error` = as.numeric(x$std.error)
-  )
-  if (!is.null(x$confint)) {
-    coef_table <- cbind(coef_table, x$confint)
-  }
-  coef_table <- cbind(
-    coef_table,
-    `t value` = as.numeric(x$statistic),
-    `Pr(>|t|)` = as.numeric(x$p.value)
+  coef_table <- .mlxs_summary_coef_table(
+    estimate = as.numeric(x$coef),
+    std_error = as.numeric(x$std.error),
+    confint = x$confint,
+    statistic = as.numeric(x$statistic),
+    p_value = as.numeric(x$p.value),
+    stat_col = "t value",
+    p_col = "Pr(>|t|)"
   )
   rownames(coef_table) <- x$coef_names
   printCoefmat(coef_table, has.Pvalue = TRUE)
