@@ -34,9 +34,7 @@ NULL
 #' @rdname mlxs-glm-methods
 #' @export
 coef.mlxs_glm <- function(object, ...) {
-  coef_mlx <- object$coefficients
-  attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
-  coef_mlx
+  object$coefficients
 }
 
 #' @rdname mlxs-glm-methods
@@ -136,7 +134,11 @@ residuals.mlxs_glm <- function(
 vcov.mlxs_glm <- function(object, ...) {
   qr_fit <- object$qr
   n_coef <- length(.mlxs_coef_names(object))
-  .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = object$dispersion)
+  vcov_mlx <- .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef,
+                                 scale = object$dispersion)
+  coef_names <- .mlxs_coef_names(object)
+  dimnames(vcov_mlx) <- list(coef_names, coef_names)
+  vcov_mlx
 }
 
 #' @rdname mlxs-glm-methods
@@ -235,6 +237,7 @@ summary.mlxs_glm <- function(
     diag_eye <- Rmlx::mlx_eye(length(coef_names))
     vcov_mlx <- diag_eye *
       Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_shape(diag_eye))
+    dimnames(vcov_mlx) <- list(coef_names, coef_names)
   } else if (isTRUE(confint)) {
     confint_mat <- stats::confint(object, level = level)
   }
@@ -249,15 +252,17 @@ summary.mlxs_glm <- function(
   p_mlx <- if (stat_label == "t value") {
     stat_num <- as.numeric(stat_mlx)
     p_num <- 2 * stats::pt(-abs(stat_num), df = object$df.residual)
-    Rmlx::mlx_vector(p_num)
+    Rmlx::mlx_matrix(p_num, ncol = 1)
   } else {
     2 * Rmlx::mlx_pnorm(-abs(stat_mlx))
   }
+  rownames(se_col_mlx) <- coef_names
+  rownames(stat_mlx) <- coef_names
+  rownames(p_mlx) <- coef_names
 
   sum_list <- list(
     call = object$call,
     family = object$family,
-    coef_names = coef_names,
     coefficients = coef_mlx,
     std.error = se_col_mlx,
     statistic = stat_mlx,
@@ -305,7 +310,7 @@ print.summary.mlxs_glm <- function(
     stat_col = stat_col,
     p_col = p_col
   )
-  rownames(coef_table) <- x$coef_names
+  rownames(coef_table) <- rownames(x$coefficients) %||% x$coef_names
   cat("\nCoefficients:\n")
   printCoefmat(coef_table, digits = digits, has.Pvalue = TRUE)
   cat(
@@ -384,8 +389,9 @@ nobs.mlxs_glm <- function(object, ...) {
 #' @export
 tidy.mlxs_glm <- function(x, ...) {
   sum_obj <- summary(x, ...)
+  coef_names <- rownames(sum_obj$coefficients) %||% sum_obj$coef_names
   data.frame(
-    term = sum_obj$coef_names,
+    term = coef_names,
     estimate = as.numeric(sum_obj$coefficients),
     std.error = as.numeric(sum_obj$std.error),
     statistic = as.numeric(sum_obj$statistic),

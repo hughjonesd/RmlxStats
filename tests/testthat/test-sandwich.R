@@ -8,7 +8,8 @@ test_that("sandwich::estfun gives same results for lm and mlxs_lm", {
   
   expect_equal(as.matrix(sandwich::estfun(mlxs_fit)), 
                unname(sandwich::estfun(base_fit)),
-               tolerance = 1e-6)
+               tolerance = 1e-6,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::estfun gives same results for glm and mlxs_glm", {
@@ -17,7 +18,8 @@ test_that("sandwich::estfun gives same results for glm and mlxs_glm", {
   
   expect_equal(as.matrix(sandwich::estfun(mlxs_fit)), 
                unname(sandwich::estfun(base_fit)),
-               tolerance = 1e-6)
+               tolerance = 1e-6,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::bread gives same results for lm and mlxs_lm", {
@@ -26,7 +28,8 @@ test_that("sandwich::bread gives same results for lm and mlxs_lm", {
   
   expect_equal(as.matrix(sandwich::bread(mlxs_fit)), 
                unname(sandwich::bread(base_fit)),
-               tolerance = 1e-6)
+               tolerance = 1e-6,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::bread gives same results for glm and mlxs_glm", {
@@ -35,7 +38,8 @@ test_that("sandwich::bread gives same results for glm and mlxs_glm", {
   
   expect_equal(as.matrix(sandwich::bread(mlxs_fit)), 
                unname(sandwich::bread(base_fit)),
-               tolerance = 1e-6)
+               tolerance = 1e-6,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::vcovHC gives same results for lm and mlxs_lm", {
@@ -46,7 +50,8 @@ test_that("sandwich::vcovHC gives same results for lm and mlxs_lm", {
   
   expect_equal(as.matrix(sandwich::vcovHC(mlxs_fit)), 
                unname(sandwich::vcovHC(base_fit)),
-               tolerance = 1e-5)
+               tolerance = 1e-5,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::vcovHC gives same results for glm and mlxs_glm", {
@@ -57,7 +62,8 @@ test_that("sandwich::vcovHC gives same results for glm and mlxs_glm", {
   
   expect_equal(as.matrix(sandwich::vcovHC(mlxs_fit)), 
                unname(sandwich::vcovHC(base_fit)),
-               tolerance = 1e-5)
+               tolerance = 1e-5,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::vcovHAC gives same results for lm and mlxs_lm", {
@@ -66,7 +72,8 @@ test_that("sandwich::vcovHAC gives same results for lm and mlxs_lm", {
   
   expect_equal(as.matrix(sandwich::vcovHAC(mlxs_fit)), 
                unname(sandwich::vcovHAC(base_fit)),
-               tolerance = 1e-4)
+               tolerance = 1e-4,
+               ignore_attr = TRUE)
 })
 
 test_that("sandwich::vcovHAC gives same results for glm and mlxs_glm", {
@@ -75,7 +82,8 @@ test_that("sandwich::vcovHAC gives same results for glm and mlxs_glm", {
   
   expect_equal(as.matrix(sandwich::vcovHAC(mlxs_fit)), 
                unname(sandwich::vcovHAC(base_fit)),
-               tolerance = 1e-4)
+               tolerance = 1e-4,
+               ignore_attr = TRUE)
 })
 
 
@@ -86,11 +94,13 @@ test_that("sandwich::vcovCL gives same results for lm and mlxs_lm", {
   
   expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit, type = "HC0")), 
                unname(sandwich::vcovCL(base_fit, type = "HC0")),
-               tolerance = 1e-4)
+               tolerance = 1e-4,
+               ignore_attr = TRUE)
   
   expect_equal(as.matrix(sandwich::vcovCL(mlxs_fit, ~cyl, type = "HC0")), 
                unname(sandwich::vcovCL(base_fit, ~cyl, type = "HC0")),
-               tolerance = 1e-4)
+               tolerance = 1e-4,
+               ignore_attr = TRUE)
 })
 
 test_that("lmtest::coeftest gives same results for lm and mlxs_lm", {
