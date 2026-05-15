@@ -49,12 +49,19 @@
   level = 0.95,
   ...,
   bootstrap = FALSE,
-  bootstrap_args = list()
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case")
 )
 
 \method{print}{mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
-\method{summary}{mlxs_glm}(object, bootstrap = FALSE, bootstrap_args = list(), ...)
+\method{summary}{mlxs_glm}(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+  confint = FALSE,
+  level = 0.95,
+  ...
+)
 
 \method{print}{summary.mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
@@ -115,6 +122,9 @@ See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
 \item{x}{An \code{mlxs_glm} model fit (for methods with a leading \code{x} argument).}
 
 \item{digits}{Number of significant digits to print for summaries.}
+
+\item{confint}{Logical; should confidence intervals be included in the
+summary object?}
 
 \item{formula, data}{Optional formula and data overrides used by
 \code{augment.mlxs_glm()}.}

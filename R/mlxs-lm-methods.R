@@ -12,6 +12,8 @@
 #'   intervals be computed?
 #' @param bootstrap_args List of bootstrap configuration options. 
 #'   See [mlxs_boot()].
+#' @param confint Logical; should confidence intervals be included in the
+#'   summary object?
 #' @param formula An `mlxs_lm` object used in place of formula for
 #'   `model.frame`.
 #' @param data Optional data frame for `augment`.
@@ -97,25 +99,38 @@ confint.mlxs_lm <- function(
   level = 0.95,
   ...,
   bootstrap = FALSE,
-  bootstrap_args = list()
+  bootstrap_args = list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case"
+  )
 ) {
   coef_names <- .mlxs_coef_names(object)
-  parm <- if (missing(parm)) {
-    .mlxs_confint_parm(coef_names = coef_names)
-  } else {
-    .mlxs_confint_parm(parm, coef_names)
-  }
   if (isTRUE(bootstrap)) {
-    user_args <- .mlxs_bootstrap_args(bootstrap_args)
+    if (!is.list(bootstrap_args)) {
+      stop("bootstrap_args must be a list.", call. = FALSE)
+    }
+    bootstrap_args <- utils::modifyList(
+      list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+      bootstrap_args
+    )
+    bootstrap_type <- match.arg(
+      bootstrap_args$bootstrap_type,
+      c("case", "residual")
+    )
     bootstrap_info <- .mlxs_bootstrap_coefs(
       object,
       fit_type = "lm",
-      B = user_args$B,
-      seed = user_args$seed,
-      progress = user_args$progress,
-      method = user_args$bootstrap_type,
+      B = bootstrap_args$B,
+      seed = bootstrap_args$seed,
+      progress = bootstrap_args$progress,
+      method = bootstrap_type,
       level = level
     )
+    if (missing(parm)) {
+      return(bootstrap_info$confint)
+    }
     return(bootstrap_info$confint[parm, , drop = FALSE])
   }
   cf <- coef(object)
@@ -327,25 +342,50 @@ tidy.mlxs_anova <- function(x, ...) {
 summary.mlxs_lm <- function(
   object,
   bootstrap = FALSE,
-  bootstrap_args = list(),
+  bootstrap_args = list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case"
+  ),
+  confint = FALSE,
+  level = 0.95,
   ...
 ) {
-  user_args <- .mlxs_bootstrap_args(bootstrap_args)
+  if (!is.list(bootstrap_args)) {
+    stop("bootstrap_args must be a list.", call. = FALSE)
+  }
+  bootstrap_args <- utils::modifyList(
+    list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+    bootstrap_args
+  )
+  bootstrap_type <- match.arg(
+    bootstrap_args$bootstrap_type,
+    c("case", "residual")
+  )
   vc <- vcov(object)
   vc_mat <- as.matrix(vc)
   se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
   bootstrap_info <- NULL
+  confint_mat <- NULL
   if (isTRUE(bootstrap)) {
     bootstrap_info <- .mlxs_bootstrap_coefs(
       object,
       fit_type = "lm",
-      B = user_args$B,
-      seed = user_args$seed,
-      progress = user_args$progress,
-      method = user_args$bootstrap_type,
-      level = 0.95
+      B = bootstrap_args$B,
+      seed = bootstrap_args$seed,
+      progress = bootstrap_args$progress,
+      method = bootstrap_type,
+      level = level
     )
     se_mlx <- bootstrap_info$se
+    if (isTRUE(confint)) {
+      confint_mat <- bootstrap_info$confint
+    } else {
+      bootstrap_info$confint <- NULL
+    }
+  } else if (isTRUE(confint)) {
+    confint_mat <- stats::confint(object, level = level)
   }
   se_num <- as.numeric(se_mlx)
   est <- as.numeric(object$coefficients)
@@ -398,6 +438,7 @@ summary.mlxs_lm <- function(
     p.value.model = p_f,
     cov.scaled = vc,
     cov.unscaled = vc / (sigma^2),
+    confint = confint_mat,
     bootstrap = bootstrap_info
   )
   class(result) <- c("summary.mlxs_lm", "mlxs_lm_summary")
@@ -425,7 +466,13 @@ print.summary.mlxs_lm <- function(x, ...) {
   cat("\nCoefficients:\n")
   coef_table <- cbind(
     Estimate = as.numeric(x$coef),
-    `Std. Error` = as.numeric(x$std.error),
+    `Std. Error` = as.numeric(x$std.error)
+  )
+  if (!is.null(x$confint)) {
+    coef_table <- cbind(coef_table, x$confint)
+  }
+  coef_table <- cbind(
+    coef_table,
     `t value` = as.numeric(x$statistic),
     `Pr(>|t|)` = as.numeric(x$p.value)
   )

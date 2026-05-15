@@ -187,8 +187,21 @@ test_that("mlxs_lm bootstrap summary provides se", {
   )
   expect_true(!is.null(sum_boot$bootstrap))
   expect_equal(length(sum_boot$bootstrap$se), length(drop(as.matrix(coef(fit)))))
-  expect_equal(dim(sum_boot$bootstrap$confint), c(3L, 2L))
-  expect_equal(rownames(sum_boot$bootstrap$confint), .mlxs_coef_names(fit))
+  expect_null(sum_boot$confint)
+  expect_null(sum_boot$bootstrap$confint)
+
+  sum_boot_ci <- summary(
+    fit,
+    bootstrap = TRUE,
+    confint = TRUE,
+    level = 0.9,
+    bootstrap_args = list(B = 20, seed = 123, progress = FALSE)
+  )
+  expect_equal(dim(sum_boot_ci$confint), c(3L, 2L))
+  expect_equal(rownames(sum_boot_ci$confint), .mlxs_coef_names(fit))
+  expect_equal(colnames(sum_boot_ci$confint), c("5 %", "95 %"))
+  expect_equal(sum_boot_ci$bootstrap$confint, sum_boot_ci$confint)
+  expect_output(print(sum_boot_ci), "5 %")
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 123, progress = FALSE))
   expect_true(all(!is.na(tidy_boot$std.error)))
 
@@ -204,6 +217,14 @@ test_that("mlxs_lm bootstrap summary provides se", {
   )
   expect_true(!is.null(sum_resid$bootstrap))
   expect_equal(length(sum_resid$bootstrap$se), length(drop(as.matrix(coef(fit)))))
+
+  sum_ci <- summary(fit, confint = TRUE, level = 0.9)
+  expect_equal(
+    sum_ci$confint,
+    confint(fit, level = 0.9),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
 })
 
 test_that("confint.mlxs_lm supports bootstrap percentile intervals", {

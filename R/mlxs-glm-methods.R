@@ -21,6 +21,8 @@
 #'   intervals be computed?
 #' @param bootstrap_args List of bootstrap configuration options.
 #'   See [mlxs_boot()].
+#' @param confint Logical; should confidence intervals be included in the
+#'   summary object?
 #' @param output Character string; return format ("data.frame" or "mlx").
 #' @param parm Parameter specification for confidence intervals.
 #' @param level Confidence level for intervals.
@@ -142,25 +144,38 @@ confint.mlxs_glm <- function(
   level = 0.95,
   ...,
   bootstrap = FALSE,
-  bootstrap_args = list()
+  bootstrap_args = list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case"
+  )
 ) {
   coef_names <- .mlxs_coef_names(object)
-  parm <- if (missing(parm)) {
-    .mlxs_confint_parm(coef_names = coef_names)
-  } else {
-    .mlxs_confint_parm(parm, coef_names)
-  }
   if (isTRUE(bootstrap)) {
-    user_args <- .mlxs_bootstrap_args(bootstrap_args)
+    if (!is.list(bootstrap_args)) {
+      stop("bootstrap_args must be a list.", call. = FALSE)
+    }
+    bootstrap_args <- utils::modifyList(
+      list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+      bootstrap_args
+    )
+    bootstrap_type <- match.arg(
+      bootstrap_args$bootstrap_type,
+      c("case", "residual")
+    )
     bootstrap_info <- .mlxs_bootstrap_coefs(
       object,
       fit_type = "glm",
-      B = user_args$B,
-      seed = user_args$seed,
-      progress = user_args$progress,
-      method = user_args$bootstrap_type,
+      B = bootstrap_args$B,
+      seed = bootstrap_args$seed,
+      progress = bootstrap_args$progress,
+      method = bootstrap_type,
       level = level
     )
+    if (missing(parm)) {
+      return(bootstrap_info$confint)
+    }
     return(bootstrap_info$confint[parm, , drop = FALSE])
   }
   cf <- coef(object)
@@ -194,10 +209,27 @@ print.mlxs_glm <- function(x, digits = max(3, getOption("digits") - 3), ...) {
 summary.mlxs_glm <- function(
   object,
   bootstrap = FALSE,
-  bootstrap_args = list(),
+  bootstrap_args = list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case"
+  ),
+  confint = FALSE,
+  level = 0.95,
   ...
 ) {
-  user_args <- .mlxs_bootstrap_args(bootstrap_args)
+  if (!is.list(bootstrap_args)) {
+    stop("bootstrap_args must be a list.", call. = FALSE)
+  }
+  bootstrap_args <- utils::modifyList(
+    list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+    bootstrap_args
+  )
+  bootstrap_type <- match.arg(
+    bootstrap_args$bootstrap_type,
+    c("case", "residual")
+  )
 
   coef_names <- .mlxs_coef_names(object)
   coef_mlx <- object$coefficients
@@ -210,17 +242,23 @@ summary.mlxs_glm <- function(
   se_col_mlx <- Rmlx::mlx_reshape(sqrt(diag_mlx), c(n_coef, 1L))
 
   bootstrap_info <- NULL
+  confint_mat <- NULL
   if (isTRUE(bootstrap)) {
     bootstrap_info <- .mlxs_bootstrap_coefs(
       object,
       fit_type = "glm",
-      B = user_args$B,
-      seed = user_args$seed,
-      progress = user_args$progress,
-      method = user_args$bootstrap_type,
-      level = 0.95
+      B = bootstrap_args$B,
+      seed = bootstrap_args$seed,
+      progress = bootstrap_args$progress,
+      method = bootstrap_type,
+      level = level
     )
     se_col_mlx <- bootstrap_info$se
+    if (isTRUE(confint)) {
+      confint_mat <- bootstrap_info$confint
+    } else {
+      bootstrap_info$confint <- NULL
+    }
     if (identical(Rmlx::mlx_dtype(se_col_mlx), "float64")) {
       Rmlx::local_device("cpu")
     }
@@ -228,6 +266,8 @@ summary.mlxs_glm <- function(
     diag_eye <- Rmlx::mlx_eye(length(coef_names))
     vcov_mlx <- diag_eye *
       Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_shape(diag_eye))
+  } else if (isTRUE(confint)) {
+    confint_mat <- stats::confint(object, level = level)
   }
   
   stat_mlx <- coef_mlx / se_col_mlx
@@ -265,6 +305,7 @@ summary.mlxs_glm <- function(
     working.residuals = object$working.residuals,
     cov.scaled = vcov_mlx,
     cov.unscaled = vcov_mlx / object$dispersion,
+    confint = confint_mat,
     bootstrap = bootstrap_info
   )
   class(sum_list) <- "summary.mlxs_glm"
@@ -290,7 +331,13 @@ print.summary.mlxs_glm <- function(
   colnames(stat_block) <- c(stat_col, p_col)
   coef_table <- cbind(
     Estimate = est,
-    `Std. Error` = se,
+    `Std. Error` = se
+  )
+  if (!is.null(x$confint)) {
+    coef_table <- cbind(coef_table, x$confint)
+  }
+  coef_table <- cbind(
+    coef_table,
     stat_block
   )
   rownames(coef_table) <- x$coef_names
