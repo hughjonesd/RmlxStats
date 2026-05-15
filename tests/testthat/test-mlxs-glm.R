@@ -106,19 +106,26 @@ test_that("mlxs_glm defaults to na.exclude and pads training predictions", {
     ignore_attr = TRUE
   )
 
-  mlx_response <- as.numeric(predict(mlx_fit, type = "response"))
-  mlx_link <- as.numeric(predict(mlx_fit, type = "link"))
+  mlx_response_raw <- predict(mlx_fit, type = "response")
+  mlx_link_raw <- predict(mlx_fit, type = "link")
+  expect_s3_class(mlx_response_raw, "mlx")
+  expect_s3_class(mlx_link_raw, "mlx")
+  mlx_response <- as.numeric(mlx_response_raw)
+  mlx_link <- as.numeric(mlx_link_raw)
   base_response <- as.numeric(predict(base_fit, type = "response"))
   base_link <- as.numeric(predict(base_fit, type = "link"))
+  keep <- !is.na(base_response)
 
   expect_equal(length(mlx_response), nrow(data))
   expect_equal(length(mlx_link), nrow(data))
   expect_equal(is.na(mlx_response), is.na(base_response))
   expect_equal(is.na(mlx_link), is.na(base_link))
-  expect_equal(mlx_response, base_response, tolerance = 1e-6)
-  expect_equal(mlx_link, base_link, tolerance = 1e-6)
+  expect_equal(mlx_response[keep], base_response[keep], tolerance = 1e-6)
+  expect_equal(mlx_link[keep], base_link[keep], tolerance = 1e-6)
 
-  mlx_resid <- as.numeric(residuals(mlx_fit, type = "pearson"))
+  mlx_resid_raw <- residuals(mlx_fit, type = "pearson")
+  expect_s3_class(mlx_resid_raw, "mlx")
+  mlx_resid <- as.numeric(mlx_resid_raw)
   expect_equal(length(mlx_resid), nrow(data))
   expect_equal(
     is.na(mlx_resid),
@@ -148,11 +155,14 @@ test_that("mlxs_glm pads binomial predictions with na.exclude", {
   )
   mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_binomial())
 
-  mlx_response <- as.numeric(predict(mlx_fit, type = "response"))
+  mlx_response_raw <- predict(mlx_fit, type = "response")
+  expect_s3_class(mlx_response_raw, "mlx")
+  mlx_response <- as.numeric(mlx_response_raw)
   base_response <- as.numeric(predict(base_fit, type = "response"))
+  keep <- !is.na(base_response)
   expect_equal(length(mlx_response), nrow(data))
   expect_equal(is.na(mlx_response), is.na(base_response))
-  expect_equal(mlx_response, base_response, tolerance = 1e-5)
+  expect_equal(mlx_response[keep], base_response[keep], tolerance = 1e-5)
 })
 
 test_that("mlxs_glm rejects rank-deficient model matrices", {

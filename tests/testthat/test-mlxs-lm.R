@@ -166,20 +166,29 @@ test_that("mlxs_lm defaults to na.exclude and pads training predictions", {
     ignore_attr = TRUE
   )
 
-  mlx_pred <- as.numeric(predict(mlx_fit))
+  mlx_pred_raw <- predict(mlx_fit)
+  expect_s3_class(mlx_pred_raw, "mlx")
+  mlx_pred <- as.numeric(mlx_pred_raw)
   base_pred <- as.numeric(predict(base_fit))
+  keep <- !is.na(base_pred)
   expect_equal(length(mlx_pred), nrow(data))
   expect_equal(is.na(mlx_pred), is.na(base_pred))
-  expect_equal(mlx_pred, base_pred, tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(mlx_pred[keep], base_pred[keep], tolerance = 1e-6)
 
-  mlx_fitted <- as.numeric(fitted(mlx_fit))
-  mlx_resid <- as.numeric(residuals(mlx_fit))
+  mlx_fitted_raw <- fitted(mlx_fit)
+  mlx_resid_raw <- residuals(mlx_fit)
+  expect_s3_class(mlx_fitted_raw, "mlx")
+  expect_s3_class(mlx_resid_raw, "mlx")
+  mlx_fitted <- as.numeric(mlx_fitted_raw)
+  mlx_resid <- as.numeric(mlx_resid_raw)
   expect_equal(length(mlx_fitted), nrow(data))
   expect_equal(length(mlx_resid), nrow(data))
   expect_equal(is.na(mlx_fitted), unname(is.na(fitted(base_fit))))
   expect_equal(is.na(mlx_resid), unname(is.na(residuals(base_fit))))
-  expect_equal(mlx_fitted, as.numeric(fitted(base_fit)), tolerance = 1e-6)
-  expect_equal(mlx_resid, as.numeric(residuals(base_fit)), tolerance = 1e-5)
+  expect_equal(mlx_fitted[keep], as.numeric(fitted(base_fit))[keep],
+               tolerance = 1e-6)
+  expect_equal(mlx_resid[keep], as.numeric(residuals(base_fit))[keep],
+               tolerance = 1e-5)
 
   omit_fit <- mlxs_lm(
     formula,

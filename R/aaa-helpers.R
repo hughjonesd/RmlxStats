@@ -92,27 +92,25 @@ utils::globalVariables("compiled")
 }
 
 .mlxs_napredict <- function(na_action, value) {
-  if (is.null(na_action)) {
-    return(value)
-  }
-  if (!inherits(value, "mlx")) {
-    return(stats::napredict(na_action, value))
-  }
-  if (!inherits(na_action, "exclude")) {
+  if (is.null(na_action) || !inherits(na_action, "exclude")) {
     return(value)
   }
 
-  value_mat <- as.matrix(value)
-  full_n <- nrow(value_mat) + length(na_action)
-  keep <- setdiff(seq_len(full_n), as.integer(na_action))
-  padded <- matrix(NA_real_, nrow = full_n, ncol = ncol(value_mat))
-  padded[keep, ] <- value_mat
-  if (ncol(padded) == 1L) {
-    return(drop(padded))
+  # stats::napredict.exclude() indexes through NA positions; [.mlx rejects
+  # those indices, so pad MLX outputs with scatter assignment instead.
+  if (identical(Rmlx::mlx_dtype(value), "float64")) {
+    Rmlx::local_device("cpu")
   }
+  full_n <- nrow(value) + length(na_action)
+  keep <- setdiff(seq_len(full_n), as.integer(na_action))
+  padded <- Rmlx::mlx_matrix(
+    rep(NaN, full_n * ncol(value)),
+    nrow = full_n,
+    ncol = ncol(value),
+    dtype = Rmlx::mlx_dtype(value)
+  )
+  padded[keep, ] <- value
   padded
 }
 
-.mlxs_naresid <- function(na_action, value) {
-  .mlxs_napredict(na_action, value)
-}
+.mlxs_naresid <- .mlxs_napredict
