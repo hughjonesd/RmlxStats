@@ -51,7 +51,7 @@ coef.mlxs_lm <- function(object, ..., output = c("vector", "mlx")) {
 #' @rdname mlxs-lm-methods
 predict.mlxs_lm <- function(object, newdata = NULL, ...) {
   if (is.null(newdata)) {
-    return(object$fitted.values)
+    return(.mlxs_napredict(object$na.action, object$fitted.values))
   }
   terms_obj <- terms(object)
   mf <- model.frame(
@@ -69,13 +69,13 @@ predict.mlxs_lm <- function(object, newdata = NULL, ...) {
 #' @export
 #' @rdname mlxs-lm-methods
 fitted.mlxs_lm <- function(object, ...) {
-  object$fitted.values
+  .mlxs_napredict(object$na.action, object$fitted.values)
 }
 
 #' @export
 #' @rdname mlxs-lm-methods
 residuals.mlxs_lm <- function(object, ...) {
-  naresid(object$na.action, object$residuals)
+  .mlxs_naresid(object$na.action, object$residuals)
 }
 
 #' @export

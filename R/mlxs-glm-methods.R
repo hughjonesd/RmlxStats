@@ -44,7 +44,7 @@ coef.mlxs_glm <- function(object, ...) {
 weights.mlxs_glm <- function(object, type = c("prior", "working"), ...) {
   type <- match.arg(type)
   res <- if (identical(type, "prior")) object$prior.weights else object$working.weights
-  if (! is.null(object$na.action)) res <- napredict(object$na.action, res)
+  if (! is.null(object$na.action)) res <- .mlxs_napredict(object$na.action, res)
   res
 }
 
@@ -65,9 +65,12 @@ predict.mlxs_glm <- function(
     )
   }
   if (is.null(newdata)) {
-    return(
-      if (type == "response") object$fitted.values else object$linear.predictors
-    )
+    value <- if (type == "response") {
+      object$fitted.values
+    } else {
+      object$linear.predictors
+    }
+    return(.mlxs_napredict(object$na.action, value))
   }
 
   terms_obj <- object$terms
@@ -97,7 +100,7 @@ predict.mlxs_glm <- function(
 #' @rdname mlxs-glm-methods
 #' @export
 fitted.mlxs_glm <- function(object, ...) {
-  object$fitted.values
+  .mlxs_napredict(object$na.action, object$fitted.values)
 }
 
 #' @rdname mlxs-glm-methods
@@ -109,13 +112,13 @@ residuals.mlxs_glm <- function(
 ) {
   type <- match.arg(type)
   if (type == "response") {
-    return(object$residuals)
+    return(.mlxs_naresid(object$na.action, object$residuals))
   }
   if (type == "deviance") {
-    return(object$deviance.resid)
+    return(.mlxs_naresid(object$na.action, object$deviance.resid))
   }
   if (type == "working") {
-    return(object$working.residuals)
+    return(.mlxs_naresid(object$na.action, object$working.residuals))
   }
 
   y_mlx <- object$y
@@ -125,7 +128,7 @@ residuals.mlxs_glm <- function(
   if (!is.null(object$prior.weights)) {
     pearson <- pearson * sqrt(object$prior.weights)
   }
-  pearson
+  .mlxs_naresid(object$na.action, pearson)
 }
 
 #' @rdname mlxs-glm-methods
