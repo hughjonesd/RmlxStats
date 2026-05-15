@@ -19,6 +19,11 @@
   errors.
 - More `mlxs_lm` methods now return base R objects by default,
   controllable via the `output` argument.
+- [`confint.mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
+  and
+  [`confint.mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+  can now return bootstrap confidence intervals. So can the respective
+  [`summary()`](https://rdrr.io/r/base/summary.html) methods.
 
 ## RmlxStats 0.2.0
 

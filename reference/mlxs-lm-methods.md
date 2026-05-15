@@ -21,7 +21,14 @@ residuals(object, ...)
 vcov(object, ...)
 
 # S3 method for class 'mlxs_lm'
-confint(object, parm, level = 0.95, ...)
+confint(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case")
+)
 
 # S3 method for class 'mlxs_lm'
 anova(object, ...)
@@ -36,7 +43,14 @@ print(x, ...)
 tidy(x, ...)
 
 # S3 method for class 'mlxs_lm'
-summary(object, bootstrap = FALSE, bootstrap_args = list(), ...)
+summary(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+  confint = FALSE,
+  level = 0.95,
+  ...
+)
 
 # S3 method for class 'mlxs_lm'
 print(x, ...)
@@ -110,6 +124,16 @@ bread(x, ...)
 
   Confidence level for intervals.
 
+- bootstrap:
+
+  Logical; should bootstrap standard errors or confidence intervals be
+  computed?
+
+- bootstrap_args:
+
+  List of bootstrap configuration options. See
+  [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+
 - x:
 
   An `mlxs_lm` model fit (for methods with a leading `x` argument).
@@ -122,14 +146,10 @@ bread(x, ...)
 
   Logical; passed to `as.data.frame`.
 
-- bootstrap:
+- confint:
 
-  Logical; should bootstrap standard errors be computed?
-
-- bootstrap_args:
-
-  List of bootstrap configuration options. See
-  [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+  Logical; should confidence intervals be included in the summary
+  object?
 
 - formula:
 

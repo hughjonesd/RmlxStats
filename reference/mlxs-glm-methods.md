@@ -31,13 +31,27 @@ residuals(object, type = c("deviance", "pearson", "working", "response"), ...)
 vcov(object, ...)
 
 # S3 method for class 'mlxs_glm'
-confint(object, parm, level = 0.95, ...)
+confint(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case")
+)
 
 # S3 method for class 'mlxs_glm'
 print(x, digits = max(3, getOption("digits") - 3), ...)
 
 # S3 method for class 'mlxs_glm'
-summary(object, bootstrap = FALSE, bootstrap_args = list(), ...)
+summary(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+  confint = FALSE,
+  level = 0.95,
+  ...
+)
 
 # S3 method for class 'summary.mlxs_glm'
 print(x, digits = max(3, getOption("digits") - 3), ...)
@@ -116,6 +130,16 @@ bread(x, ...)
 
   Confidence level for intervals.
 
+- bootstrap:
+
+  Logical; should bootstrap standard errors or confidence intervals be
+  computed?
+
+- bootstrap_args:
+
+  List of bootstrap configuration options. See
+  [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+
 - x:
 
   An `mlxs_glm` model fit (for methods with a leading `x` argument).
@@ -124,14 +148,10 @@ bread(x, ...)
 
   Number of significant digits to print for summaries.
 
-- bootstrap:
+- confint:
 
-  Logical; should bootstrap standard errors be computed?
-
-- bootstrap_args:
-
-  List of bootstrap configuration options. See
-  [`mlxs_boot()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_boot.md).
+  Logical; should confidence intervals be included in the summary
+  object?
 
 - formula, data:
 

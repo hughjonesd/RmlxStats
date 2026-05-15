@@ -60,7 +60,14 @@
 <span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html" class="external-link">vcov</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mlxs_lm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">parm</span>, level <span class="op">=</span> <span class="fl">0.95</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint</a></span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">parm</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  <span class="va">...</span>,</span>
+<span>  bootstrap <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bootstrap_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>B <span class="op">=</span> <span class="fl">200L</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, progress <span class="op">=</span> <span class="cn">FALSE</span>, bootstrap_type <span class="op">=</span> <span class="st">"case"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mlxs_lm'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -75,7 +82,14 @@
 <span><span class="fu"><a href="generics-reexports.html">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mlxs_lm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, bootstrap <span class="op">=</span> <span class="cn">FALSE</span>, bootstrap_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  bootstrap <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  bootstrap_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>B <span class="op">=</span> <span class="fl">200L</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, progress <span class="op">=</span> <span class="cn">FALSE</span>, bootstrap_type <span class="op">=</span> <span class="st">"case"</span><span class="op">)</span>,</span>
+<span>  confint <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'mlxs_lm'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -151,6 +165,16 @@ R object.</p></dd>
 <dd><p>Confidence level for intervals.</p></dd>
 
 
+<dt id="arg-bootstrap">bootstrap<a class="anchor" aria-label="anchor" href="#arg-bootstrap"></a></dt>
+<dd><p>Logical; should bootstrap standard errors or confidence
+intervals be computed?</p></dd>
+
+
+<dt id="arg-bootstrap-args">bootstrap_args<a class="anchor" aria-label="anchor" href="#arg-bootstrap-args"></a></dt>
+<dd><p>List of bootstrap configuration options.
+See <code><a href="mlxs_boot.html">mlxs_boot()</a></code>.</p></dd>
+
+
 <dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>An <code>mlxs_lm</code> model fit (for methods with a leading <code>x</code> argument).</p></dd>
 
@@ -163,13 +187,9 @@ R object.</p></dd>
 <dd><p>Logical; passed to <code>as.data.frame</code>.</p></dd>
 
 
-<dt id="arg-bootstrap">bootstrap<a class="anchor" aria-label="anchor" href="#arg-bootstrap"></a></dt>
-<dd><p>Logical; should bootstrap standard errors be computed?</p></dd>
-
-
-<dt id="arg-bootstrap-args">bootstrap_args<a class="anchor" aria-label="anchor" href="#arg-bootstrap-args"></a></dt>
-<dd><p>List of bootstrap configuration options.
-See <code><a href="mlxs_boot.html">mlxs_boot()</a></code>.</p></dd>
+<dt id="arg-confint">confint<a class="anchor" aria-label="anchor" href="#arg-confint"></a></dt>
+<dd><p>Logical; should confidence intervals be included in the
+summary object?</p></dd>
 
 
 <dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>

@@ -63,8 +63,8 @@ tier <- latest(fuzz)$tier[1]
 
 | Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-14 |
-| Commit       | bb9f3a5    |
+| Generated on | 2026-05-15 |
+| Commit       | c485dc5    |
 | Branch       | master     |
 | Rmlx version | 0.3.0.9000 |
 | Tier         | fast       |
@@ -100,13 +100,13 @@ fuzz |>
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 45 rows containing missing values or values outside the scale range
+    ## Warning: Removed 50 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 45 rows containing missing values or values outside the scale range
+    ## Warning: Removed 50 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## `geom_line()`: Each group consists of only one observation.

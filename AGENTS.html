@@ -77,7 +77,7 @@
 <div class="section level2">
 <h2 id="working-style-expectations">Working Style Expectations<a class="anchor" aria-label="anchor" href="#working-style-expectations"></a></h2>
 <ul><li>
-<strong>KEEP IT SIMPLE.</strong> Prefer the most direct expression of an idea over elaborate helper stacks. If a single call (e.g., <code>as_mlx()</code>) communicates intent, use it instead of wrapping the same logic in multiple conditionals.</li>
+<strong>KEEP IT SIMPLE.</strong> Prefer the most direct expression of an idea over elaborate helper stacks. If a single call (e.g., <code>as_mlx()</code>) communicates intent, use it instead of wrapping the same logic in multiple conditionals. With rare exceptions, do not commit a non-exported function until it is used at least twice. Do not be too fussy about argument checking: check inputs to the api, but not to unexported functions. Let base R catch errors, unless an error would silently give a misleading result.</li>
 <li>
 <strong>READ THE Rmlx AND LOCAL CODEBASE.</strong> Before changing behaviour, scan the existing MLX helpers and this repo to stay aligned with current conventions—assume the answer probably already exists somewhere nearby. <code>Rmlx</code> is in <code>../Rmlx</code>. You should read <code>AGENTS.md</code> there too. If you find an issue in Rmlx, you can fix it yourself, or file a github issue using the <code>gh</code> command line tool.</li>
 <li>

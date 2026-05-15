@@ -49,7 +49,11 @@ workflows.
 - **KEEP IT SIMPLE.** Prefer the most direct expression of an idea over
   elaborate helper stacks. If a single call (e.g., `as_mlx()`)
   communicates intent, use it instead of wrapping the same logic in
-  multiple conditionals.
+  multiple conditionals. With rare exceptions, do not commit a
+  non-exported function until it is used at least twice. Do not be too
+  fussy about argument checking: check inputs to the api, but not to
+  unexported functions. Let base R catch errors, unless an error would
+  silently give a misleading result.
 - **READ THE Rmlx AND LOCAL CODEBASE.** Before changing behaviour, scan
   the existing MLX helpers and this repo to stay aligned with current
   conventions—assume the answer probably already exists somewhere
