@@ -391,7 +391,8 @@ mlxs_glm_control <- function(
 #' @param family MLXS family object.
 #' @param control List from [mlxs_glm_control()].
 #' @param coef_start Optional starting coefficients.
-#' @param coef_names Optional coefficient names; required when `design` is MLX.
+#' @param coef_names Optional coefficient names; inferred from MLX dimnames
+#'   when available.
 #' @param has_intercept Optional logical indicating whether the design includes
 #'   an intercept column.
 #' @return Unclassed `mlxs_glm`-style list with coefficients, fitted values,
@@ -413,6 +414,15 @@ mlxs_glm_control <- function(
     dims <- Rmlx::mlx_shape(X_mlx)
     n_obs <- dims[1L]
     n_coef <- dims[2L]
+    if (is.null(coef_names)) {
+      coef_names <- colnames(design)
+    }
+    if (is.null(coef_names) && inherits(coef_start, "mlx")) {
+      coef_names <- rownames(coef_start)
+    }
+    if (is.null(coef_names) && !is.null(names(coef_start))) {
+      coef_names <- names(coef_start)
+    }
     if (is.null(coef_names)) {
       stop(
         "coef_names must be supplied when design is an mlx array.",
@@ -541,6 +551,7 @@ mlxs_glm_control <- function(
   if (irls_state$float64) {
     Rmlx::local_device("cpu")
   }
+  rownames(irls_state$beta) <- coef_names
 
   dev_res_vec <- as.numeric(irls_state$dev_resids)
   deviance <- sum(dev_res_vec)
@@ -608,7 +619,6 @@ mlxs_glm_control <- function(
     working.weights = working_weights_mlx,
     working.residuals = working_residuals_mlx,
     mu_eta = irls_state$mu_eta,
-    coef_names = coef_names,
     control = control,
     qr = irls_state$qr
   )

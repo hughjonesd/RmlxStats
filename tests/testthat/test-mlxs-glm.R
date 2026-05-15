@@ -5,6 +5,7 @@ test_that("mlxs_glm gaussian matches stats::glm", {
 
   expect_true(mlx_fit$converged)
   expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(rownames(coef(mlx_fit)), names(coef(base_fit)))
   expect_equal(
     drop(as.matrix(mlx_fit$fitted.values)),
     fitted(base_fit),
@@ -13,6 +14,7 @@ test_that("mlxs_glm gaussian matches stats::glm", {
   )
   expect_equal(mlx_fit$deviance, base_fit$deviance, tolerance = 1e-6)
   expect_equal(unname(as.matrix(vcov(mlx_fit))), unname(vcov(base_fit)), tolerance = 1e-6)
+  expect_equal(dimnames(vcov(mlx_fit)), dimnames(vcov(base_fit)))
   expect_equal(
     confint(mlx_fit),
     confint.default(base_fit),
@@ -48,7 +50,12 @@ test_that("mlxs_glm gaussian matches stats::glm", {
   expect_s3_class(augment_mlx$.fitted, "mlx")
   expect_s3_class(augment_mlx$.resid, "mlx")
 
-  expect_s3_class(summary(mlx_fit), "summary.mlxs_glm")
+  sum_obj <- summary(mlx_fit)
+  expect_s3_class(sum_obj, "summary.mlxs_glm")
+  expect_equal(rownames(sum_obj$coefficients), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$std.error), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$statistic), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$p.value), names(coef(base_fit)))
   expect_error(anova(mlx_fit), "not implemented", fixed = TRUE)
 })
 

@@ -6,7 +6,7 @@
 #' @noRd
 coef_vector <- function(fit) {
   coefs <- coef(fit)
-  coef_names <- attr(coefs, "coef_names")
+  coef_names <- rownames(coefs)
   if (is.null(coef_names)) {
     coef_names <- names(coefs)
   }

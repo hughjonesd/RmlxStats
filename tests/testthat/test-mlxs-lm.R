@@ -27,6 +27,8 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   )
 
   expect_equal(drop(as.matrix(coef(mlx_fit))), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(names(coef(mlx_fit)), names(coef(base_fit)))
+  expect_equal(rownames(coef(mlx_fit, output = "mlx")), names(coef(base_fit)))
   expect_equal(drop(as.matrix(fitted(mlx_fit))), fitted(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(residuals(mlx_fit))), residuals(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(
@@ -35,6 +37,7 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
     tolerance = 1e-6,
     ignore_attr = TRUE
   )
+  expect_equal(dimnames(vcov(mlx_fit)), dimnames(vcov(base_fit)))
   expect_equal(
     confint(mlx_fit),
     confint(base_fit),
@@ -130,6 +133,10 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   sum_obj <- summary(mlx_fit)
   expect_s3_class(sum_obj, "summary.mlxs_lm")
   expect_equal(drop(as.matrix(sum_obj$coef)), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(rownames(sum_obj$coef), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$std.error), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$statistic), names(coef(base_fit)))
+  expect_equal(rownames(sum_obj$p.value), names(coef(base_fit)))
 })
 
 test_that("mlxs_lm handles weights like stats::lm", {

@@ -102,6 +102,7 @@ mlxs_lm <- function(
     y = response_mlx,
     weights = weights_mlx
   )
+  rownames(fit_res$coefficients) <- colnames(design)
 
   result <- list(
     coefficients = fit_res$coefficients,
@@ -115,7 +116,6 @@ mlxs_lm <- function(
     terms = terms,
     model = mf,
     qr = fit_res$qr,
-    coef_names = colnames(design),
     weights = weights_mlx,
     assign = assign_vec
   )
@@ -181,6 +181,10 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
   # so does solve_triangular 
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE, 
                                          device = "cpu")
+  coef_names <- colnames(x_orig)
+  if (!is.null(coef_names)) {
+    rownames(coef_mlx) <- coef_names
+  }
   fitted_mlx <- x_orig %*% coef_mlx
   residual_mlx <- y_orig - fitted_mlx
 

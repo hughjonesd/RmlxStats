@@ -40,8 +40,6 @@ coef.mlxs_lm <- function(object, ..., output = c("vector", "mlx")) {
   if (identical(output, "vector")) {
     coef <- as.numeric(coef) 
     names(coef) <- .mlxs_coef_names(object)
-  } else {
-    attr(coef, "coef_names") <- .mlxs_coef_names(object)
   }
   
   coef
@@ -88,7 +86,10 @@ vcov.mlxs_lm <- function(object, ...) {
     object$weights
   ))
   sigma2 <- rss / object$df.residual
-  .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = sigma2)
+  vcov_mlx <- .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = sigma2)
+  coef_names <- .mlxs_coef_names(object)
+  dimnames(vcov_mlx) <- list(coef_names, coef_names)
+  vcov_mlx
 }
 
 #' @export
@@ -334,6 +335,7 @@ summary.mlxs_lm <- function(
   level = 0.95,
   ...
 ) {
+  coef_names <- .mlxs_coef_names(object)
   vc <- vcov(object)
   vc_mat <- as.matrix(vc)
   se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
@@ -358,6 +360,11 @@ summary.mlxs_lm <- function(
   est <- as.numeric(object$coefficients)
   tvals <- est / se_num
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
+  rownames(se_mlx) <- coef_names
+  statistic_mlx <- Rmlx::mlx_matrix(tvals, ncol = 1)
+  p_value_mlx <- Rmlx::mlx_matrix(pvals, ncol = 1)
+  rownames(statistic_mlx) <- coef_names
+  rownames(p_value_mlx) <- coef_names
   resid_mlx <- object$residuals
   rdf <- object$df.residual
   rss <- as.numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
@@ -389,10 +396,9 @@ summary.mlxs_lm <- function(
     terms = object$terms,
     residuals = resid_mlx,
     coef = object$coefficients,
-    coef_names = .mlxs_coef_names(object),
     std.error = se_mlx,
-    statistic = Rmlx::mlx_matrix(tvals, ncol = 1),
-    p.value = Rmlx::mlx_matrix(pvals, ncol = 1),
+    statistic = statistic_mlx,
+    p.value = p_value_mlx,
     sigma = sigma,
     df = c(object$rank, rdf, n_obs),
     r.squared = r.squared,
@@ -461,7 +467,7 @@ print.summary.mlxs_lm <- function(x, ...) {
     stat_col = "t value",
     p_col = "Pr(>|t|)"
   )
-  rownames(coef_table) <- x$coef_names
+  rownames(coef_table) <- rownames(x$coef) %||% x$coef_names
   printCoefmat(coef_table, has.Pvalue = TRUE)
   cat(
     "\nResidual standard error:",
@@ -526,8 +532,9 @@ nobs.mlxs_lm <- function(object, ...) {
 #' @rdname mlxs-lm-methods
 tidy.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
+  coef_names <- rownames(sum_obj$coef) %||% sum_obj$coef_names
   data.frame(
-    term = sum_obj$coef_names,
+    term = coef_names,
     estimate = as.numeric(sum_obj$coef),
     std.error = as.numeric(sum_obj$std.error),
     statistic = as.numeric(sum_obj$statistic),

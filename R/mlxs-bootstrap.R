@@ -189,7 +189,9 @@ mlxs_boot <- function(
 
   case_fun <- if (fit_type == "lm") {
     function(X, y, weights = NULL) {
-      mlxs_lm_fit(X, y, weights = weights)$coefficients
+      coef_mlx <- mlxs_lm_fit(X, y, weights = weights)$coefficients
+      rownames(coef_mlx) <- coef_names
+      coef_mlx
     }
   } else {
     family <- object$family
@@ -265,8 +267,10 @@ mlxs_boot <- function(
   residual_fun <- function(residuals) {
     y_boot <- fitted_mlx + residuals
     qty <- crossprod(qr_state$Q, y_boot)
-    Rmlx::mlx_solve_triangular(qr_state$R, qty, upper = TRUE, 
-                               device = "cpu")
+    coef_mlx <- Rmlx::mlx_solve_triangular(qr_state$R, qty, upper = TRUE,
+                                           device = "cpu")
+    rownames(coef_mlx) <- coef_names
+    coef_mlx
   }
 
   boot_res <- mlxs_boot(
@@ -313,6 +317,7 @@ mlxs_boot <- function(
   coef_array <- Rmlx::mlx_stack(sample_list, axis = 3L)
   se_mlx <- Rmlx::mlx_std(coef_array, axes = 3L, drop = FALSE, ddof = 1L)
   se_mlx <- Rmlx::mlx_reshape(se_mlx, c(length(coef_names), 1L))
+  rownames(se_mlx) <- coef_names
   alpha <- (1 - level) / 2
   confint_mlx <- Rmlx::mlx_quantile(
     coef_array,
