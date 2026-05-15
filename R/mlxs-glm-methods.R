@@ -17,7 +17,8 @@
 #' @param type.predict,type.residuals Character strings controlling the scale of
 #'   fitted values and residuals returned by `augment.mlxs_glm()`.
 #' @param se_fit Logical; standard-error analogue for `augment`.
-#' @param bootstrap Logical; should bootstrap standard errors be computed?
+#' @param bootstrap Logical; should bootstrap standard errors or confidence
+#'   intervals be computed?
 #' @param bootstrap_args List of bootstrap configuration options.
 #'   See [mlxs_boot()].
 #' @param output Character string; return format ("data.frame" or "mlx").
@@ -135,18 +136,35 @@ vcov.mlxs_glm <- function(object, ...) {
 
 #' @rdname mlxs-glm-methods
 #' @export
-confint.mlxs_glm <- function(object, parm, level = 0.95, ...) {
+confint.mlxs_glm <- function(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list()
+) {
+  coef_names <- .mlxs_coef_names(object)
+  parm <- if (missing(parm)) {
+    .mlxs_confint_parm(coef_names = coef_names)
+  } else {
+    .mlxs_confint_parm(parm, coef_names)
+  }
+  if (isTRUE(bootstrap)) {
+    user_args <- .mlxs_bootstrap_args(bootstrap_args)
+    bootstrap_info <- .mlxs_bootstrap_coefs(
+      object,
+      fit_type = "glm",
+      B = user_args$B,
+      seed = user_args$seed,
+      progress = user_args$progress,
+      method = user_args$bootstrap_type,
+      level = level
+    )
+    return(bootstrap_info$confint[parm, , drop = FALSE])
+  }
   cf <- coef(object)
   cf_num <- as.numeric(cf)
-  coef_names <- .mlxs_coef_names(object)
-  if (missing(parm)) {
-    parm <- seq_len(length(cf_num))
-  } else if (is.character(parm)) {
-    parm <- match(parm, coef_names, nomatch = NA_integer_)
-    if (any(is.na(parm))) {
-      stop("Some parameters not found in the model.", call. = FALSE)
-    }
-  }
   vcov. <- vcov(object)
   if (identical(Rmlx::mlx_dtype(vcov.), "float64")) {
     Rmlx::local_device("cpu")
@@ -179,17 +197,7 @@ summary.mlxs_glm <- function(
   bootstrap_args = list(),
   ...
 ) {
-  default_args <- list(
-    B = 200L,
-    seed = NULL,
-    progress = FALSE,
-    bootstrap_type = "case"
-  )
-  if (!is.list(bootstrap_args)) {
-    stop("bootstrap_args must be a list.", call. = FALSE)
-  }
-  user_args <- utils::modifyList(default_args, bootstrap_args)
-  bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
+  user_args <- .mlxs_bootstrap_args(bootstrap_args)
 
   coef_names <- .mlxs_coef_names(object)
   coef_mlx <- object$coefficients
@@ -209,7 +217,8 @@ summary.mlxs_glm <- function(
       B = user_args$B,
       seed = user_args$seed,
       progress = user_args$progress,
-      method = bootstrap_type
+      method = user_args$bootstrap_type,
+      level = 0.95
     )
     se_col_mlx <- bootstrap_info$se
     if (identical(Rmlx::mlx_dtype(se_col_mlx), "float64")) {

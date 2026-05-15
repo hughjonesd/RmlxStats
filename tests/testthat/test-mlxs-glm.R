@@ -127,9 +127,15 @@ test_that("mlxs_glm bootstrap summary works", {
   formula <- vs ~ mpg + wt
   data <- transform(mtcars, vs = as.integer(vs > 0))
   fit <- mlxs_glm(formula, data = data, family = mlxs_binomial())
-  sum_boot <- summary(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 42, progress = FALSE))
+  sum_boot <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(B = 15, seed = 42, progress = FALSE)
+  )
   expect_true(!is.null(sum_boot$bootstrap))
   expect_equal(length(sum_boot$bootstrap$se), length(coef(fit)))
+  expect_equal(dim(sum_boot$bootstrap$confint), c(3L, 2L))
+  expect_equal(rownames(sum_boot$bootstrap$confint), .mlxs_coef_names(fit))
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 12, seed = 42, progress = FALSE))
   expect_true(all(!is.na(tidy_boot$std.error)))
 })
@@ -144,6 +150,64 @@ test_that("mlxs_glm residual bootstrap works for gaussian", {
   )
   expect_true(!is.null(sum_resid$bootstrap))
   expect_equal(length(sum_resid$bootstrap$se), length(coef(fit)))
+})
+
+test_that("confint.mlxs_glm supports bootstrap percentile intervals", {
+  data <- transform(mtcars, vs = as.integer(vs > 0))
+  fit <- mlxs_glm(vs ~ mpg + wt, data = data, family = mlxs_binomial())
+  args <- list(B = 12, seed = 42, progress = FALSE)
+
+  ci <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
+  expect_equal(dim(ci), c(3L, 2L))
+  expect_equal(rownames(ci), .mlxs_coef_names(fit))
+  expect_equal(colnames(ci), c("2.5 %", "97.5 %"))
+  expect_true(all(is.finite(ci)))
+  expect_true(all(ci[, 1L] <= ci[, 2L]))
+
+  ci_again <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
+  expect_equal(ci_again, ci)
+
+  ci_wt <- confint(
+    fit,
+    parm = "wt",
+    bootstrap = TRUE,
+    bootstrap_args = args
+  )
+  expect_equal(dim(ci_wt), c(1L, 2L))
+  expect_equal(rownames(ci_wt), "wt")
+
+  expect_error(
+    confint(
+      fit,
+      bootstrap = TRUE,
+      bootstrap_args = list(
+        bootstrap_type = "residual",
+        B = 10,
+        seed = 11,
+        progress = FALSE
+      )
+    ),
+    "supports only gaussian/quasigaussian",
+    fixed = TRUE
+  )
+})
+
+test_that("confint.mlxs_glm supports gaussian residual bootstrap", {
+  fit <- mlxs_glm(mpg ~ cyl + disp + wt, data = mtcars, family = mlxs_gaussian())
+  ci <- confint(
+    fit,
+    parm = "wt",
+    bootstrap = TRUE,
+    bootstrap_args = list(
+      bootstrap_type = "residual",
+      B = 10,
+      seed = 11,
+      progress = FALSE
+    )
+  )
+  expect_equal(dim(ci), c(1L, 2L))
+  expect_equal(rownames(ci), "wt")
+  expect_true(all(is.finite(ci)))
 })
 
 test_that("mlxs_glm binomial matches stats::glm", {

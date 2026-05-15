@@ -180,15 +180,66 @@ test_that("mlxs_lm rejects rank-deficient model matrices", {
 
 test_that("mlxs_lm bootstrap summary provides se", {
   fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
-  sum_boot <- summary(fit, bootstrap = TRUE, bootstrap_args = list(B = 20, seed = 123, progress = FALSE))
+  sum_boot <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(B = 20, seed = 123, progress = FALSE)
+  )
   expect_true(!is.null(sum_boot$bootstrap))
   expect_equal(length(sum_boot$bootstrap$se), length(drop(as.matrix(coef(fit)))))
+  expect_equal(dim(sum_boot$bootstrap$confint), c(3L, 2L))
+  expect_equal(rownames(sum_boot$bootstrap$confint), .mlxs_coef_names(fit))
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 123, progress = FALSE))
   expect_true(all(!is.na(tidy_boot$std.error)))
 
-  sum_resid <- summary(fit,
-                       bootstrap = TRUE,
-                       bootstrap_args = list(bootstrap_type = "residual", B = 10, seed = 321, progress = FALSE))
+  sum_resid <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(
+      bootstrap_type = "residual",
+      B = 10,
+      seed = 321,
+      progress = FALSE
+    )
+  )
   expect_true(!is.null(sum_resid$bootstrap))
   expect_equal(length(sum_resid$bootstrap$se), length(drop(as.matrix(coef(fit)))))
+})
+
+test_that("confint.mlxs_lm supports bootstrap percentile intervals", {
+  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
+  args <- list(B = 12, seed = 123, progress = FALSE)
+
+  ci <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
+  expect_equal(dim(ci), c(3L, 2L))
+  expect_equal(rownames(ci), .mlxs_coef_names(fit))
+  expect_equal(colnames(ci), c("2.5 %", "97.5 %"))
+  expect_true(all(is.finite(ci)))
+  expect_true(all(ci[, 1L] <= ci[, 2L]))
+
+  ci_again <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
+  expect_equal(ci_again, ci)
+
+  ci_cyl <- confint(
+    fit,
+    parm = "cyl",
+    bootstrap = TRUE,
+    bootstrap_args = args
+  )
+  expect_equal(dim(ci_cyl), c(1L, 2L))
+  expect_equal(rownames(ci_cyl), "cyl")
+
+  ci_resid <- confint(
+    fit,
+    parm = 2L,
+    bootstrap = TRUE,
+    bootstrap_args = list(
+      bootstrap_type = "residual",
+      B = 10,
+      seed = 321,
+      progress = FALSE
+    )
+  )
+  expect_equal(dim(ci_resid), c(1L, 2L))
+  expect_equal(rownames(ci_resid), "cyl")
 })

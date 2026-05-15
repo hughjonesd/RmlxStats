@@ -8,7 +8,8 @@
 #' @param newdata Optional data frame for prediction.
 #' @param parm Parameter specification for confidence intervals.
 #' @param level Confidence level for intervals.
-#' @param bootstrap Logical; should bootstrap standard errors be computed?
+#' @param bootstrap Logical; should bootstrap standard errors or confidence
+#'   intervals be computed?
 #' @param bootstrap_args List of bootstrap configuration options. 
 #'   See [mlxs_boot()].
 #' @param formula An `mlxs_lm` object used in place of formula for
@@ -90,18 +91,35 @@ vcov.mlxs_lm <- function(object, ...) {
 
 #' @export
 #' @rdname mlxs-lm-methods
-confint.mlxs_lm <- function(object, parm, level = 0.95, ...) {
+confint.mlxs_lm <- function(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list()
+) {
+  coef_names <- .mlxs_coef_names(object)
+  parm <- if (missing(parm)) {
+    .mlxs_confint_parm(coef_names = coef_names)
+  } else {
+    .mlxs_confint_parm(parm, coef_names)
+  }
+  if (isTRUE(bootstrap)) {
+    user_args <- .mlxs_bootstrap_args(bootstrap_args)
+    bootstrap_info <- .mlxs_bootstrap_coefs(
+      object,
+      fit_type = "lm",
+      B = user_args$B,
+      seed = user_args$seed,
+      progress = user_args$progress,
+      method = user_args$bootstrap_type,
+      level = level
+    )
+    return(bootstrap_info$confint[parm, , drop = FALSE])
+  }
   cf <- coef(object)
   cf_num <- as.numeric(cf)
-  coef_names <- .mlxs_coef_names(object)
-  if (missing(parm)) {
-    parm <- seq_len(length(cf_num))
-  } else if (is.character(parm)) {
-    parm <- match(parm, coef_names, nomatch = NA_integer_)
-    if (any(is.na(parm))) {
-      stop("Some parameters not found in the model.", call. = FALSE)
-    }
-  }
   vc <- vcov(object)
   se <- as.numeric(sqrt(Rmlx::diag(vc)))[parm]
   est <- cf_num[parm]
@@ -312,17 +330,7 @@ summary.mlxs_lm <- function(
   bootstrap_args = list(),
   ...
 ) {
-  default_args <- list(
-    B = 200L,
-    seed = NULL,
-    progress = FALSE,
-    bootstrap_type = "case"
-  )
-  if (!is.list(bootstrap_args)) {
-    stop("bootstrap_args must be a list.", call. = FALSE)
-  }
-  user_args <- utils::modifyList(default_args, bootstrap_args)
-  bootstrap_type <- match.arg(user_args$bootstrap_type, c("case", "residual"))
+  user_args <- .mlxs_bootstrap_args(bootstrap_args)
   vc <- vcov(object)
   vc_mat <- as.matrix(vc)
   se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
@@ -334,7 +342,8 @@ summary.mlxs_lm <- function(
       B = user_args$B,
       seed = user_args$seed,
       progress = user_args$progress,
-      method = bootstrap_type
+      method = user_args$bootstrap_type,
+      level = 0.95
     )
     se_mlx <- bootstrap_info$se
   }

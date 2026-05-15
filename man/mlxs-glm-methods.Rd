@@ -43,7 +43,14 @@
 
 \method{vcov}{mlxs_glm}(object, ...)
 
-\method{confint}{mlxs_glm}(object, parm, level = 0.95, ...)
+\method{confint}{mlxs_glm}(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list()
+)
 
 \method{print}{mlxs_glm}(x, digits = max(3, getOption("digits") - 3), ...)
 
@@ -99,14 +106,15 @@ supported?}
 
 \item{level}{Confidence level for intervals.}
 
-\item{x}{An \code{mlxs_glm} model fit (for methods with a leading \code{x} argument).}
-
-\item{digits}{Number of significant digits to print for summaries.}
-
-\item{bootstrap}{Logical; should bootstrap standard errors be computed?}
+\item{bootstrap}{Logical; should bootstrap standard errors or confidence
+intervals be computed?}
 
 \item{bootstrap_args}{List of bootstrap configuration options.
 See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
+
+\item{x}{An \code{mlxs_glm} model fit (for methods with a leading \code{x} argument).}
+
+\item{digits}{Number of significant digits to print for summaries.}
 
 \item{formula, data}{Optional formula and data overrides used by
 \code{augment.mlxs_glm()}.}
