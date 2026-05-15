@@ -199,6 +199,25 @@ test_that("mlxs_lm defaults to na.exclude and pads training predictions", {
   expect_false(anyNA(as.numeric(predict(omit_fit))))
 })
 
+test_that("mlxs_lm summaries use complete-case internals with na.exclude", {
+  data <- mtcars
+  data$mpg[1] <- NA_real_
+
+  fit <- mlxs_lm(gear ~ mpg, data = data)
+  base_fit <- lm(gear ~ mpg, data = data, na.action = stats::na.exclude)
+
+  expect_output(print(fit), "Residuals")
+  sum_obj <- summary(fit)
+  base_summary <- summary(base_fit)
+  expect_equal(sum_obj$r.squared, base_summary$r.squared, tolerance = 1e-6)
+  expect_equal(
+    sum_obj$adj.r.squared,
+    base_summary$adj.r.squared,
+    tolerance = 1e-6
+  )
+  expect_equal(glance(fit)$r.squared, base_summary$r.squared, tolerance = 1e-6)
+})
+
 test_that("mlxs_lm rejects rank-deficient model matrices", {
   data <- mtcars
   data$disp_copy <- data$disp

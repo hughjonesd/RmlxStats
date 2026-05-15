@@ -358,11 +358,11 @@ summary.mlxs_lm <- function(
   est <- as.numeric(object$coefficients)
   tvals <- est / se_num
   pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
-  resid_mlx <- residuals(object)
+  resid_mlx <- object$residuals
   rdf <- object$df.residual
   rss <- as.numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
   sigma <- sqrt(rss / rdf)
-  fitted_mlx <- fitted(object)
+  fitted_mlx <- object$fitted.values
   y_mlx <- resid_mlx + fitted_mlx
   n_obs <- nobs(object)
   y_mean <- as.numeric(Rmlx::mlx_sum(y_mlx)) / n_obs
@@ -541,7 +541,7 @@ tidy.mlxs_lm <- function(x, ...) {
 glance.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   n <- nobs(x)
-  resid_vec <- as.numeric(residuals(x))
+  resid_vec <- as.numeric(x$residuals)
   rss <- sum(resid_vec^2)
   sigma <- sum_obj$sigma
   k <- sum_obj$df[1]
