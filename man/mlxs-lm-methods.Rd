@@ -37,7 +37,14 @@
 
 \method{vcov}{mlxs_lm}(object, ...)
 
-\method{confint}{mlxs_lm}(object, parm, level = 0.95, ...)
+\method{confint}{mlxs_lm}(
+  object,
+  parm,
+  level = 0.95,
+  ...,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case")
+)
 
 \method{anova}{mlxs_lm}(object, ...)
 
@@ -47,7 +54,14 @@
 
 \method{tidy}{mlxs_anova}(x, ...)
 
-\method{summary}{mlxs_lm}(object, bootstrap = FALSE, bootstrap_args = list(), ...)
+\method{summary}{mlxs_lm}(
+  object,
+  bootstrap = FALSE,
+  bootstrap_args = list(B = 200L, seed = NULL, progress = FALSE, bootstrap_type = "case"),
+  confint = FALSE,
+  level = 0.95,
+  ...
+)
 
 \method{print}{mlxs_lm}(x, ...)
 
@@ -95,16 +109,20 @@ R object.}
 
 \item{level}{Confidence level for intervals.}
 
+\item{bootstrap}{Logical; should bootstrap standard errors or confidence
+intervals be computed?}
+
+\item{bootstrap_args}{List of bootstrap configuration options.
+See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
+
 \item{x}{An \code{mlxs_lm} model fit (for methods with a leading \code{x} argument).}
 
 \item{row.names}{Optional row names for data frame conversion.}
 
 \item{optional}{Logical; passed to \code{as.data.frame}.}
 
-\item{bootstrap}{Logical; should bootstrap standard errors be computed?}
-
-\item{bootstrap_args}{List of bootstrap configuration options.
-See \code{\link[=mlxs_boot]{mlxs_boot()}}.}
+\item{confint}{Logical; should confidence intervals be included in the
+summary object?}
 
 \item{formula}{An \code{mlxs_lm} object used in place of formula for
 \code{model.frame}.}
