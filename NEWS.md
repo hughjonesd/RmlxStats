@@ -9,6 +9,9 @@
   sandwich-style robust standard errors. 
 * More `mlxs_lm` methods now return base R objects by default, controllable
   via the `output` argument.
+* `confint.mlxs_lm()` and `confint.mlxs_glm()` can now return bootstrap
+  confidence intervals. So can the respective `summary()` methods.
+
 
 # RmlxStats 0.2.0
 

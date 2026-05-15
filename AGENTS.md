@@ -38,7 +38,8 @@ This project builds on the `Rmlx` GPU math package to expose statistical workflo
 ## Working Style Expectations
 - **KEEP IT SIMPLE.** Prefer the most direct expression of an idea over elaborate helper
   stacks. If a single call (e.g., `as_mlx()`) communicates intent, use it instead of
-  wrapping the same logic in multiple conditionals.
+  wrapping the same logic in multiple conditionals. With rare exceptions, do not commit 
+  a non-exported function until it is used at least twice. 
 - **READ THE Rmlx AND LOCAL CODEBASE.** Before changing behaviour, scan the existing MLX
   helpers and this repo to stay aligned with current conventions—assume the answer
   probably already exists somewhere nearby. `Rmlx` is in `../Rmlx`. You should read
