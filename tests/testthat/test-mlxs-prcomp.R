@@ -195,6 +195,8 @@ test_that("mlxs_prcomp methods reuse prcomp presentation behavior", {
   expect_equal(unname(pred_named), unname(pred_ref), tolerance = 2e-1)
 
   expect_output(print(fit), "Standard deviations")
+  on.exit(try(file.remove("Rplots.pdf"), silent = TRUE), 
+          add = TRUE, after = FALSE)
   expect_silent(graphics::plot(fit))
   expect_silent(stats::biplot(fit))
 })
