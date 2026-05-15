@@ -10,6 +10,9 @@
 #' @param weights Optional non-negative observation weights. Treated like the
 #'   `weights` argument to [stats::lm()], i.e. they enter the fit via weighted
 #'   least squares.
+#' @param na.action A function indicating how missing values should be handled.
+#'   Defaults to [stats::na.exclude()] so residuals, fitted values, and
+#'   training-data predictions are padded back to the original row count.
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -23,13 +26,22 @@
 #' @examples
 #' fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
 #' coef(fit)
-mlxs_lm <- function(formula, data, subset, weights) {
+mlxs_lm <- function(
+  formula,
+  data,
+  subset,
+  weights,
+  na.action = stats::na.exclude
+) {
   call <- match.call()
 
   mf <- match.call(expand.dots = FALSE)
-  arg_names <- c("formula", "data", "subset", "weights")
+  arg_names <- c("formula", "data", "subset", "weights", "na.action")
   keep <- match(arg_names, names(mf), nomatch = 0L)
   mf <- mf[c(1L, keep)]
+  if (!"na.action" %in% names(mf)) {
+    mf$na.action <- na.action
+  }
   mf[[1L]] <- quote(model.frame)
   mf <- eval(mf, parent.frame())
 

@@ -151,6 +151,73 @@ test_that("mlxs_lm handles weights like stats::lm", {
   expect_equal(anova_weighted[["Mean Sq"]], base_weighted[["Mean Sq"]], tolerance = 1e-6)
 })
 
+test_that("mlxs_lm defaults to na.exclude and pads training predictions", {
+  data <- mtcars
+  data$disp[c(2, 7)] <- NA_real_
+  formula <- mpg ~ cyl + disp
+
+  base_fit <- lm(formula, data = data, na.action = stats::na.exclude)
+  mlx_fit <- mlxs_lm(formula, data = data)
+
+  expect_equal(
+    drop(as.matrix(mlx_fit$coefficients)),
+    coef(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
+
+  mlx_pred_raw <- predict(mlx_fit)
+  expect_s3_class(mlx_pred_raw, "mlx")
+  mlx_pred <- as.numeric(mlx_pred_raw)
+  base_pred <- as.numeric(predict(base_fit))
+  keep <- !is.na(base_pred)
+  expect_equal(length(mlx_pred), nrow(data))
+  expect_equal(is.na(mlx_pred), is.na(base_pred))
+  expect_equal(mlx_pred[keep], base_pred[keep], tolerance = 1e-6)
+
+  mlx_fitted_raw <- fitted(mlx_fit)
+  mlx_resid_raw <- residuals(mlx_fit)
+  expect_s3_class(mlx_fitted_raw, "mlx")
+  expect_s3_class(mlx_resid_raw, "mlx")
+  mlx_fitted <- as.numeric(mlx_fitted_raw)
+  mlx_resid <- as.numeric(mlx_resid_raw)
+  expect_equal(length(mlx_fitted), nrow(data))
+  expect_equal(length(mlx_resid), nrow(data))
+  expect_equal(is.na(mlx_fitted), unname(is.na(fitted(base_fit))))
+  expect_equal(is.na(mlx_resid), unname(is.na(residuals(base_fit))))
+  expect_equal(mlx_fitted[keep], as.numeric(fitted(base_fit))[keep],
+               tolerance = 1e-6)
+  expect_equal(mlx_resid[keep], as.numeric(residuals(base_fit))[keep],
+               tolerance = 1e-5)
+
+  omit_fit <- mlxs_lm(
+    formula,
+    data = data,
+    na.action = stats::na.omit
+  )
+  expect_equal(length(as.numeric(predict(omit_fit))), nrow(data) - 2L)
+  expect_false(anyNA(as.numeric(predict(omit_fit))))
+})
+
+test_that("mlxs_lm summaries use complete-case internals with na.exclude", {
+  data <- mtcars
+  data$mpg[1] <- NA_real_
+
+  fit <- mlxs_lm(gear ~ mpg, data = data)
+  base_fit <- lm(gear ~ mpg, data = data, na.action = stats::na.exclude)
+
+  expect_output(print(fit), "Residuals")
+  sum_obj <- summary(fit)
+  base_summary <- summary(base_fit)
+  expect_equal(sum_obj$r.squared, base_summary$r.squared, tolerance = 1e-6)
+  expect_equal(
+    sum_obj$adj.r.squared,
+    base_summary$adj.r.squared,
+    tolerance = 1e-6
+  )
+  expect_equal(glance(fit)$r.squared, base_summary$r.squared, tolerance = 1e-6)
+})
+
 test_that("mlxs_lm rejects rank-deficient model matrices", {
   data <- mtcars
   data$disp_copy <- data$disp

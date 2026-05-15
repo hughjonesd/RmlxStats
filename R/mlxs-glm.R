@@ -7,6 +7,9 @@
 #' @inheritParams stats::glm
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
 #'   [mlxs_poisson()]). You can use `"gaussian"` etc.
+#' @param na.action A function indicating how missing values should be handled.
+#'   Defaults to [stats::na.exclude()] so residuals, fitted values, and
+#'   training-data predictions are padded back to the original row count.
 #' @param control Optional list of control parameters passed to
 #'   [mlxs_glm_control()]. Control parameters can include `epsilon`, `epsilon_f64`,
 #'   `maxit` and `trace`.
@@ -25,7 +28,7 @@ mlxs_glm <- function(
   data,
   subset,
   weights,
-  na.action,
+  na.action = stats::na.exclude,
   start = NULL,
   control = list(),
   ...
@@ -49,6 +52,9 @@ mlxs_glm <- function(
   arg_names <- c("formula", "data", "subset", "weights", "na.action")
   keep <- match(arg_names, names(mf), nomatch = 0L)
   mf <- mf[c(1L, keep)]
+  if (!"na.action" %in% names(mf)) {
+    mf$na.action <- na.action
+  }
   mf$drop.unused.levels <- TRUE
   mf[[1L]] <- quote(stats::model.frame)
   mf <- eval(mf, parent.frame())

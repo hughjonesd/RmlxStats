@@ -10,7 +10,7 @@ mlxs_glm(
   data,
   subset,
   weights,
-  na.action,
+  na.action = stats::na.exclude,
   start = NULL,
   control = list(),
   ...
@@ -39,12 +39,9 @@ mlxs_glm(
 \item{weights}{an optional vector of \sQuote{prior weights} to be used
     in the fitting process.  Should be \code{NULL} or a numeric vector.}
 
-\item{na.action}{a function which indicates what should happen
-    when the data contain \code{NA}s.  The default is set by
-    the \code{na.action} setting of \code{\link{options}}, and is
-    \code{\link[stats]{na.fail}} if that is unset.  The \sQuote{factory-fresh}
-    default is \code{\link[stats]{na.omit}}.  Another possible value is
-    \code{NULL}, no action.  Value \code{\link[stats]{na.exclude}} can be useful.}
+\item{na.action}{A function indicating how missing values should be handled.
+Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
+training-data predictions are padded back to the original row count.}
 
 \item{start}{starting values for the parameters in the linear predictor.}
 
