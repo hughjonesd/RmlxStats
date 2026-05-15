@@ -90,3 +90,27 @@ utils::globalVariables("compiled")
 `%||%` <- function (x, y) {
   if (is.null(x)) y else x
 }
+
+.mlxs_napredict <- function(na_action, value) {
+  if (is.null(na_action) || !inherits(na_action, "exclude")) {
+    return(value)
+  }
+
+  # stats::napredict.exclude() indexes through NA positions; [.mlx rejects
+  # those indices, so pad MLX outputs with scatter assignment instead.
+  if (identical(Rmlx::mlx_dtype(value), "float64")) {
+    Rmlx::local_device("cpu")
+  }
+  full_n <- nrow(value) + length(na_action)
+  keep <- setdiff(seq_len(full_n), as.integer(na_action))
+  padded <- Rmlx::mlx_matrix(
+    rep(NaN, full_n * ncol(value)),
+    nrow = full_n,
+    ncol = ncol(value),
+    dtype = Rmlx::mlx_dtype(value)
+  )
+  padded[keep, ] <- value
+  padded
+}
+
+.mlxs_naresid <- .mlxs_napredict

@@ -4,7 +4,7 @@
 \alias{mlxs_lm}
 \title{MLX-backed linear regression}
 \usage{
-mlxs_lm(formula, data, subset, weights)
+mlxs_lm(formula, data, subset, weights, na.action = stats::na.exclude)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -17,6 +17,10 @@ variables in the model.}
 \item{weights}{Optional non-negative observation weights. Treated like the
 \code{weights} argument to \code{\link[stats:lm]{stats::lm()}}, i.e. they enter the fit via weighted
 least squares.}
+
+\item{na.action}{A function indicating how missing values should be handled.
+Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
+training-data predictions are padded back to the original row count.}
 }
 \value{
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing

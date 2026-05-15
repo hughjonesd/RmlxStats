@@ -86,6 +86,110 @@ test_that("mlxs_glm respects observation weights", {
   )
 })
 
+test_that("mlxs_glm defaults to na.exclude and pads training predictions", {
+  data <- mtcars
+  data$disp[c(2, 7)] <- NA_real_
+  formula <- mpg ~ cyl + disp
+
+  base_fit <- glm(
+    formula,
+    data = data,
+    family = gaussian(),
+    na.action = stats::na.exclude
+  )
+  mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_gaussian())
+
+  expect_equal(
+    drop(as.matrix(coef(mlx_fit))),
+    coef(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
+
+  mlx_response_raw <- predict(mlx_fit, type = "response")
+  mlx_link_raw <- predict(mlx_fit, type = "link")
+  expect_s3_class(mlx_response_raw, "mlx")
+  expect_s3_class(mlx_link_raw, "mlx")
+  mlx_response <- as.numeric(mlx_response_raw)
+  mlx_link <- as.numeric(mlx_link_raw)
+  base_response <- as.numeric(predict(base_fit, type = "response"))
+  base_link <- as.numeric(predict(base_fit, type = "link"))
+  keep <- !is.na(base_response)
+
+  expect_equal(length(mlx_response), nrow(data))
+  expect_equal(length(mlx_link), nrow(data))
+  expect_equal(is.na(mlx_response), is.na(base_response))
+  expect_equal(is.na(mlx_link), is.na(base_link))
+  expect_equal(mlx_response[keep], base_response[keep], tolerance = 1e-6)
+  expect_equal(mlx_link[keep], base_link[keep], tolerance = 1e-6)
+
+  mlx_resid_raw <- residuals(mlx_fit, type = "pearson")
+  expect_s3_class(mlx_resid_raw, "mlx")
+  mlx_resid <- as.numeric(mlx_resid_raw)
+  expect_equal(length(mlx_resid), nrow(data))
+  expect_equal(
+    is.na(mlx_resid),
+    unname(is.na(residuals(base_fit, type = "pearson")))
+  )
+
+  omit_fit <- mlxs_glm(
+    formula,
+    data = data,
+    family = mlxs_gaussian(),
+    na.action = stats::na.omit
+  )
+  expect_equal(length(as.numeric(predict(omit_fit))), nrow(data) - 2L)
+  expect_false(anyNA(as.numeric(predict(omit_fit))))
+})
+
+test_that("mlxs_glm pads binomial predictions with na.exclude", {
+  data <- transform(mtcars, vs = as.integer(vs > 0))
+  data$mpg[c(3, 8)] <- NA_real_
+  formula <- vs ~ mpg + wt
+
+  base_fit <- glm(
+    formula,
+    data = data,
+    family = binomial(),
+    na.action = stats::na.exclude
+  )
+  mlx_fit <- mlxs_glm(formula, data = data, family = mlxs_binomial())
+
+  mlx_response_raw <- predict(mlx_fit, type = "response")
+  expect_s3_class(mlx_response_raw, "mlx")
+  mlx_response <- as.numeric(mlx_response_raw)
+  base_response <- as.numeric(predict(base_fit, type = "response"))
+  keep <- !is.na(base_response)
+  expect_equal(length(mlx_response), nrow(data))
+  expect_equal(is.na(mlx_response), is.na(base_response))
+  expect_equal(mlx_response[keep], base_response[keep], tolerance = 1e-5)
+})
+
+test_that("mlxs_glm augment uses complete-case internals with na.exclude", {
+  data <- mtcars
+  data$mpg[1] <- NA_real_
+
+  fit <- mlxs_glm(gear ~ mpg, data = data, family = mlxs_gaussian())
+  base_fit <- glm(
+    gear ~ mpg,
+    data = data,
+    family = gaussian(),
+    na.action = stats::na.exclude
+  )
+
+  expect_output(print(fit), "Residual deviance")
+  expect_s3_class(summary(fit), "summary.mlxs_glm")
+  aug <- augment(fit)
+  expect_equal(nrow(aug), nrow(model.frame(fit)))
+  expect_equal(aug$.fitted, unname(fitted(base_fit)[-1]), tolerance = 1e-6)
+  expect_equal(
+    aug$.resid,
+    unname(residuals(base_fit, type = "response")[-1]),
+    tolerance = 1e-6
+  )
+  expect_equal(glance(fit)$deviance, base_fit$deviance, tolerance = 1e-6)
+})
+
 test_that("mlxs_glm rejects rank-deficient model matrices", {
   gaussian_data <- mtcars
   gaussian_data$disp_copy <- gaussian_data$disp
