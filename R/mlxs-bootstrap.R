@@ -116,7 +116,8 @@ mlxs_boot <- function(
   B = 200L,
   seed = NULL,
   progress = FALSE,
-  method = c("case", "residual")
+  method = c("case", "residual"),
+  level = 0.95
 ) {
   fit_type <- match.arg(fit_type)
   method <- match.arg(method)
@@ -132,15 +133,15 @@ mlxs_boot <- function(
   }
 
   if (method == "case") {
-    return(.mlxs_bootstrap_case(object, fit_type, B, seed, progress))
+    return(.mlxs_bootstrap_case(object, fit_type, B, seed, progress, level))
   }
-  .mlxs_bootstrap_residual(object, B, seed, progress)
+  .mlxs_bootstrap_residual(object, B, seed, progress, level)
 }
 
-.mlxs_bootstrap_case <- function(object, fit_type, B, seed, progress) {
+.mlxs_bootstrap_case <- function(object, fit_type, B, seed, progress, level) {
   mm <- stats::model.matrix(object$terms, object$model)
   design_mlx <- Rmlx::as_mlx(mm)
-  coef_names <- object$coef_names
+  coef_names <- .mlxs_coef_names(object)
   y_mlx <- if (fit_type == "glm") {
     object$y
   } else {
@@ -198,12 +199,13 @@ mlxs_boot <- function(
     coef_names,
     B,
     seed,
-    method = "case"
+    method = "case",
+    level = level
   )
 }
 
-.mlxs_bootstrap_residual <- function(object, B, seed, progress) {
-  coef_names <- object$coef_names
+.mlxs_bootstrap_residual <- function(object, B, seed, progress, level) {
+  coef_names <- .mlxs_coef_names(object)
   residuals_mlx <- object$residuals
   resid_centered <- residuals_mlx - Rmlx::mlx_mean(residuals_mlx)
   fitted_mlx <- object$fitted.values
@@ -233,7 +235,8 @@ mlxs_boot <- function(
     coef_names,
     B,
     seed,
-    method = "residual"
+    method = "residual",
+    level = level
   )
 }
 
@@ -242,12 +245,80 @@ mlxs_boot <- function(
   coef_names,
   B,
   seed,
-  method
+  method,
+  level
 ) {
   coef_array <- Rmlx::mlx_stack(sample_list, axis = 3L)
   se_mlx <- Rmlx::mlx_std(coef_array, axes = 3L, drop = FALSE, ddof = 1L)
   se_mlx <- Rmlx::mlx_reshape(se_mlx, c(length(coef_names), 1L))
-  list(se = se_mlx, samples = NULL, B = B, seed = seed, method = method)
+  alpha <- (1 - level) / 2
+  lower_mlx <- Rmlx::mlx_quantile(coef_array, alpha, axis = 3L, drop = TRUE)
+  upper_mlx <- Rmlx::mlx_quantile(
+    coef_array,
+    1 - alpha,
+    axis = 3L,
+    drop = TRUE
+  )
+  confint_mlx <- cbind(lower_mlx, upper_mlx)
+  list(
+    se = se_mlx,
+    confint = .mlxs_confint_matrix(confint_mlx, coef_names, level),
+    samples = NULL,
+    B = B,
+    seed = seed,
+    method = method,
+    level = level
+  )
+}
+
+.mlxs_bootstrap_args <- function(bootstrap_args) {
+  default_args <- list(
+    B = 200L,
+    seed = NULL,
+    progress = FALSE,
+    bootstrap_type = "case"
+  )
+  if (!is.list(bootstrap_args)) {
+    stop("bootstrap_args must be a list.", call. = FALSE)
+  }
+  user_args <- utils::modifyList(default_args, bootstrap_args)
+  user_args$bootstrap_type <- match.arg(
+    user_args$bootstrap_type,
+    c("case", "residual")
+  )
+  user_args
+}
+
+.mlxs_confint_parm <- function(parm, coef_names) {
+  if (missing(parm)) {
+    return(seq_along(coef_names))
+  }
+  if (is.character(parm)) {
+    parm <- match(parm, coef_names, nomatch = NA_integer_)
+    if (any(is.na(parm))) {
+      stop("Some parameters not found in the model.", call. = FALSE)
+    }
+  }
+  parm <- as.integer(parm)
+  if (anyNA(parm) || any(parm < 1L) || any(parm > length(coef_names))) {
+    stop("Some parameters not found in the model.", call. = FALSE)
+  }
+  parm
+}
+
+.mlxs_confint_matrix <- function(ci, coef_names, level, parm) {
+  ci_mat <- as.matrix(ci)
+  if (ncol(ci_mat) != 2L) {
+    ci_mat <- matrix(ci_mat, ncol = 2L)
+  }
+  rownames(ci_mat) <- coef_names
+  alpha <- (1 - level) / 2
+  probs <- c(alpha, 1 - alpha) * 100
+  colnames(ci_mat) <- paste0(sprintf("%g", probs), " %")
+  if (!missing(parm)) {
+    ci_mat <- ci_mat[parm, , drop = FALSE]
+  }
+  ci_mat
 }
 
 .mlxs_boot_prepare_arg <- function(x) {
