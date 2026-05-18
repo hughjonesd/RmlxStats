@@ -10,11 +10,7 @@ utils::globalVariables("compiled")
 #' @return Character vector of coefficient names.
 #' @noRd
 .mlxs_coef_names <- function(object) {
-  if (!is.null(object$coef_names)) {
-    return(object$coef_names)
-  }
-  mm <- stats::model.matrix(object$terms, object$model)
-  colnames(mm)
+  rownames(object$coefficients)
 }
 
 #' Reject rank-deficient model matrices

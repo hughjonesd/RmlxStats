@@ -171,7 +171,8 @@ mlxs_glm_control <- function(
   }
   w_mlx <- Rmlx::mlx_clip(w_mlx, min = .Machine$double.eps)
   dims <- Rmlx::mlx_shape(X_mlx)
-  x_w_mlx <- Rmlx::mlx_broadcast_to(w_mlx, dims) * X_mlx
+  # order of multiplication matters here: it preserves X_mlx dimnames
+  x_w_mlx <- X_mlx * Rmlx::mlx_broadcast_to(w_mlx, dims)
   z_w_mlx <- z_mlx * w_mlx
   list(z = z_mlx, w = w_mlx, x_w = x_w_mlx, z_w = z_w_mlx)
 }
@@ -391,7 +392,6 @@ mlxs_glm_control <- function(
 #' @param family MLXS family object.
 #' @param control List from [mlxs_glm_control()].
 #' @param coef_start Optional starting coefficients.
-#' @param coef_names Optional coefficient names; required when `design` is MLX.
 #' @param has_intercept Optional logical indicating whether the design includes
 #'   an intercept column.
 #' @return Unclassed `mlxs_glm`-style list with coefficients, fitted values,
@@ -404,7 +404,6 @@ mlxs_glm_control <- function(
   family,
   control,
   coef_start = NULL,
-  coef_names = NULL,
   has_intercept = NULL
 ) {
   design_is_mlx <- inherits(design, "mlx")
@@ -413,12 +412,6 @@ mlxs_glm_control <- function(
     dims <- Rmlx::mlx_shape(X_mlx)
     n_obs <- dims[1L]
     n_coef <- dims[2L]
-    if (is.null(coef_names)) {
-      stop(
-        "coef_names must be supplied when design is an mlx array.",
-        call. = FALSE
-      )
-    }
   } else {
     n_obs <- nrow(design)
     n_coef <- ncol(design)
@@ -428,9 +421,9 @@ mlxs_glm_control <- function(
     if (is.null(n_coef) || n_coef == 0L) {
       stop("Design matrix must have at least one column.", call. = FALSE)
     }
-    coef_names <- colnames(design)
     X_mlx <- Rmlx::as_mlx(design)
   }
+
   coef_start <- coef_start %||% rep.int(0, n_coef)
   weights_supplied <- !is.null(weights_raw)
   weights_mlx <- if (!weights_supplied) {
@@ -553,6 +546,7 @@ mlxs_glm_control <- function(
   )^2
   working_residuals_mlx <- irls_state$residual / irls_state$mu_eta
   if (is.null(has_intercept)) {
+    coef_names <- colnames(design)
     has_intercept <- !is.null(coef_names) && any(coef_names == "(Intercept)")
   }
   df_residual <- n_obs - n_coef
@@ -608,7 +602,6 @@ mlxs_glm_control <- function(
     working.weights = working_weights_mlx,
     working.residuals = working_residuals_mlx,
     mu_eta = irls_state$mu_eta,
-    coef_names = coef_names,
     control = control,
     qr = irls_state$qr
   )
