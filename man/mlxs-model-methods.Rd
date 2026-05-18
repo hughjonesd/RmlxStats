@@ -3,9 +3,12 @@
 \name{mlxs-model-methods}
 \alias{mlxs-model-methods}
 \alias{update.mlxs_model}
+\alias{coef.mlxs_model}
 \title{Shared mlxs model methods}
 \usage{
 \method{update}{mlxs_model}(object, ..., evaluate = TRUE)
+
+\method{coef}{mlxs_model}(object, ..., output = c("vector", "mlx"))
 }
 \arguments{
 \item{object}{An \code{mlxs_model} fit.}

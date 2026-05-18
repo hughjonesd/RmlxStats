@@ -33,14 +33,6 @@ NULL
 
 #' @rdname mlxs-glm-methods
 #' @export
-coef.mlxs_glm <- function(object, ...) {
-  coef_mlx <- object$coefficients
-  attr(coef_mlx, "coef_names") <- .mlxs_coef_names(object)
-  coef_mlx
-}
-
-#' @rdname mlxs-glm-methods
-#' @export
 weights.mlxs_glm <- function(object, type = c("prior", "working"), ...) {
   type <- match.arg(type)
   res <- if (identical(type, "prior")) object$prior.weights else object$working.weights
@@ -135,7 +127,7 @@ residuals.mlxs_glm <- function(
 #' @export
 vcov.mlxs_glm <- function(object, ...) {
   qr_fit <- object$qr
-  n_coef <- length(.mlxs_coef_names(object))
+  n_coef <- length(coef(object))
   .mlxs_vcov_from_qr(qr_fit, n_coef = n_coef, scale = object$dispersion)
 }
 
@@ -154,7 +146,6 @@ confint.mlxs_glm <- function(
     bootstrap_type = "case"
   )
 ) {
-  coef_names <- .mlxs_coef_names(object)
   if (isTRUE(bootstrap)) {
     names(bootstrap_args)[names(bootstrap_args) == "bootstrap_type"] <- "method"
     bootstrap_info <- do.call(
@@ -163,7 +154,7 @@ confint.mlxs_glm <- function(
     )
     return(bootstrap_info$confint[parm, , drop = FALSE])
   }
-  cf <- coef(object)
+  cf <- coef(object, output = "mlx")
   cf_num <- as.numeric(cf)
   vcov. <- vcov(object)
   if (identical(Rmlx::mlx_dtype(vcov.), "float64")) {
@@ -177,6 +168,7 @@ confint.mlxs_glm <- function(
   ci <- cbind(est + limits[, 1], est + limits[, 2])
   probs <- c(alpha, 1 - alpha) * 100
   colnames(ci) <- paste0(sprintf("%g", probs), " %")
+  coef_names <- rownames(cf)
   rownames(ci) <- coef_names[parm]
   ci
 }
@@ -204,14 +196,14 @@ summary.mlxs_glm <- function(
   level = 0.95,
   ...
 ) {
-  coef_names <- .mlxs_coef_names(object)
   coef_mlx <- object$coefficients
+  coef_names <- rownames(coef_mlx)
   vcov_mlx <- vcov(object)
   if (Rmlx::mlx_dtype(vcov_mlx) == "float64") {
     Rmlx::local_device("cpu")
   }
   diag_mlx <- Rmlx::diag(vcov_mlx)
-  n_coef <- length(coef_names)
+  n_coef <- nrow(coef_mlx)
   se_col_mlx <- Rmlx::mlx_reshape(sqrt(diag_mlx), c(n_coef, 1L))
 
   bootstrap_info <- NULL
@@ -231,8 +223,8 @@ summary.mlxs_glm <- function(
     if (identical(Rmlx::mlx_dtype(se_col_mlx), "float64")) {
       Rmlx::local_device("cpu")
     }
-    se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, length(coef_names)))
-    diag_eye <- Rmlx::mlx_eye(length(coef_names))
+    se_sq_row <- Rmlx::mlx_reshape(se_col_mlx^2, c(1L, n_coef))
+    diag_eye <- Rmlx::mlx_eye(n_coef)
     vcov_mlx <- diag_eye *
       Rmlx::mlx_broadcast_to(se_sq_row, Rmlx::mlx_shape(diag_eye))
   } else if (isTRUE(confint)) {
@@ -257,7 +249,6 @@ summary.mlxs_glm <- function(
   sum_list <- list(
     call = object$call,
     family = object$family,
-    coef_names = coef_names,
     coefficients = coef_mlx,
     std.error = se_col_mlx,
     statistic = stat_mlx,
@@ -305,7 +296,7 @@ print.summary.mlxs_glm <- function(
     stat_col = stat_col,
     p_col = p_col
   )
-  rownames(coef_table) <- x$coef_names
+  rownames(coef_table) <- rownames(x$coefficients)
   cat("\nCoefficients:\n")
   printCoefmat(coef_table, digits = digits, has.Pvalue = TRUE)
   cat(
@@ -385,7 +376,7 @@ nobs.mlxs_glm <- function(object, ...) {
 tidy.mlxs_glm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   data.frame(
-    term = sum_obj$coef_names,
+    term = rownames(sum_obj$coefficients),
     estimate = as.numeric(sum_obj$coefficients),
     std.error = as.numeric(sum_obj$std.error),
     statistic = as.numeric(sum_obj$statistic),

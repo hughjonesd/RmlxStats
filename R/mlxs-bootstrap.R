@@ -174,7 +174,7 @@ mlxs_boot <- function(
 .mlxs_bootstrap_case <- function(object, fit_type, B, seed, progress, level) {
   mm <- stats::model.matrix(object$terms, object$model)
   design_mlx <- Rmlx::as_mlx(mm)
-  coef_names <- .mlxs_coef_names(object)
+  coef_names <- colnames(mm)
   y_mlx <- if (fit_type == "glm") {
     object$y
   } else {
@@ -204,7 +204,6 @@ mlxs_boot <- function(
         family = family,
         control = control,
         coef_start = coef_start,
-        coef_names = coef_names,
         has_intercept = has_intercept
       )$coefficients
     }
@@ -229,7 +228,6 @@ mlxs_boot <- function(
 
   .mlxs_bootstrap_sample_stats(
     boot_res$samples,
-    coef_names,
     B,
     seed,
     method = "case",
@@ -252,7 +250,7 @@ mlxs_boot <- function(
 #' @return List from `.mlxs_bootstrap_sample_stats()`.
 #' @noRd
 .mlxs_bootstrap_residual <- function(object, B, seed, progress, level) {
-  coef_names <- .mlxs_coef_names(object)
+  coef_names <- rownames(object$coefficients)
   residuals_mlx <- object$residuals
   resid_centered <- residuals_mlx - Rmlx::mlx_mean(residuals_mlx)
   fitted_mlx <- object$fitted.values
@@ -279,7 +277,6 @@ mlxs_boot <- function(
 
   .mlxs_bootstrap_sample_stats(
     boot_res$samples,
-    coef_names,
     B,
     seed,
     method = "residual",
@@ -294,7 +291,6 @@ mlxs_boot <- function(
 #' workflows.
 #'
 #' @param sample_list List of MLX coefficient vectors.
-#' @param coef_names Coefficient names.
 #' @param B Number of bootstrap replicates.
 #' @param seed Optional random seed.
 #' @param method Bootstrap method label.
@@ -304,15 +300,16 @@ mlxs_boot <- function(
 #' @noRd
 .mlxs_bootstrap_sample_stats <- function(
   sample_list,
-  coef_names,
   B,
   seed,
   method,
   level
 ) {
+  n_coef <- nrow(sample_list[[1]])
+  coef_names <- rownames(sample_list[[1]])
   coef_array <- Rmlx::mlx_stack(sample_list, axis = 3L)
   se_mlx <- Rmlx::mlx_std(coef_array, axes = 3L, drop = FALSE, ddof = 1L)
-  se_mlx <- Rmlx::mlx_reshape(se_mlx, c(length(coef_names), 1L))
+  se_mlx <- Rmlx::mlx_reshape(se_mlx, c(n_coef, 1L))
   alpha <- (1 - level) / 2
   confint_mlx <- Rmlx::mlx_quantile(
     coef_array,
@@ -321,7 +318,7 @@ mlxs_boot <- function(
   )
   confint_mat <- as.matrix(Rmlx::mlx_reshape(
     confint_mlx,
-    c(length(coef_names), 2L)
+    c(n_coef, 2L)
   ))
   rownames(confint_mat) <- coef_names
   probs <- c(alpha, 1 - alpha) * 100

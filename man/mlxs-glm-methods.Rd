@@ -2,7 +2,6 @@
 % Please edit documentation in R/mlxs-glm-methods.R, R/sandwich.R
 \name{mlxs-glm-methods}
 \alias{mlxs-glm-methods}
-\alias{coef.mlxs_glm}
 \alias{weights.mlxs_glm}
 \alias{predict.mlxs_glm}
 \alias{fitted.mlxs_glm}
@@ -25,8 +24,6 @@
 \alias{bread.mlxs_glm}
 \title{mlxs_glm method utilities}
 \usage{
-\method{coef}{mlxs_glm}(object, ...)
-
 \method{weights}{mlxs_glm}(object, type = c("prior", "working"), ...)
 
 \method{predict}{mlxs_glm}(
@@ -99,10 +96,10 @@
 \arguments{
 \item{object, model}{An \code{mlxs_glm} model fit.}
 
-\item{...}{Additional arguments passed to underlying methods.}
-
 \item{type}{Character string indicating the scale of the prediction or
 residuals to return.}
+
+\item{...}{Additional arguments passed to underlying methods.}
 
 \item{newdata}{Optional data frame used for prediction.}
 

@@ -2,7 +2,6 @@
 % Please edit documentation in R/mlxs-lm-methods.R, R/sandwich.R
 \name{mlxs-lm-methods}
 \alias{mlxs-lm-methods}
-\alias{coef.mlxs_lm}
 \alias{predict.mlxs_lm}
 \alias{fitted.mlxs_lm}
 \alias{residuals.mlxs_lm}
@@ -27,8 +26,6 @@
 \alias{bread.mlxs_lm}
 \title{mlxs_lm method utilities}
 \usage{
-\method{coef}{mlxs_lm}(object, ..., output = c("vector", "mlx"))
-
 \method{predict}{mlxs_lm}(object, newdata = NULL, ...)
 
 \method{fitted}{mlxs_lm}(object, ...)
@@ -97,13 +94,9 @@
 \arguments{
 \item{object, model}{An \code{mlxs_lm} model fit.}
 
-\item{...}{Additional arguments passed to underlying methods.}
-
-\item{output}{Character string; return format ("data.frame", "matrix", "vector" or "mlx").
-To make methods from other packages work, the usual default is to return a base
-R object.}
-
 \item{newdata}{Optional data frame for prediction.}
+
+\item{...}{Additional arguments passed to underlying methods.}
 
 \item{parm}{Parameter specification for confidence intervals.}
 
@@ -130,6 +123,10 @@ summary object?}
 \item{data}{Optional data frame for \code{augment}.}
 
 \item{se_fit}{Logical; should standard errors of fit be included?}
+
+\item{output}{Character string; return format ("data.frame", "matrix", "vector" or "mlx").
+To make methods from other packages work, the usual default is to return a base
+R object.}
 }
 \description{
 These helpers provide the familiar S3 surface for \code{mlxs_lm} fits.
