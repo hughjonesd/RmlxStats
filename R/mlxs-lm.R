@@ -115,7 +115,6 @@ mlxs_lm <- function(
     terms = terms,
     model = mf,
     qr = fit_res$qr,
-    coef_names = colnames(design),
     weights = weights_mlx,
     assign = assign_vec
   )

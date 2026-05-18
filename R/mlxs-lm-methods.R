@@ -34,21 +34,6 @@ NULL
 
 #' @export
 #' @rdname mlxs-lm-methods
-coef.mlxs_lm <- function(object, ..., output = c("vector", "mlx")) {
-  output <- match.arg(output)
-  coef <- object$coefficients
-  if (identical(output, "vector")) {
-    coef <- as.numeric(coef) 
-    names(coef) <- .mlxs_coef_names(object)
-  } else {
-    attr(coef, "coef_names") <- .mlxs_coef_names(object)
-  }
-  
-  coef
-}
-
-#' @export
-#' @rdname mlxs-lm-methods
 predict.mlxs_lm <- function(object, newdata = NULL, ...) {
   if (is.null(newdata)) {
     return(.mlxs_napredict(object$na.action, object$fitted.values))
@@ -82,7 +67,7 @@ residuals.mlxs_lm <- function(object, ...) {
 #' @rdname mlxs-lm-methods
 vcov.mlxs_lm <- function(object, ...) {
   qr_fit <- object$qr
-  n_coef <- length(.mlxs_coef_names(object))
+  n_coef <- length(coef(object))
   rss <- as.numeric(.mlxs_weighted_sum_of_squares(
     object$residuals,
     object$weights
@@ -106,7 +91,6 @@ confint.mlxs_lm <- function(
     bootstrap_type = "case"
   )
 ) {
-  coef_names <- .mlxs_coef_names(object)
   if (isTRUE(bootstrap)) {
     names(bootstrap_args)[names(bootstrap_args) == "bootstrap_type"] <- "method"
     bootstrap_info <- do.call(
@@ -116,6 +100,7 @@ confint.mlxs_lm <- function(
     return(bootstrap_info$confint[parm, , drop = FALSE])
   }
   cf <- coef(object)
+  coef_names <- names(cf)
   cf_num <- as.numeric(cf)
   vc <- vcov(object)
   se <- as.numeric(sqrt(Rmlx::diag(vc)))[parm]
@@ -389,7 +374,6 @@ summary.mlxs_lm <- function(
     terms = object$terms,
     residuals = resid_mlx,
     coef = object$coefficients,
-    coef_names = .mlxs_coef_names(object),
     std.error = se_mlx,
     statistic = Rmlx::mlx_matrix(tvals, ncol = 1),
     p.value = Rmlx::mlx_matrix(pvals, ncol = 1),
@@ -461,7 +445,7 @@ print.summary.mlxs_lm <- function(x, ...) {
     stat_col = "t value",
     p_col = "Pr(>|t|)"
   )
-  rownames(coef_table) <- x$coef_names
+  rownames(coef_table) <- names(x$coef)
   printCoefmat(coef_table, has.Pvalue = TRUE)
   cat(
     "\nResidual standard error:",
@@ -527,7 +511,7 @@ nobs.mlxs_lm <- function(object, ...) {
 tidy.mlxs_lm <- function(x, ...) {
   sum_obj <- summary(x, ...)
   data.frame(
-    term = sum_obj$coef_names,
+    term = rownames(sum_obj$coef),
     estimate = as.numeric(sum_obj$coef),
     std.error = as.numeric(sum_obj$std.error),
     statistic = as.numeric(sum_obj$statistic),
