@@ -21,7 +21,7 @@ expect_mlxs_lm_matches_lm <- function(
     mlxs_lm(formula, data = data, weights = .weights)
   }
 
-  expect_equal(coef_vector(mlx_fit), coef(base_fit),
+  expect_equal(coef(mlx_fit), coef(base_fit),
                tolerance = coef_tol, ignore_attr = TRUE, info = label)
   expect_equal(drop(as.matrix(fitted(mlx_fit))), fitted(base_fit),
                tolerance = value_tol, ignore_attr = TRUE, info = label)
@@ -40,7 +40,7 @@ expect_mlxs_lm_matches_lm <- function(
 compare_lm_to_stats_lm <- function(scenario, formula, data, case_type) {
   mlx_fit <- mlxs_lm(formula, data = data)
   base_fit <- lm(formula, data = data)
-  mlx_coef <- coef_vector(mlx_fit)
+  mlx_coef <- coef(mlx_fit)
   mlx_vcov <- as.matrix(vcov(mlx_fit))
   mlx_fitted <- drop(as.matrix(fitted(mlx_fit)))
   finite_values <- c(mlx_coef, mlx_vcov, mlx_fitted)
@@ -169,15 +169,15 @@ test_that("mlxs_lm metamorphic fuzz properties hold", {
   set.seed(2718)
   perm <- sample(seq_len(nrow(data)))
   perm_fit <- mlxs_lm(case$formula, data = data[perm, ])
-  expect_equal(coef_vector(perm_fit), coef_vector(fit),
+  expect_equal(coef(perm_fit), coef(fit),
                tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(fitted(perm_fit)))[order(perm)],
                drop(as.matrix(fitted(fit))),
                tolerance = 1e-6, ignore_attr = TRUE)
 
   col_fit <- mlxs_lm(y ~ x3 + x1 + x2, data = data)
-  expect_equal(coef_vector(col_fit)[names(coef_vector(fit))],
-               coef_vector(fit),
+  expect_equal(coef(col_fit)[names(coef(fit))],
+               coef(fit),
                tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(predict(col_fit, newdata = data))),
                drop(as.matrix(predict(fit, newdata = data))),
@@ -190,7 +190,7 @@ test_that("mlxs_lm metamorphic fuzz properties hold", {
     transformed_data[[nm]] <- (data[[nm]] - centers[[nm]]) / scales[[nm]]
   }
   transformed_fit <- mlxs_lm(case$formula, data = transformed_data)
-  coef_orig <- coef_vector(fit)
+  coef_orig <- coef(fit)
 
   # If z_j = (x_j - c_j) / s_j, the same fitted values are obtained with
   # beta'_j = s_j beta_j and intercept' = intercept + sum_j c_j beta_j.
@@ -198,7 +198,7 @@ test_that("mlxs_lm metamorphic fuzz properties hold", {
   expected_coef[names(scales)] <- coef_orig[names(scales)] * scales
   expected_coef["(Intercept)"] <- coef_orig["(Intercept)"] +
     sum(coef_orig[names(centers)] * centers)
-  expect_equal(coef_vector(transformed_fit), expected_coef,
+  expect_equal(coef(transformed_fit), expected_coef,
                tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(fitted(transformed_fit))),
                drop(as.matrix(fitted(fit))),
@@ -317,7 +317,7 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
     case <- nist_lm_cases[[case_name]]
     fit <- mlxs_lm(case$formula, data = case$data)
     fit_summary <- summary(fit)
-    coefs <- coef_vector(fit)
+    coefs <- coef(fit)
     se <- setNames(as.numeric(fit_summary$std.error), names(coefs))
     sigma <- fit_summary$sigma
     r_squared <- fit_summary$r.squared

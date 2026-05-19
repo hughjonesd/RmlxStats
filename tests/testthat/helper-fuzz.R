@@ -1,18 +1,3 @@
-#' Extract named coefficients from an MLX-backed model fit.
-#'
-#' @param fit A fitted model with a `coef()` method returning an MLX array.
-#'
-#' @return A named numeric vector.
-#' @noRd
-coef_vector <- function(fit) {
-  coefs <- coef(fit)
-  coef_names <- attr(coefs, "coef_names")
-  if (is.null(coef_names)) {
-    coef_names <- names(coefs)
-  }
-  setNames(drop(as.matrix(coefs)), coef_names)
-}
-
 #' Return the fuzz run timestamp.
 #'
 #' @return A UTC timestamp shared by every fuzz summary written in this test run.

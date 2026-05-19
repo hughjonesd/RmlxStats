@@ -23,7 +23,8 @@ coef.mlxs_model <- function(object, ..., output = c("vector", "mlx")) {
   output <- match.arg(output)
   coef <- object$coefficients
   if (identical(output, "vector")) {
-    coef <- as.numeric(coef) 
+    nms <- rownames(coef)
+    coef <- setNames(as.numeric(coef), nms)
   }
   coef
 }

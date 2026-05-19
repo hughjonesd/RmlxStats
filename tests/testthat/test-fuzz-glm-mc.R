@@ -25,7 +25,7 @@ run_glm_mc_rep <- function(
   fit <- mlxs_glm(formula, data = data, family = families$mlx)
   base_fit <- glm(formula, data = data, family = families$base)
   sum_fit <- summary(fit)
-  estimates <- coef_vector(fit)
+  estimates <- coef(fit)
   ses <- as.numeric(sum_fit$std.error)
   ci <- confint(fit)
 
@@ -150,7 +150,7 @@ run_glm_bootstrap_mc_rep <- function(
   )
 
   list(
-    estimates = coef_vector(fit),
+    estimates = coef(fit),
     ses = as.numeric(sum_fit$std.error),
     boot_ses = as.numeric(boot_sum$std.error),
     converged = fit$converged,

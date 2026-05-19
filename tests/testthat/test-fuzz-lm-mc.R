@@ -73,7 +73,7 @@ run_lm_mc_rep <- function(
   sum_fit <- summary(fit)
 
   list(
-    estimates = coef_vector(fit),
+    estimates = coef(fit),
     ses = as.numeric(sum_fit$std.error),
     covered = ci[, 1] <= truth & truth <= ci[, 2]
   )
@@ -110,7 +110,7 @@ run_lm_bootstrap_mc_rep <- function(
   )
 
   list(
-    estimates = coef_vector(fit),
+    estimates = coef(fit),
     ses = as.numeric(sum_fit$std.error),
     boot_ses = as.numeric(boot_sum$std.error)
   )

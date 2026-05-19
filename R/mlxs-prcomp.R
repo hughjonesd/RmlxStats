@@ -62,8 +62,8 @@ mlxs_prcomp <- function(x,
     stop("Unused arguments in mlxs_prcomp().", call. = FALSE)
   }
 
-  x_names <- if (inherits(x, "mlx")) NULL else dimnames(as.matrix(x))
-  x_mlx <- if (inherits(x, "mlx")) Rmlx::as_mlx(x) else Rmlx::as_mlx(as.matrix(x))
+  x_names <- dimnames(x)
+  x_mlx <- Rmlx::as_mlx(x)
 
   if (length(dim(x_mlx)) != 2L) {
     stop("x must be a 2D matrix-like object.", call. = FALSE)

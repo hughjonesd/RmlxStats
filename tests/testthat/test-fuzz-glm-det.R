@@ -33,7 +33,7 @@ compare_glm_to_stats_glm <- function(
       weights = .weights
     )
   }
-  mlx_coef <- coef_vector(mlx_fit)
+  mlx_coef <- coef(mlx_fit)
   mlx_vcov <- as.matrix(vcov(mlx_fit))
   mlx_fitted <- drop(as.matrix(fitted(mlx_fit)))
   mlx_eta <- drop(as.matrix(predict(mlx_fit, type = "link")))
@@ -97,7 +97,7 @@ expect_mlxs_glm_matches_glm <- function(
   }
 
   expect_true(mlx_fit$converged, info = label)
-  expect_equal(coef_vector(mlx_fit), coef(base_fit),
+  expect_equal(coef(mlx_fit), coef(base_fit),
                tolerance = coef_tol, ignore_attr = TRUE, info = label)
   expect_equal(drop(as.matrix(fitted(mlx_fit))), fitted(base_fit),
                tolerance = value_tol, ignore_attr = TRUE, info = label)
@@ -278,7 +278,7 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
     families <- glm_family_pair(family)
     fit <- mlxs_glm(case$formula, data = data, family = families$mlx)
     refit <- mlxs_glm(case$formula, data = data, family = families$mlx)
-    expect_equal(coef_vector(refit), coef_vector(fit),
+    expect_equal(coef(refit), coef(fit),
                  tolerance = 1e-12, ignore_attr = TRUE, info = family)
 
     set.seed(2718)
@@ -288,7 +288,7 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
       data = data[perm, ],
       family = families$mlx
     )
-    expect_equal(coef_vector(perm_fit), coef_vector(fit),
+    expect_equal(coef(perm_fit), coef(fit),
                  tolerance = 1e-6, ignore_attr = TRUE, info = family)
     expect_equal(drop(as.matrix(fitted(perm_fit)))[order(perm)],
                  drop(as.matrix(fitted(fit))),
@@ -299,8 +299,8 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
       data = data,
       family = families$mlx
     )
-    expect_equal(coef_vector(col_fit)[names(coef_vector(fit))],
-                 coef_vector(fit),
+    expect_equal(coef(col_fit)[names(coef(fit))],
+                 coef(fit),
                  tolerance = 1e-6, ignore_attr = TRUE, info = family)
     expect_equal(drop(as.matrix(predict(col_fit, newdata = data))),
                  drop(as.matrix(predict(fit, newdata = data))),
@@ -317,7 +317,7 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
       data = transformed_data,
       family = families$mlx
     )
-    coef_orig <- coef_vector(fit)
+    coef_orig <- coef(fit)
 
     # GLM coefficients live on the linear-predictor scale. The same
     # transformation as linear regression preserves eta, and therefore
@@ -326,7 +326,7 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
     expected_coef[names(scales)] <- coef_orig[names(scales)] * scales
     expected_coef["(Intercept)"] <- coef_orig["(Intercept)"] +
       sum(coef_orig[names(centers)] * centers)
-    expect_equal(coef_vector(transformed_fit), expected_coef,
+    expect_equal(coef(transformed_fit), expected_coef,
                  tolerance = 2e-5, ignore_attr = TRUE, info = family)
     expect_equal(drop(as.matrix(predict(transformed_fit, type = "link"))),
                  drop(as.matrix(predict(fit, type = "link"))),
@@ -356,7 +356,7 @@ test_that("mlxs_glm metamorphic fuzz properties hold", {
   glm_fit <- mlxs_glm(gaussian$formula, data = gaussian$data,
                       family = mlxs_gaussian())
   lm_fit <- mlxs_lm(gaussian$formula, data = gaussian$data)
-  expect_equal(coef_vector(glm_fit), coef_vector(lm_fit),
+  expect_equal(coef(glm_fit), coef(lm_fit),
                tolerance = 1e-6, ignore_attr = TRUE)
   expect_equal(drop(as.matrix(fitted(glm_fit))),
                drop(as.matrix(fitted(lm_fit))),
