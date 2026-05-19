@@ -85,7 +85,12 @@ jobs:
           RMLXSTATS_RUN_FUZZ: ${{ steps.tier.outputs.tier }}
           RMLXSTATS_FUZZ_OUT: ${{ steps.tier.outputs.out_dir }}
         run: |
-          Rscript -e 'devtools::test(filter = "fuzz")'
+          Rscript -e '
+            results <- devtools::test(filter = "fuzz", stop_on_failure = FALSE)
+            summary <- as.data.frame(results)
+            failed <- any(summary$failed > 0L) || any(summary$error)
+            if (failed) quit(status = 1)
+          '
 
       - name: Commit updated fuzz results
         if: steps.changes.outputs.run == 'true'
