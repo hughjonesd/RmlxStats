@@ -48,7 +48,9 @@ chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
   fuzz |> 
     filter(tier %in% chosen_tiers) |> 
-    filter(branch == "master", datetime_utc == max(datetime_utc)) 
+    filter(branch == "master") |> 
+    # separate filter statements for a reason, given the max() below
+    filter(datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -94,7 +96,23 @@ Tier         | `r tier`
 history_theme <- theme(panel.grid = element_blank(), 
                        panel.grid.major.y = element_line(
                          colour = "grey95", linewidth = 0.5))
+```
 
+## Benchmarks
+
+```{r}
+fuzz |> 
+  filter(suite == "mlxs-benchmarks") |> 
+  ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
+    geom_point() + 
+    geom_line(aes(group = scenario, linetype = tier)) +
+    history_theme +
+    theme(legend.position="bottom")
+
+```
+
+
+```{r, fig.height = 10}
 fuzz |> 
   filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
