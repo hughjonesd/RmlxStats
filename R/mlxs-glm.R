@@ -131,7 +131,7 @@ mlxs_glm_control <- function(
 .mlxs_glm_clamp_mu <- function(mu, family) {
   fam <- family$family
   if (fam %in% c("binomial", "quasibinomial")) {
-    eps <- 1e-6
+    eps <- .mlxs_tail_epsilon(mu)
     mu <- Rmlx::mlx_clip(mu, min = eps, max = 1 - eps)
   } else if (fam %in% c("poisson", "quasipoisson")) {
     eps <- 1e-6

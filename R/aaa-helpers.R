@@ -91,6 +91,16 @@ utils::globalVariables("compiled")
   if (is.null(x)) y else x
 }
 
+.mlxs_tail_epsilon <- function(x) {
+  if (inherits(x, "mlx")) {
+    if (identical(Rmlx::mlx_dtype(x), "float64")) {
+      return(.Machine$double.eps)
+    }
+    return(1e-6)
+  }
+  .Machine$double.eps
+}
+
 .mlxs_napredict <- function(na_action, value) {
   if (is.null(na_action) || !inherits(na_action, "exclude")) {
     return(value)

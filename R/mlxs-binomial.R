@@ -56,18 +56,18 @@ mlxs_binomial <- function(link = "logit") {
   # BCE(mu, y) = -(y*log(mu) + (1-y)*log(1-mu)) = -fitted_loglik
   # So deviance = 2 * wt * (saturated_loglik + BCE)
 
-  eps <- 1e-6
-  y_clamped <- .mlxs_binomial_clip_unit(y, eps)
+  y_clamped <- .mlxs_binomial_clip_unit(y)
   saturated_loglik <- y * log(y_clamped) + (1 - y) * log(1 - y_clamped)
 
   bce <- Rmlx::mlx_binary_cross_entropy(mu, y, reduction = "none")
   2 * wt * (saturated_loglik + bce)
 }
 
-.mlxs_binomial_clip_unit <- function(x, eps) {
+.mlxs_binomial_clip_unit <- function(x, eps = .mlxs_tail_epsilon(x)) {
   x <- Rmlx::as_mlx(x)
-  eps_scalar <- Rmlx::as_mlx(eps)
-  upper_scalar <- Rmlx::as_mlx(1 - eps)
+  x_dtype <- Rmlx::mlx_dtype(x)
+  eps_scalar <- Rmlx::as_mlx(eps, dtype = x_dtype)
+  upper_scalar <- Rmlx::as_mlx(1 - eps, dtype = x_dtype)
 
   x <- Rmlx::mlx_where(x < eps_scalar, eps_scalar, x)
   Rmlx::mlx_where(x > upper_scalar, upper_scalar, x)
@@ -90,8 +90,8 @@ mlxs_binomial <- function(link = "logit") {
   }
   mu_eta <- function(eta) {
     mu <- linkinv(eta)
-    eps <- Rmlx::as_mlx(1e-6)
-    Rmlx::mlx_where(mu * (1 - mu) < eps, eps, mu * (1 - mu))
+    eps <- .mlxs_tail_epsilon(eta)
+    Rmlx::mlx_maximum(mu * (1 - mu), eps)
   }
   list(
     linkfun = function(mu) {
@@ -113,9 +113,9 @@ mlxs_binomial <- function(link = "logit") {
     },
     linkinv = linkinv,
     mu.eta = function(eta) {
-      eps <- Rmlx::as_mlx(1e-6)
+      eps <- .mlxs_tail_epsilon(eta)
       deriv <- linkinv(eta)
-      Rmlx::mlx_where(deriv < eps, eps, deriv)
+      Rmlx::mlx_maximum(deriv, eps)
     },
     valideta = function(eta) all(is.finite(eta))
   )
@@ -131,9 +131,9 @@ mlxs_binomial <- function(link = "logit") {
     },
     linkinv = linkinv,
     mu.eta = function(eta) {
-      eps <- Rmlx::as_mlx(1e-6)
+      eps <- .mlxs_tail_epsilon(eta)
       deriv <- exp(eta - exp(eta))
-      Rmlx::mlx_where(deriv < eps, eps, deriv)
+      Rmlx::mlx_maximum(deriv, eps)
     },
     valideta = function(eta) all(is.finite(eta))
   )
@@ -149,9 +149,9 @@ mlxs_binomial <- function(link = "logit") {
     },
     linkinv = linkinv,
     mu.eta = function(eta) {
-      eps <- Rmlx::as_mlx(1e-6)
+      eps <- .mlxs_tail_epsilon(eta)
       deriv <- 1 / (pi * (1 + eta^2))
-      Rmlx::mlx_where(deriv < eps, eps, deriv)
+      Rmlx::mlx_maximum(deriv, eps)
     },
     valideta = function(eta) all(is.finite(eta))
   )
@@ -173,32 +173,22 @@ mlxs_binomial <- function(link = "logit") {
 }
 
 .mlxs_inverse_link <- function() {
+  eta_adj <- function(eta) {
+    eps <- .mlxs_tail_epsilon(eta)
+    if (inherits(eta, "mlx")) {
+      eta_sign <- Rmlx::mlx_where(eta >= 0, 1, -1)
+      return(eta_sign * Rmlx::mlx_maximum(abs(eta), eps))
+    }
+    ifelse(eta >= 0, 1, -1) * pmax(abs(eta), eps)
+  }
+
   list(
     linkfun = function(mu) 1 / mu,
     linkinv = function(eta) {
-      eps <- Rmlx::as_mlx(1e-6)
-      eta_adj <- if (inherits(eta, "mlx")) {
-        Rmlx::mlx_where(
-          abs(eta) < eps,
-          Rmlx::mlx_where(eta >= 0, eps, -eps),
-          eta
-        )
-      } else {
-        pmax(pmin(eta, -1e-6), 1e-6)
-      }
-      1 / eta_adj
+      1 / eta_adj(eta)
     },
     mu.eta = function(eta) {
-      if (inherits(eta, "mlx")) {
-        eta_adj <- Rmlx::mlx_where(
-          abs(eta) < Rmlx::as_mlx(1e-6),
-          Rmlx::mlx_where(eta >= 0, Rmlx::as_mlx(1e-6), Rmlx::as_mlx(-1e-6)),
-          eta
-        )
-        -1 / (eta_adj^2)
-      } else {
-        -1 / (pmax(pmin(eta, -1e-6), 1e-6)^2)
-      }
+      -1 / (eta_adj(eta)^2)
     },
     valideta = function(eta) all(is.finite(eta)) && all(eta != 0)
   )
