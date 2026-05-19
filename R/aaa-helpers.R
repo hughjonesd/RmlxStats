@@ -1,17 +1,6 @@
 # Suppress R CMD check notes for closure variables
 utils::globalVariables("compiled")
 
-#' Resolve coefficient names for fitted MLXS models
-#'
-#' Internal helper used by summaries, intervals, and bootstrap code when they
-#' need the model-matrix column names attached to coefficient-sized outputs.
-#'
-#' @param object Fitted `mlxs_lm` or `mlxs_glm` object.
-#' @return Character vector of coefficient names.
-#' @noRd
-.mlxs_coef_names <- function(object) {
-  rownames(object$coefficients)
-}
 
 #' Reject rank-deficient model matrices
 #'

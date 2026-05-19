@@ -58,7 +58,7 @@ test_that("mlxs_glm updates through the mlxs_model superclass", {
 
   expect_s3_class(updated, "mlxs_glm")
   expect_equal(
-    .mlxs_coef_names(updated),
+    rownames(coef(updated, output = "mlx")),
     c("(Intercept)", "cyl", "disp", "hp")
   )
 })
@@ -248,7 +248,8 @@ test_that("mlxs_glm bootstrap summary works", {
     bootstrap_args = list(B = 15, seed = 42, progress = FALSE)
   )
   expect_equal(dim(sum_boot_ci$confint), c(3L, 2L))
-  expect_equal(rownames(sum_boot_ci$confint), .mlxs_coef_names(fit))
+  expect_equal(rownames(sum_boot_ci$confint), 
+               rownames(coef(fit, output = "mlx")))
   expect_equal(colnames(sum_boot_ci$confint), c("5 %", "95 %"))
   expect_output(print(sum_boot_ci), "5 %")
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 12, seed = 42, progress = FALSE))
@@ -282,7 +283,7 @@ test_that("confint.mlxs_glm supports bootstrap percentile intervals", {
 
   ci <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
   expect_equal(dim(ci), c(3L, 2L))
-  expect_equal(rownames(ci), .mlxs_coef_names(fit))
+  expect_equal(rownames(ci), rownames(coef(fit, output = "mlx")))
   expect_equal(colnames(ci), c("2.5 %", "97.5 %"))
   expect_true(all(is.finite(ci)))
   expect_true(all(ci[, 1L] <= ci[, 2L]))
@@ -351,7 +352,7 @@ test_that("mlxs_glm binomial matches stats::glm", {
     est + se * qnorm(0.025),
     est + se * qnorm(0.975)
   )
-  rownames(expected_ci) <- .mlxs_coef_names(mlx_fit)
+  rownames(expected_ci) <- rownames(coef(mlx_fit, output = "mlx"))
   colnames(expected_ci) <- c("2.5 %", "97.5 %")
   expect_equal(confint(mlx_fit), expected_ci, tolerance = 1e-12)
 

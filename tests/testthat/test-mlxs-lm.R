@@ -52,7 +52,7 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   updated <- update(mlx_fit, . ~ . + hp)
   expect_s3_class(updated, "mlxs_lm")
   expect_equal(
-    .mlxs_coef_names(updated),
+    rownames(coef(updated, output = "mlx")),
     c("(Intercept)", "cyl", "disp", "hp")
   )
 
@@ -264,7 +264,8 @@ test_that("mlxs_lm bootstrap summary provides se", {
     bootstrap_args = list(B = 20, seed = 123, progress = FALSE)
   )
   expect_equal(dim(sum_boot_ci$confint), c(3L, 2L))
-  expect_equal(rownames(sum_boot_ci$confint), .mlxs_coef_names(fit))
+  expect_equal(rownames(sum_boot_ci$confint), 
+               rownames(coef(fit, output = "mlx")))
   expect_equal(colnames(sum_boot_ci$confint), c("5 %", "95 %"))
   expect_output(print(sum_boot_ci), "5 %")
   tidy_boot <- tidy(fit, bootstrap = TRUE, bootstrap_args = list(B = 15, seed = 123, progress = FALSE))
@@ -298,7 +299,7 @@ test_that("confint.mlxs_lm supports bootstrap percentile intervals", {
 
   ci <- confint(fit, bootstrap = TRUE, bootstrap_args = args)
   expect_equal(dim(ci), c(3L, 2L))
-  expect_equal(rownames(ci), .mlxs_coef_names(fit))
+  expect_equal(rownames(ci), rownames(coef(fit, output = "mlx")))
   expect_equal(colnames(ci), c("2.5 %", "97.5 %"))
   expect_true(all(is.finite(ci)))
   expect_true(all(ci[, 1L] <= ci[, 2L]))
