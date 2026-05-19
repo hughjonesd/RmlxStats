@@ -288,7 +288,8 @@ fit_glmnet_pair <- function(
     lambda.min.ratio = lambda_min_ratio,
     standardize = FALSE,
     intercept = TRUE,
-    control = list(thresh = 1e-12, maxit = 100000L)
+    thresh = 1e-12,
+    maxit = 100000L
   )
   lambda <- as.numeric(ref$lambda)
   mlx_family <- if (family == "gaussian") {
