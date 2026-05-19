@@ -19,9 +19,6 @@ pass generates about 1000 pieces of data. We can't always binary pass/fail,
 so this page is meant to show our current performance and also how it has 
 evolved over time.
 
-The GPU is 32-bit. MLX has support for float64 but not on the GPU, and Rmlx
-doesn't yet support float64 at all. That limits our precision. This page
-should help us figure out how much that affects performance.
 
 * What about diagnostics?
 
@@ -81,7 +78,7 @@ Branch       | `r branch`
 Rmlx version | `r rmlx_version`
 Tier         | `r tier`
 
-## History
+## History {.tabset}
 
 ```{r, fig.height = 10}
 # lm-det: not sure?
@@ -98,7 +95,7 @@ history_theme <- theme(panel.grid = element_blank(),
                          colour = "grey95", linewidth = 0.5))
 ```
 
-## Benchmarks
+### Benchmarks
 
 ```{r}
 fuzz |> 
@@ -106,11 +103,16 @@ fuzz |>
   ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
     geom_point() + 
     geom_line(aes(group = scenario, linetype = tier)) +
+    labs(
+      y = "Time (seconds)"
+    ) +
     history_theme +
     theme(legend.position="bottom")
 
 ```
 
+
+### Fuzz tests
 
 ```{r, fig.height = 10}
 fuzz |> 
@@ -121,6 +123,10 @@ fuzz |>
                     position = position_dodge(0.5), size = 0.2) +
     geom_line(aes(linetype = tier)) + 
     facet_grid(rows = vars(Scenario)) +
+    labs(
+      title = "Per-term bias, mlxs_lm() monte carlo",
+      y = "Bias"
+    ) +
     history_theme
     
 ```
@@ -135,10 +141,99 @@ fuzz |>
                     position = position_dodge(0.5)) +
     geom_line(aes(linetype = tier)) + 
     facet_grid(rows = vars(Scenario)) +
+    labs(
+      title = "Confidence interval coverage, mlxs_lm() monte carlo",
+      subtitle = "Vertical lines show empirical monte carlo 95% c.i.s",
+      y = "Coverage"
+    ) +
     history_theme
 ```
 
 
+```{r}
+fuzz |> 
+  filter(branch == "master", suite == "mlxs-glm-monte-carlo", 
+         measure == "bias") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term),
+             colour = term)) + 
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se),
+                    position = position_dodge(0.5), size = 0.2) +
+    geom_line(aes(linetype = tier)) + 
+    facet_wrap(vars(Scenario, family)) +
+    labs(
+      title = "Per-term bias, mlxs_glm() monte carlo",
+      y = "Bias"
+    ) +
+    history_theme
+  
+```
+
+```{r}
+fuzz |> 
+  filter(suite == "mlxs-glm-monte-carlo", measure == "coverage") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se), size = 0.2,
+                    position = position_dodge(0.5)) +
+    geom_line(aes(linetype = tier)) + 
+    facet_wrap(vars(Scenario, family)) +
+    labs(
+      title = "Per-term confidence interval coverage, mlxs_glm() monte carlo",
+      subtitle = "Vertical lines show empirical monte carlo 95% c.i.s",
+      y = "Coverage"
+    ) +
+    history_theme
+```
+
+```{r, fig.height=8}
+fuzz |> 
+  filter(suite == "mlxs-glmnet-deterministic", measure =="loss", 
+         target == "prediction", source == "mlx") |> 
+  ggplot(aes(x = datetime_utc, y = value, colour = factor(lambda_index))) + 
+    geom_point() +
+    geom_line() + 
+    facet_wrap(vars(Scenario, family), ncol = 3) +
+    scale_y_log10() +
+    labs(
+      title = "Prediction error, mlxs_glmnet() monte carlo"
+    ) +
+    history_theme + 
+    theme(
+      legend.position = "bottom"
+    )
+```
+
+```{r, fig.height = 10}
+fuzz |> 
+  filter(suite == "mlxs-prcomp-deterministic", measure == "error", 
+         target == "subspace", source == "mlx") |> 
+  ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
+    geom_point() + 
+    geom_line() + 
+    facet_wrap(vars(Scenario)) +
+    scale_y_log10() + 
+    labs(
+      title = "Subspace error, mlxs_prcomp() deterministic",
+      y = "Error (log scale)"
+    )
+```
+
+```{r, fig.height = 10}
+fuzz |> 
+  filter(suite == "mlxs-prcomp-monte-carlo", measure == "error", 
+         target == "subspace", source == "mlx") |> 
+  ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
+    geom_point() + 
+    geom_line() + 
+    facet_wrap(vars(Scenario)) +
+    scale_y_log10() + 
+    labs(
+      title = "Subspace error, mlxs_prcomp() monte carlo",
+      y = "Error (log scale)"
+    )
+```
 
 ## `mlxs_lm` {.tabset}
 
