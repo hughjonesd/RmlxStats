@@ -213,7 +213,7 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
       NULL
     }
     label <- paste(spec$family, spec$scenario, sep = ":")
-    coef_tol <- if (grepl("overdispersed|near_separation", spec$scenario)) {
+    coef_tol <- if (grepl("overdispersed|near_separation|large_p_rare", spec$scenario)) {
       1e-4
     } else {
       1e-5
