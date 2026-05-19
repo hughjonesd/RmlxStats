@@ -279,7 +279,7 @@ mlxs_glmnet <- function(x,
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
 
   gram_mlx <- crossprod(x_mlx) / n_obs
-  base_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
+  base_lipschitz <- .mlxs_glmnet_gram_lipschitz(gram_mlx)
   n_obs_mlx <- Rmlx::as_mlx(n_obs)
   zero_mlx <- Rmlx::as_mlx(0)
 
@@ -385,7 +385,7 @@ mlxs_glmnet <- function(x,
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
   intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
-  gram_lipschitz <- as.numeric(max(Rmlx::colSums(abs(gram_mlx))))
+  gram_lipschitz <- .mlxs_glmnet_gram_lipschitz(gram_mlx)
   effective_maxit <- min(maxit, 200L)
   zero_mlx <- Rmlx::as_mlx(0)
   one_mlx <- Rmlx::as_mlx(1)
@@ -502,8 +502,8 @@ mlxs_glmnet <- function(x,
 
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
-  col_sq_sums <- as.numeric(Rmlx::colSums(x_mlx^2))
-  base_lipschitz <- 0.25 * max(col_sq_sums) / n_obs
+  gram_mlx <- crossprod(x_mlx) / n_obs
+  base_lipschitz <- 0.25 * .mlxs_glmnet_gram_lipschitz(gram_mlx)
   n_obs_mlx <- Rmlx::as_mlx(n_obs)
   zero_mlx <- Rmlx::as_mlx(0)
 
@@ -632,6 +632,34 @@ mlxs_glmnet <- function(x,
   } else {
     "dense"
   }
+}
+
+#' Estimate the Gram-matrix Lipschitz constant
+#'
+#' Uses MLX power iteration to estimate the largest eigenvalue of a symmetric
+#' positive-semidefinite Gram matrix. The small safety factor keeps proximal
+#' gradient steps conservative when the estimate is still settling.
+#'
+#' @param gram_mlx MLX Gram matrix.
+#' @param n_iter Number of power iterations.
+#' @return Numeric scalar Lipschitz estimate.
+#' @noRd
+.mlxs_glmnet_gram_lipschitz <- function(gram_mlx, n_iter = 30L) {
+  n_pred <- ncol(gram_mlx)
+  v_mlx <- Rmlx::mlx_ones(c(n_pred, 1L)) / sqrt(n_pred)
+
+  for (i in seq_len(n_iter)) {
+    v_next_mlx <- gram_mlx %*% v_mlx
+    norm_mlx <- sqrt(Rmlx::mlx_sum(v_next_mlx^2))
+    norm <- as.numeric(norm_mlx)
+    if (!is.finite(norm) || norm == 0) {
+      return(1)
+    }
+    v_mlx <- v_next_mlx / norm_mlx
+  }
+
+  rayleigh_mlx <- Rmlx::mlx_sum(v_mlx * (gram_mlx %*% v_mlx))
+  max(as.numeric(rayleigh_mlx) * 1.01, .Machine$double.eps)
 }
 
 #' Soft-threshold MLX values
