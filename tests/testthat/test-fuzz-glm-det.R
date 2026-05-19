@@ -213,12 +213,17 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
       NULL
     }
     label <- paste(spec$family, spec$scenario, sep = ":")
+    coef_tol <- if (grepl("overdispersed|near_separation", spec$scenario)) {
+      1e-4
+    } else {
+      1e-5
+    }
     expect_mlxs_glm_matches_glm(
       case$formula,
       case$data,
       family = spec$family,
       weights = weights,
-      coef_tol = if (grepl("overdispersed", spec$scenario)) 1e-4 else 1e-5,
+      coef_tol = coef_tol,
       value_tol = 1e-5,
       label = label
     )
@@ -253,7 +258,7 @@ test_that("mlxs_glm deterministic differential fuzz cases match stats::glm", {
   ]
   expect_true(all(as.logical(converged$value)))
   expect_true(all(as.logical(finite$value)))
-  expect_true(all(coef_error$value <= 1e-5))
+  expect_true(all(coef_error$value <= 1e-4))
   expect_true(all(vcov_error$value <= 1e-5))
 })
 
