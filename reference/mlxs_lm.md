@@ -8,7 +8,7 @@ arguments.
 ## Usage
 
 ``` r
-mlxs_lm(formula, data, subset, weights)
+mlxs_lm(formula, data, subset, weights, na.action = stats::na.exclude)
 ```
 
 ## Arguments
@@ -31,6 +31,13 @@ mlxs_lm(formula, data, subset, weights)
   Optional non-negative observation weights. Treated like the `weights`
   argument to [`stats::lm()`](https://rdrr.io/r/stats/lm.html), i.e.
   they enter the fit via weighted least squares.
+
+- na.action:
+
+  A function indicating how missing values should be handled. Defaults
+  to [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html) so
+  residuals, fitted values, and training-data predictions are padded
+  back to the original row count.
 
 ## Value
 

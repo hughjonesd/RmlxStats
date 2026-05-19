@@ -38,7 +38,9 @@ chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
   fuzz |> 
     filter(tier %in% chosen_tiers) |> 
-    filter(branch == "master", datetime_utc == max(datetime_utc)) 
+    filter(branch == "master") |> 
+    # separate filter statements for a reason, given the max() below
+    filter(datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -63,10 +65,10 @@ tier <- latest(fuzz)$tier[1]
 
 | Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-15 |
-| Commit       | c485dc5    |
+| Generated on | 2026-05-19 |
+| Commit       | 95a9a86    |
 | Branch       | master     |
-| Rmlx version | 0.3.0.9000 |
+| Rmlx version | 0.4.0      |
 | Tier         | fast       |
 
 ### History
@@ -85,6 +87,24 @@ tier <- latest(fuzz)$tier[1]
 history_theme <- theme(panel.grid = element_blank(), 
                        panel.grid.major.y = element_line(
                          colour = "grey95", linewidth = 0.5))
+```
+
+### Benchmarks
+
+``` r
+
+fuzz |> 
+  filter(suite == "mlxs-benchmarks") |> 
+  ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
+    geom_point() + 
+    geom_line(aes(group = scenario, linetype = tier)) +
+    history_theme +
+    theme(legend.position="bottom")
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-2-1.png)
+
+``` r
 
 fuzz |> 
   filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
@@ -100,13 +120,13 @@ fuzz |>
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 50 rows containing missing values or values outside the scale range
+    ## Warning: Removed 70 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 50 rows containing missing values or values outside the scale range
+    ## Warning: Removed 70 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## `geom_line()`: Each group consists of only one observation.
@@ -114,7 +134,7 @@ fuzz |>
     ## `geom_line()`: Each group consists of only one observation.
     ## ℹ Do you need to adjust the group aesthetic?
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-1-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png)
 
 ``` r
 
@@ -130,7 +150,7 @@ fuzz |>
     history_theme
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-2-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-4-1.png)
 
 ### `mlxs_lm`
 
@@ -174,7 +194,7 @@ fuzz_lm_det |>
     labs(x = "Error (log scale)")
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
 
 #### Monte Carlo tests
 
@@ -236,7 +256,7 @@ fuzz_lm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png)
 
 ##### Standard errors
 
@@ -271,7 +291,7 @@ fuzz_lm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
 
 ### `mlxs_glm`
 
@@ -323,7 +343,7 @@ fuzz_glm_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
 
 #### Monte Carlo tests
 
@@ -367,7 +387,7 @@ fuzz_glm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-12-1.png)
 
 ##### Standard errors
 
@@ -392,7 +412,7 @@ fuzz_glm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-11-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png)
 
 ### `mlxs_glmnet`
 
@@ -430,7 +450,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
 
 We also check values of our objective function (within the training
 set). If we do worse than glmnet (positive values of e.g. 0.1 or more)
@@ -460,7 +480,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-14-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-16-1.png)
 
 Lastly, we measure precision and recall of the active set (i.e.
 variables with a non-zero beta).
@@ -488,7 +508,7 @@ fuzz_glmnet_det |>
     ## Warning: Removed 15 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png)
 
 We also examine quality of predictions for an out-of-sample test set.The
 loss statistic is mean squared prediction error for Gaussian fits, or
@@ -530,7 +550,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-16-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-18-1.png)
 
 #### Monte Carlo tests
 
@@ -600,7 +620,7 @@ fuzz_cv_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-20-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png)
 
 ``` r
 
@@ -620,7 +640,7 @@ fuzz_cv_glmnet_det |>
     ## Warning in scale_x_log10(labels = scales::label_math(format = log10)):
     ## log-10 transformation introduced infinite values.
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-21-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png)
 
 ### `mlxs_prcomp`
 
@@ -681,7 +701,7 @@ fuzz_prcomp_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png)
 
 #### Monte Carlo tests
 
@@ -715,4 +735,4 @@ fuzz_prcomp_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-27-1.png)

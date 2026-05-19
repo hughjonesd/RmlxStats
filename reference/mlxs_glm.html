@@ -56,7 +56,7 @@ convergence is done at double precision on the cpu.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">subset</span>,</span>
 <span>  <span class="va">weights</span>,</span>
-<span>  <span class="va">na.action</span>,</span>
+<span>  na.action <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.exclude</a></span>,</span>
 <span>  start <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  control <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -100,12 +100,9 @@ convergence is done at double precision on the cpu.</p>
 
 
 <dt id="arg-na-action">na.action<a class="anchor" aria-label="anchor" href="#arg-na-action"></a></dt>
-<dd><p>a function which indicates what should happen
-    when the data contain <code>NA</code>s.  The default is set by
-    the <code>na.action</code> setting of <code><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></code>, and is
-    <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.fail</a></code> if that is unset.  The ‘factory-fresh’
-    default is <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></code>.  Another possible value is
-    <code>NULL</code>, no action.  Value <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.exclude</a></code> can be useful.</p></dd>
+<dd><p>A function indicating how missing values should be handled.
+Defaults to <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">stats::na.exclude()</a></code> so residuals, fitted values, and
+training-data predictions are padded back to the original row count.</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
@@ -139,10 +136,10 @@ coefficients.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mlx array [3 x 1]</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   dtype: float32</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   values:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             [,1]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1,] 34.66099167</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [2,] -1.58727658</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [3,] -0.02058364</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    [,1]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (Intercept) 34.66099167</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cyl         -1.58727658</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> disp        -0.02058364</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"coef_names")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "(Intercept)" "cyl"         "disp"       </span>
 </code></pre></div>

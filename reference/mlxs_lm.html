@@ -47,7 +47,7 @@ devices. The interface mirrors <code><a href="https://rdrr.io/r/stats/lm.html" c
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mlxs_lm</span><span class="op">(</span><span class="va">formula</span>, <span class="va">data</span>, <span class="va">subset</span>, <span class="va">weights</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mlxs_lm</span><span class="op">(</span><span class="va">formula</span>, <span class="va">data</span>, <span class="va">subset</span>, <span class="va">weights</span>, na.action <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.exclude</a></span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,6 +71,12 @@ variables in the model.</p></dd>
 <dd><p>Optional non-negative observation weights. Treated like the
 <code>weights</code> argument to <code><a href="https://rdrr.io/r/stats/lm.html" class="external-link">stats::lm()</a></code>, i.e. they enter the fit via weighted
 least squares.</p></dd>
+
+
+<dt id="arg-na-action">na.action<a class="anchor" aria-label="anchor" href="#arg-na-action"></a></dt>
+<dd><p>A function indicating how missing values should be handled.
+Defaults to <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">stats::na.exclude()</a></code> so residuals, fitted values, and
+training-data predictions are padded back to the original row count.</p></dd>
 
 </dl></div>
     <div class="section level2">

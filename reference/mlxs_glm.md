@@ -13,7 +13,7 @@ mlxs_glm(
   data,
   subset,
   weights,
-  na.action,
+  na.action = stats::na.exclude,
   start = NULL,
   control = list(),
   ...
@@ -59,14 +59,10 @@ mlxs_glm(
 
 - na.action:
 
-  a function which indicates what should happen when the data contain
-  `NA`s. The default is set by the `na.action` setting of
-  [`options`](https://rdrr.io/r/base/options.html), and is
-  [`na.fail`](https://rdrr.io/r/stats/na.fail.html) if that is unset.
-  The ‘factory-fresh’ default is
-  [`na.omit`](https://rdrr.io/r/stats/na.fail.html). Another possible
-  value is `NULL`, no action. Value
-  [`na.exclude`](https://rdrr.io/r/stats/na.fail.html) can be useful.
+  A function indicating how missing values should be handled. Defaults
+  to [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html) so
+  residuals, fitted values, and training-data predictions are padded
+  back to the original row count.
 
 - start:
 
@@ -102,10 +98,10 @@ coef(fit)
 #> mlx array [3 x 1]
 #>   dtype: float32
 #>   values:
-#>             [,1]
-#> [1,] 34.66099167
-#> [2,] -1.58727658
-#> [3,] -0.02058364
+#>                    [,1]
+#> (Intercept) 34.66099167
+#> cyl         -1.58727658
+#> disp        -0.02058364
 #> attr(,"coef_names")
 #> [1] "(Intercept)" "cyl"         "disp"       
 ```

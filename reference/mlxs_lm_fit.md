@@ -55,5 +55,6 @@ x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))
 y <- Rmlx::mlx_matrix(mtcars$mpg, ncol = 1)
 fit <- mlxs_lm_fit(x, y)
 drop(as.matrix(fit$coefficients))
-#> [1] 34.66099167 -1.58727658 -0.02058364
+#>                     cyl        disp 
+#> 34.66099167 -1.58727658 -0.02058364 
 ```
