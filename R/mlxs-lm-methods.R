@@ -320,8 +320,10 @@ summary.mlxs_lm <- function(
   ...
 ) {
   vc <- vcov(object)
-  vc_mat <- as.matrix(vc)
-  se_mlx <- Rmlx::mlx_matrix(sqrt(diag(vc_mat)), ncol = 1)
+  se_mlx <- Rmlx::mlx_reshape(
+    sqrt(Rmlx::diag(vc)),
+    c(length(coef(object)), 1L)
+  )
   bootstrap_info <- NULL
   confint_mat <- NULL
   if (isTRUE(bootstrap)) {
@@ -339,10 +341,9 @@ summary.mlxs_lm <- function(
   } else if (isTRUE(confint)) {
     confint_mat <- stats::confint(object, level = level)
   }
-  se_num <- as.numeric(se_mlx)
-  est <- as.numeric(object$coefficients)
-  tvals <- est / se_num
-  pvals <- 2 * pt(-abs(tvals), df = object$df.residual)
+  tvals_mlx <- object$coefficients / se_mlx
+  tvals_num <- as.numeric(tvals_mlx)
+  pvals <- 2 * pt(-abs(tvals_num), df = object$df.residual)
   resid_mlx <- object$residuals
   rdf <- object$df.residual
   rss <- as.numeric(Rmlx::mlx_sum(resid_mlx * resid_mlx))
@@ -375,7 +376,7 @@ summary.mlxs_lm <- function(
     residuals = resid_mlx,
     coef = object$coefficients,
     std.error = se_mlx,
-    statistic = Rmlx::mlx_matrix(tvals, ncol = 1),
+    statistic = tvals_mlx,
     p.value = Rmlx::mlx_matrix(pvals, ncol = 1),
     sigma = sigma,
     df = c(object$rank, rdf, n_obs),
@@ -562,6 +563,7 @@ augment.mlxs_lm <- function(
   output <- match.arg(output)
   if (is.null(newdata)) {
     mm <- model.matrix(x)
+    mm_mlx <- Rmlx::as_mlx(mm)
     fitted_vals <- x$fitted.values
     residuals_vals <- x$residuals
     base_data <- data
@@ -607,8 +609,9 @@ augment.mlxs_lm <- function(
   }
 
   if (se_fit) {
-    vc <- as.matrix(vcov(x))
-    se_vals <- sqrt(rowSums((mm %*% vc) * mm))
+    vc <- vcov(x)
+    se_vals_mlx <- sqrt(Rmlx::rowSums((mm_mlx %*% vc) * mm_mlx))
+    se_vals <- as.numeric(se_vals_mlx)
     if (!is.null(rownames(mm))) {
       names(se_vals) <- rownames(mm)
     }
