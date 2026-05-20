@@ -371,7 +371,7 @@ mlxs_glmnet <- function(x,
   xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
   shape_sig <- paste(n_pred, n_pred, sep = "x")
 
-  lambda_max <- max(abs(as.numeric(xy_mlx))) / max(alpha, 1e-8)
+  lambda_max <- as.numeric(max(abs(xy_mlx))) / max(alpha, 1e-8)
   if (is.finite(lambda_max) && lambda_max == 0) {
     lambda_max <- 1
   }
@@ -585,7 +585,7 @@ mlxs_glmnet <- function(x,
 #' @noRd
 .mlxs_glmnet_lambda_max <- function(x_mlx, residual_mlx, n_obs, alpha) {
   z0_mlx <- crossprod(x_mlx, residual_mlx) / n_obs
-  lambda_max <- max(abs(as.numeric(z0_mlx))) / max(alpha, 1e-8)
+  lambda_max <- as.numeric(max(abs(z0_mlx))) / max(alpha, 1e-8)
   if (is.finite(lambda_max) && lambda_max == 0) {
     lambda_max <- 1
   }

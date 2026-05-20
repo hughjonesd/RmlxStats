@@ -181,7 +181,7 @@ mlxs_cv_glmnet <- function(x,
     cvsd = cvsd,
     cvup = cvup,
     cvlo = cvlo,
-    nzero = colSums(abs(glmnet_fit$beta) > 0),
+    nzero = as.numeric(colSums(abs(glmnet_fit$beta) > 0)),
     call = match.call(),
     name = stats::setNames(
       .mlxs_cv_glmnet_measure_name(type.measure, family_name),
