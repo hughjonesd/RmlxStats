@@ -21,8 +21,7 @@ print.mlxs_glmnet <- function(
     lambda_fmt <- format(signif(lambda_vals[idx], digits = digits))
 
     beta_slice <- x$beta[, idx, drop = FALSE]
-    beta_host <- as.matrix(beta_slice)
-    nnz <- colSums(abs(beta_host) > 0)
+    nnz <- as.numeric(Rmlx::colSums(abs(beta_slice) > 0))
 
     cat("  Lambdas: ", paste(lambda_fmt, collapse = ", "), "\n", sep = "")
     cat("  Nonzero coefficients: ", paste(nnz, collapse = ", "), "\n", sep = "")

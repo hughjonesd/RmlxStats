@@ -18,7 +18,7 @@
 
 \method{summary}{mlxs_prcomp}(object, ...)
 
-\method{plot}{mlxs_prcomp}(x, ...)
+\method{plot}{mlxs_prcomp}(x, main = deparse1(substitute(x)), ...)
 
 \method{biplot}{mlxs_prcomp}(x, ...)
 
@@ -46,7 +46,7 @@ Method-specific output. \code{predict.mlxs_prcomp()} returns an MLX
 matrix. \code{augment.mlxs_prcomp()} returns either a data frame or MLX matrix.
 }
 \description{
-\code{predict.mlxs_prcomp()} returns MLX scores. The presentation methods
-(\code{print()}, \code{summary()}, \code{plot()}, and \code{biplot()}) reuse the base \code{prcomp}
-implementations by converting to a temporary host-backed \code{prcomp} object.
+\code{predict.mlxs_prcomp()} returns MLX scores. \code{summary()} and \code{plot()} only
+materialize standard deviations for base-style output; \code{print()} and
+\code{biplot()} materialize rotations and scores as needed for display.
 }

@@ -33,6 +33,27 @@ mlxs_binomial <- function(link = "logit") {
   base_family$valideta <- link_parts$valideta
   base_family$dev.resids <- .mlxs_binomial_dev_resids
   base_family$validmu <- .mlxs_binomial_validmu
+  base_family$initialize_mlx <- function(
+    y,
+    weights,
+    eta,
+    mu,
+    nobs,
+    warn_noninteger = TRUE
+  ) {
+    if (any(y < 0 | y > 1)) {
+      stop("y values must be 0 <= y <= 1", call. = FALSE)
+    }
+    m <- weights * y
+    if (warn_noninteger && any(abs(m - round(m)) > 0.001)) {
+      warning(
+        "non-integer #successes in a binomial glm!",
+        call. = FALSE
+      )
+    }
+    mu <- (weights * y + 0.5) / (weights + 1)
+    list(mu = mu, eta = base_family$linkfun(mu))
+  }
   base_family
 }
 

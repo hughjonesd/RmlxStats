@@ -11,6 +11,7 @@
   via the `output` argument.
 * `confint.mlxs_lm()` and `confint.mlxs_glm()` can now return bootstrap
   confidence intervals. So can the respective `summary()` methods.
+* Speedups for some `augment()`, `predict()` and `summary()` methods.
 
 
 # RmlxStats 0.2.0
