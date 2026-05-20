@@ -132,6 +132,46 @@ test_that("mlxs_prcomp honours tol and rank.", {
   expect_true(fit_tol$rank <= min(dim(x)))
 })
 
+test_that("mlxs_prcomp accepts MLX center and scale values", {
+  set.seed(9)
+  x <- matrix(rnorm(60), nrow = 12, ncol = 5)
+  center <- colMeans(x)
+  scale <- apply(x, 2L, stats::sd)
+
+  fit <- mlxs_prcomp(
+    Rmlx::as_mlx(x),
+    center = Rmlx::as_mlx(center),
+    scale. = Rmlx::as_mlx(scale)
+  )
+  ref <- stats::prcomp(x, center = center, scale. = scale)
+
+  rotation <- align_pca_columns(as.matrix(fit$rotation), ref$rotation)
+  expect_equal(as.numeric(fit$sdev), ref$sdev, tolerance = 5e-4)
+  expect_equal(unname(rotation), unname(ref$rotation), tolerance = 2e-3)
+  expect_s3_class(fit$center, "mlx")
+  expect_s3_class(fit$scale, "mlx")
+  expect_equal(as.matrix(fit$center), matrix(center, nrow = 1),
+               tolerance = 1e-6)
+  expect_equal(as.matrix(fit$scale), matrix(scale, nrow = 1),
+               tolerance = 1e-6)
+})
+
+test_that("mlxs_prcomp stores numeric center and scale values as MLX", {
+  set.seed(10)
+  x <- matrix(rnorm(60), nrow = 12, ncol = 5)
+  center <- colMeans(x)
+  scale <- apply(x, 2L, stats::sd)
+
+  fit <- mlxs_prcomp(x, center = center, scale. = scale)
+
+  expect_s3_class(fit$center, "mlx")
+  expect_s3_class(fit$scale, "mlx")
+  expect_equal(as.matrix(fit$center), matrix(center, nrow = 1),
+               tolerance = 1e-6)
+  expect_equal(as.matrix(fit$scale), matrix(scale, nrow = 1),
+               tolerance = 1e-6)
+})
+
 test_that("predict.mlxs_prcomp matches stats::predict.prcomp", {
   set.seed(5)
   x <- matrix(rnorm(84), nrow = 14, ncol = 6)

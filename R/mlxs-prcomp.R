@@ -81,14 +81,12 @@ mlxs_prcomp <- function(x,
   seed <- .mlxs_prcomp_validate_seed(seed)
 
   x_scaled <- scale(x_mlx, center = center, scale = scale.)
-  x_center <- .mlxs_prcomp_param_to_mlx(
+  x_center <- .mlxs_prcomp_scale_attr_to_mlx(
     attr(x_scaled, "scaled:center"),
-    n_pred,
     x_scaled
   )
-  x_scale <- .mlxs_prcomp_param_to_mlx(
+  x_scale <- .mlxs_prcomp_scale_attr_to_mlx(
     attr(x_scaled, "scaled:scale"),
-    n_pred,
     x_scaled
   )
 
@@ -232,8 +230,7 @@ mlxs_prcomp <- function(x,
   }
 
   zero_tol <- sdev_all[1] * 1e-6
-  n_positive <- as.integer(sum(sdev_all[seq_len(keep)] > zero_tol))
-  if (n_positive < keep) {
+  if (!all(sdev_all[seq_len(keep)] > zero_tol)) {
     return(.mlxs_prcomp_exact_svd(
       x_scaled = x_scaled,
       rank_limit = rank_limit,
@@ -500,30 +497,11 @@ mlxs_prcomp <- function(x,
   as.numeric(seed)
 }
 
-#' Convert PCA center or scale metadata to MLX
-#'
-#' Normalizes the attributes returned by `scale()` so prediction can apply the
-#' same preprocessing on device. A `FALSE` return value preserves the `prcomp`
-#' convention for no centering or no scaling.
-#'
-#' @param value Center or scale attribute from `scale()`.
-#' @param n_pred Number of feature columns.
-#' @param x_scaled Scaled MLX data matrix, used to match dtype.
-#' @return `FALSE` or a one-row MLX matrix.
-#' @noRd
-.mlxs_prcomp_param_to_mlx <- function(value, n_pred, x_scaled) {
+.mlxs_prcomp_scale_attr_to_mlx <- function(value, x_scaled) {
   if (is.null(value)) {
     return(FALSE)
   }
-  if (inherits(value, "mlx")) {
-    return(value)
-  }
-
-  value <- as.numeric(value)
-  Rmlx::as_mlx(
-    matrix(value, nrow = 1L, ncol = n_pred),
-    dtype = Rmlx::mlx_dtype(x_scaled)
-  )
+  Rmlx::mlx_matrix(value, nrow = 1L, dtype = Rmlx::mlx_dtype(x_scaled))
 }
 
 #' Generate deterministic MLX standard-normal values
@@ -582,7 +560,7 @@ NULL
 #' @param x Fitted `mlxs_prcomp` object.
 #' @return Host-backed object of class `"prcomp"`.
 #' @noRd
-.mlxs_prcomp_as_prcomp <- function(x) {
+.mlxs_prcomp_as_prcomp <- function(x, include_scores = TRUE) {
   rotation <- as.matrix(x$rotation)
   dimnames(rotation) <- list(x$feature_names, x$component_names)
 
@@ -593,7 +571,7 @@ NULL
     scale = .mlxs_prcomp_host_vector(x$scale, x$feature_names)
   )
 
-  if (!is.null(x$x)) {
+  if (include_scores && !is.null(x$x)) {
     scores <- as.matrix(x$x)
     dimnames(scores) <- list(x$observation_names, x$component_names)
     result$x <- scores
@@ -676,20 +654,21 @@ predict.mlxs_prcomp <- function(object, newdata, ...) {
 #' @export
 #' @rdname mlxs-prcomp-methods
 print.mlxs_prcomp <- function(x, ...) {
-  print(.mlxs_prcomp_as_prcomp(x), ...)
+  include_scores <- isTRUE(list(...)$print.x)
+  print(.mlxs_prcomp_as_prcomp(x, include_scores = include_scores), ...)
   invisible(x)
 }
 
 #' @export
 #' @rdname mlxs-prcomp-methods
 summary.mlxs_prcomp <- function(object, ...) {
-  summary(.mlxs_prcomp_as_prcomp(object), ...)
+  summary(.mlxs_prcomp_as_prcomp(object, include_scores = FALSE), ...)
 }
 
 #' @export
 #' @rdname mlxs-prcomp-methods
 plot.mlxs_prcomp <- function(x, ...) {
-  graphics::plot(.mlxs_prcomp_as_prcomp(x), ...)
+  graphics::plot(.mlxs_prcomp_as_prcomp(x, include_scores = FALSE), ...)
 }
 
 #' @export
@@ -707,13 +686,14 @@ nobs.mlxs_prcomp <- function(object, ...) {
 #' @export
 #' @rdname mlxs-prcomp-methods
 tidy.mlxs_prcomp <- function(x, ...) {
-  sum_obj <- summary(x, ...)
-  importance <- t(sum_obj$importance)
+  sdev <- as.numeric(x$sdev)
+  vars <- sdev^2
+  proportion <- vars / sum(vars)
   data.frame(
-    component = rownames(importance),
-    std.dev = importance[, "Standard deviation"],
-    proportion = importance[, "Proportion of Variance"],
-    cumulative = importance[, "Cumulative Proportion"],
+    component = x$component_names,
+    std.dev = sdev,
+    proportion = round(proportion, 5),
+    cumulative = round(cumsum(proportion), 5),
     row.names = NULL,
     check.names = FALSE
   )
