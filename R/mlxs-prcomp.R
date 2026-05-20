@@ -535,9 +535,9 @@ mlxs_prcomp <- function(x,
 
 #' PCA methods for `mlxs_prcomp`
 #'
-#' `predict.mlxs_prcomp()` returns MLX scores. The presentation methods
-#' (`print()`, `summary()`, `plot()`, and `biplot()`) reuse the base `prcomp`
-#' implementations by converting to a temporary host-backed `prcomp` object.
+#' `predict.mlxs_prcomp()` returns MLX scores. `summary()` and `plot()` only
+#' materialize standard deviations for base-style output; `print()` and
+#' `biplot()` materialize rotations and scores as needed for display.
 #'
 #' @param object,x A fitted `mlxs_prcomp` object.
 #' @param newdata Optional new observations to project.
@@ -613,12 +613,14 @@ predict.mlxs_prcomp <- function(object, newdata, ...) {
     stop("no scores are available: refit with 'retx=TRUE'", call. = FALSE)
   }
 
-  newdata_names <- NULL
+  newdata_names <- colnames(newdata)
   x_mlx <- if (inherits(newdata, "mlx")) {
     Rmlx::as_mlx(newdata)
   } else {
     newdata_mat <- as.matrix(newdata)
-    newdata_names <- colnames(newdata_mat)
+    if (is.null(newdata_names)) {
+      newdata_names <- colnames(newdata_mat)
+    }
     Rmlx::as_mlx(newdata_mat)
   }
 
@@ -662,13 +664,48 @@ print.mlxs_prcomp <- function(x, ...) {
 #' @export
 #' @rdname mlxs-prcomp-methods
 summary.mlxs_prcomp <- function(object, ...) {
-  summary(.mlxs_prcomp_as_prcomp(object, include_scores = FALSE), ...)
+  if (length(list(...)) > 0L) {
+    stop("Unused arguments in summary.mlxs_prcomp().", call. = FALSE)
+  }
+
+  sdev <- as.numeric(object$sdev)
+  vars <- sdev^2
+  proportion <- vars / sum(vars)
+  object$importance <- rbind(
+    `Standard deviation` = sdev,
+    `Proportion of Variance` = round(proportion, 5),
+    `Cumulative Proportion` = round(cumsum(proportion), 5)
+  )
+  colnames(object$importance) <- object$component_names
+  class(object) <- "summary.mlxs_prcomp"
+  object
+}
+
+#' @export
+print.summary.mlxs_prcomp <- function(x,
+                                      digits = max(3L, getOption("digits") - 3L),
+                                      ...) {
+  dr <- dim(x$rotation)
+  k <- dr[2L]
+  p <- length(x$sdev)
+  if (k < p) {
+    cat(sprintf("Importance of first k=%d (out of %d) components:\n", k, p))
+    print(x$importance[, seq_len(k), drop = FALSE], digits = digits, ...)
+  } else {
+    cat("Importance of components:\n")
+    print(x$importance, digits = digits, ...)
+  }
+  invisible(x)
 }
 
 #' @export
 #' @rdname mlxs-prcomp-methods
-plot.mlxs_prcomp <- function(x, ...) {
-  graphics::plot(.mlxs_prcomp_as_prcomp(x, include_scores = FALSE), ...)
+plot.mlxs_prcomp <- function(x, main = deparse1(substitute(x)), ...) {
+  plot_obj <- list(
+    sdev = stats::setNames(as.numeric(x$sdev), x$component_names)
+  )
+  class(plot_obj) <- "prcomp"
+  graphics::plot(plot_obj, main = main, ...)
 }
 
 #' @export

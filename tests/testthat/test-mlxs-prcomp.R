@@ -207,8 +207,10 @@ test_that("mlxs_prcomp methods reuse prcomp presentation behavior", {
   expect_equal(nobs(fit), nrow(x))
 
   sum_obj <- summary(fit)
-  expect_s3_class(sum_obj, "summary.prcomp")
+  expect_s3_class(sum_obj, "summary.mlxs_prcomp")
+  expect_false(inherits(sum_obj, "summary.prcomp"))
   expect_true("importance" %in% names(sum_obj))
+  expect_s3_class(sum_obj$rotation, "mlx")
 
   tidy_obj <- tidy(fit)
   expect_equal(
@@ -233,6 +235,12 @@ test_that("mlxs_prcomp methods reuse prcomp presentation behavior", {
   )
   pred_named <- align_pca_columns(pred_named, pred_ref)
   expect_equal(unname(pred_named), unname(pred_ref), tolerance = 2e-1)
+
+  named_new_mlx <- Rmlx::as_mlx(named_new)
+  colnames(named_new_mlx) <- colnames(named_new)
+  pred_named_mlx <- as.matrix(predict(fit, named_new_mlx))
+  pred_named_mlx <- align_pca_columns(pred_named_mlx, pred_ref)
+  expect_equal(unname(pred_named_mlx), unname(pred_ref), tolerance = 2e-1)
 
   expect_output(print(fit), "Standard deviations")
   on.exit(try(file.remove("Rplots.pdf"), silent = TRUE), 
