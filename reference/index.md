@@ -6,8 +6,7 @@
   : MLX-backed linear regression
 - [`mlxs_lm_fit()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm_fit.md)
   : Fit an MLX linear model from design matrices
-- [`coef(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
-  [`predict(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
+- [`predict(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`fitted(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`residuals(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
   [`vcov(`*`<mlxs_lm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-lm-methods.md)
@@ -37,8 +36,7 @@
   : MLX-backed generalized linear model
 - [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md)
   : Control parameters
-- [`coef(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
-  [`weights(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
+- [`weights(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`predict(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`fitted(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   [`residuals(`*`<mlxs_glm>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
@@ -106,4 +104,5 @@
   [`augment()`](https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.md)
   : Re-export generics
 - [`update(`*`<mlxs_model>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-model-methods.md)
+  [`coef(`*`<mlxs_model>`*`)`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-model-methods.md)
   : Shared mlxs model methods

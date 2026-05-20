@@ -95,13 +95,6 @@ matrices are rejected rather than fit with aliased coefficients.
 ``` r
 fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)
 coef(fit)
-#> mlx array [3 x 1]
-#>   dtype: float32
-#>   values:
-#>                    [,1]
-#> (Intercept) 34.66099167
-#> cyl         -1.58727658
-#> disp        -0.02058364
-#> attr(,"coef_names")
-#> [1] "(Intercept)" "cyl"         "disp"       
+#> (Intercept)         cyl        disp 
+#> 34.66099167 -1.58727658 -0.02058364 
 ```

@@ -74,11 +74,11 @@ through <code><a href="https://hughjonesd.github.io/Rmlx/reference/mlx_compile.h
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>Numeric matrix of predictors (observations in rows).</p></dd>
+<dd><p>Numeric R or mlx matrix of predictors.</p></dd>
 
 
 <dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
-<dd><p>Numeric response vector (for binomial, values must be 0/1).</p></dd>
+<dd><p>Numeric R or mlx response vector.</p></dd>
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
@@ -130,7 +130,10 @@ the computation.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>mlxs_glmnet</code> containing the fitted coefficient
-path, intercepts, lambda sequence, and scaling information.</p>
+path, intercepts, lambda sequence, and scaling information. The <code>beta</code> and
+<code>a0</code> components are stored as MLX arrays so downstream methods can keep
+path computations on the MLX backend. Use <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> or <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for
+ordinary base-R matrix outputs.</p>
     </div>
     <div class="section level2">
     <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>

@@ -8,6 +8,9 @@ Methods for behavior shared by `mlxs_lm` and `mlxs_glm` through their
 ``` r
 # S3 method for class 'mlxs_model'
 update(object, ..., evaluate = TRUE)
+
+# S3 method for class 'mlxs_model'
+coef(object, ..., output = c("vector", "mlx"))
 ```
 
 ## Arguments

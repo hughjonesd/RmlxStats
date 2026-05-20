@@ -8,10 +8,6 @@ single pass generates about 1000 pieces of data. We can’t always binary
 pass/fail, so this page is meant to show our current performance and
 also how it has evolved over time.
 
-The GPU is 32-bit. MLX has support for float64 but not on the GPU, and
-Rmlx doesn’t yet support float64 at all. That limits our precision. This
-page should help us figure out how much that affects performance.
-
 - What about diagnostics?
 
 ``` r
@@ -38,7 +34,7 @@ chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
   fuzz |> 
     filter(tier %in% chosen_tiers) |> 
-    filter(branch == "master") |> 
+    filter(grepl(params$branch, branch)) |> 
     # separate filter statements for a reason, given the max() below
     filter(datetime_utc == max(datetime_utc)) 
 }
@@ -65,8 +61,8 @@ tier <- latest(fuzz)$tier[1]
 
 | Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-19 |
-| Commit       | 95a9a86    |
+| Generated on | 2026-05-20 |
+| Commit       | ae67404    |
 | Branch       | master     |
 | Rmlx version | 0.4.0      |
 | Tier         | fast       |
@@ -89,44 +85,56 @@ history_theme <- theme(panel.grid = element_blank(),
                          colour = "grey95", linewidth = 0.5))
 ```
 
-### Benchmarks
+#### Benchmarks
 
 ``` r
 
 fuzz |> 
-  filter(suite == "mlxs-benchmarks") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-benchmarks") |> 
   ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
     geom_point() + 
     geom_line(aes(group = scenario, linetype = tier)) +
+    labs(
+      y = "Time (seconds)"
+    ) +
     history_theme +
     theme(legend.position="bottom")
 ```
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-2-1.png)
 
+#### Fuzz tests
+
 ``` r
 
 fuzz |> 
-  filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-lm-monte-carlo", 
+         measure == "bias") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
     geom_pointrange(aes(ymin = value - 1.96 * value_se, 
                         ymax = value + 1.96 * value_se),
                     position = position_dodge(0.5), size = 0.2) +
     geom_line(aes(linetype = tier)) + 
     facet_grid(rows = vars(Scenario)) +
+    labs(
+      title = "Per-term bias, mlxs_lm() monte carlo",
+      y = "Bias"
+    ) +
     history_theme
 ```
 
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 70 rows containing missing values or values outside the scale range
+    ## Warning: Removed 75 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## Warning: Removed 5 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 70 rows containing missing values or values outside the scale range
+    ## Warning: Removed 75 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
     ## `geom_line()`: Each group consists of only one observation.
@@ -139,7 +147,9 @@ fuzz |>
 ``` r
 
 fuzz |> 
-  filter(suite == "mlxs-lm-monte-carlo", measure == "coverage") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-lm-monte-carlo", 
+         measure == "coverage") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
     geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
     geom_pointrange(aes(ymin = value - 1.96 * value_se, 
@@ -147,10 +157,163 @@ fuzz |>
                     position = position_dodge(0.5)) +
     geom_line(aes(linetype = tier)) + 
     facet_grid(rows = vars(Scenario)) +
+    labs(
+      title = "Confidence interval coverage, mlxs_lm() monte carlo",
+      subtitle = "Vertical lines show empirical monte carlo 95% c.i.s",
+      y = "Coverage"
+    ) +
     history_theme
 ```
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-4-1.png)
+
+``` r
+
+fuzz |> 
+  filter(grepl(params$branch, branch), 
+         suite == "mlxs-glm-monte-carlo", 
+         measure == "bias") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term),
+             colour = term)) + 
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se),
+                    position = position_dodge(0.5), size = 0.2) +
+    geom_line(aes(linetype = tier)) + 
+    facet_wrap(vars(Scenario, family)) +
+    labs(
+      title = "Per-term bias, mlxs_glm() monte carlo",
+      y = "Bias"
+    ) +
+    history_theme
+```
+
+    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+    ## Removed 5 rows containing missing values or values outside the scale range
+    ## (`geom_segment()`).
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
+
+``` r
+
+fuzz |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-glm-monte-carlo", 
+         measure == "coverage") |> 
+  ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
+    geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
+    geom_pointrange(aes(ymin = value - 1.96 * value_se, 
+                        ymax = value + 1.96 * value_se), size = 0.2,
+                    position = position_dodge(0.5)) +
+    geom_line(aes(linetype = tier)) + 
+    facet_wrap(vars(Scenario, family)) +
+    labs(
+      title = "Per-term confidence interval coverage, mlxs_glm() monte carlo",
+      subtitle = "Vertical lines show empirical monte carlo 95% c.i.s",
+      y = "Coverage"
+    ) +
+    history_theme
+```
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png)
+
+``` r
+
+fuzz |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-glmnet-deterministic", 
+         measure =="loss", 
+         target == "prediction", 
+         source == "mlx") |> 
+  ggplot(aes(x = datetime_utc, y = value, colour = factor(lambda_index))) + 
+    geom_point() +
+    geom_line() + 
+    facet_wrap(vars(Scenario, family), ncol = 3) +
+    scale_y_log10() +
+    labs(
+      title = "Prediction error, mlxs_glmnet() monte carlo"
+    ) +
+    history_theme + 
+    theme(
+      legend.position = "bottom"
+    )
+```
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png)
+
+``` r
+
+fuzz |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-prcomp-deterministic", 
+         measure == "error", 
+         target == "subspace", 
+         source == "mlx") |> 
+  ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
+    geom_point() + 
+    geom_line() + 
+    facet_wrap(vars(Scenario)) +
+    scale_y_log10() + 
+    labs(
+      title = "Subspace error, mlxs_prcomp() deterministic",
+      y = "Error (log scale)"
+    )
+```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
+
+``` r
+
+fuzz |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-prcomp-monte-carlo", 
+         measure == "error", 
+         target == "subspace", 
+         source == "mlx") |> 
+  ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
+    geom_point() + 
+    geom_line() + 
+    facet_wrap(vars(Scenario)) +
+    scale_y_log10() + 
+    labs(
+      title = "Subspace error, mlxs_prcomp() monte carlo",
+      y = "Error (log scale)"
+    )
+```
+
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+    ## `geom_line()`: Each group consists of only one observation.
+    ## ℹ Do you need to adjust the group aesthetic?
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-9-1.png)
 
 ### `mlxs_lm`
 
@@ -194,7 +357,7 @@ fuzz_lm_det |>
     labs(x = "Error (log scale)")
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
 
 #### Monte Carlo tests
 
@@ -256,7 +419,7 @@ fuzz_lm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-12-1.png)
 
 ##### Standard errors
 
@@ -291,7 +454,7 @@ fuzz_lm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png)
 
 ### `mlxs_glm`
 
@@ -343,7 +506,7 @@ fuzz_glm_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
 
 #### Monte Carlo tests
 
@@ -387,7 +550,7 @@ fuzz_glm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-12-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png)
 
 ##### Standard errors
 
@@ -412,7 +575,7 @@ fuzz_glm_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-18-1.png)
 
 ### `mlxs_glmnet`
 
@@ -450,7 +613,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-20-1.png)
 
 We also check values of our objective function (within the training
 set). If we do worse than glmnet (positive values of e.g. 0.1 or more)
@@ -480,7 +643,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-16-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-21-1.png)
 
 Lastly, we measure precision and recall of the active set (i.e.
 variables with a non-zero beta).
@@ -508,7 +671,7 @@ fuzz_glmnet_det |>
     ## Warning: Removed 15 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png)
 
 We also examine quality of predictions for an out-of-sample test set.The
 loss statistic is mean squared prediction error for Gaussian fits, or
@@ -550,7 +713,7 @@ fuzz_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-18-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png)
 
 #### Monte Carlo tests
 
@@ -620,7 +783,7 @@ fuzz_cv_glmnet_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-27-1.png)
 
 ``` r
 
@@ -640,7 +803,7 @@ fuzz_cv_glmnet_det |>
     ## Warning in scale_x_log10(labels = scales::label_math(format = log10)):
     ## log-10 transformation introduced infinite values.
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-28-1.png)
 
 ### `mlxs_prcomp`
 
@@ -701,7 +864,7 @@ fuzz_prcomp_det |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-30-1.png)
 
 #### Monte Carlo tests
 
@@ -735,4 +898,4 @@ fuzz_prcomp_mc |>
     )
 ```
 
-![](fuzz-test-results_files/figure-html/unnamed-chunk-27-1.png)
+![](fuzz-test-results_files/figure-html/unnamed-chunk-32-1.png)

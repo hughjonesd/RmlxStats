@@ -24,6 +24,10 @@
   [`confint.mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs-glm-methods.md)
   can now return bootstrap confidence intervals. So can the respective
   [`summary()`](https://rdrr.io/r/base/summary.html) methods.
+- Speedups for some
+  [`augment()`](https://hughjonesd.github.io/RmlxStats/reference/generics-reexports.md),
+  [`predict()`](https://rdrr.io/r/stats/predict.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) methods.
 
 ## RmlxStats 0.2.0
 

@@ -7,9 +7,6 @@ by delegating to equivalent base `glm` behaviour where helpful.
 
 ``` r
 # S3 method for class 'mlxs_glm'
-coef(object, ...)
-
-# S3 method for class 'mlxs_glm'
 weights(object, type = c("prior", "working"), ...)
 
 # S3 method for class 'mlxs_glm'
@@ -105,14 +102,14 @@ bread(x, ...)
 
   An `mlxs_glm` model fit.
 
-- ...:
-
-  Additional arguments passed to underlying methods.
-
 - type:
 
   Character string indicating the scale of the prediction or residuals
   to return.
+
+- ...:
+
+  Additional arguments passed to underlying methods.
 
 - newdata:
 

@@ -30,11 +30,11 @@ mlxs_glmnet(
 
 - x:
 
-  Numeric matrix of predictors (observations in rows).
+  Numeric R or mlx matrix of predictors.
 
 - y:
 
-  Numeric response vector (for binomial, values must be 0/1).
+  Numeric R or mlx response vector.
 
 - family:
 
@@ -87,7 +87,12 @@ mlxs_glmnet(
 ## Value
 
 An object of class `mlxs_glmnet` containing the fitted coefficient path,
-intercepts, lambda sequence, and scaling information.
+intercepts, lambda sequence, and scaling information. The `beta` and
+`a0` components are stored as MLX arrays so downstream methods can keep
+path computations on the MLX backend. Use
+[`coef()`](https://rdrr.io/r/stats/coef.html) or
+[`predict()`](https://rdrr.io/r/stats/predict.html) for ordinary base-R
+matrix outputs.
 
 ## Note
 

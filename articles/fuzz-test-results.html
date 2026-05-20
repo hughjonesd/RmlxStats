@@ -77,10 +77,6 @@ extensively, aiming to cover hard cases and capture a number of relevant
 metrics: a single pass generates about 1000 pieces of data. We can’t
 always binary pass/fail, so this page is meant to show our current
 performance and also how it has evolved over time.</p>
-<p>The GPU is 32-bit. MLX has support for float64 but not on the GPU,
-and Rmlx doesn’t yet support float64 at all. That limits our precision.
-This page should help us figure out how much that affects
-performance.</p>
 <ul>
 <li>What about diagnostics?</li>
 </ul>
@@ -107,7 +103,7 @@ performance.</p>
 <span><span class="va">latest</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">tier</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">chosen_tiers</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">branch</span> <span class="op">==</span> <span class="st">"master"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="co"># separate filter statements for a reason, given the max() below</span></span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">datetime_utc</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">datetime_utc</span><span class="op">)</span><span class="op">)</span> </span>
 <span><span class="op">}</span></span>
@@ -138,11 +134,11 @@ performance.</p>
 <tbody>
 <tr class="odd">
 <td>Generated on</td>
-<td>2026-05-19</td>
+<td>2026-05-20</td>
 </tr>
 <tr class="even">
 <td>Commit</td>
-<td>95a9a86</td>
+<td>ae67404</td>
 </tr>
 <tr class="odd">
 <td>Branch</td>
@@ -159,7 +155,7 @@ performance.</p>
 </tbody>
 </table>
 <div class="section level3">
-<h3 id="history">History<a class="anchor" aria-label="anchor" href="#history"></a>
+<h3 class="tabset" id="history">History<a class="anchor" aria-label="anchor" href="#history"></a>
 </h3>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># lm-det: not sure?</span></span>
@@ -174,36 +170,49 @@ performance.</p>
 <span><span class="va">history_theme</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>panel.grid <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>, </span>
 <span>                       panel.grid.major.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_line</a></span><span class="op">(</span></span>
 <span>                         colour <span class="op">=</span> <span class="st">"grey95"</span>, linewidth <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="benchmarks">Benchmarks<a class="anchor" aria-label="anchor" href="#benchmarks"></a>
-</h3>
+<div class="section level4">
+<h4 id="benchmarks">Benchmarks<a class="anchor" aria-label="anchor" href="#benchmarks"></a>
+</h4>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-benchmarks"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-benchmarks"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">value</span>, x <span class="op">=</span> <span class="va">datetime_utc</span>, colour <span class="op">=</span> <span class="va">scenario</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>group <span class="op">=</span> <span class="va">scenario</span>, linetype <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      y <span class="op">=</span> <span class="st">"Time (seconds)"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="va">history_theme</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position<span class="op">=</span><span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="700"></p>
+</div>
+<div class="section level4">
+<h4 id="fuzz-tests-1">Fuzz tests<a class="anchor" aria-label="anchor" href="#fuzz-tests-1"></a>
+</h4>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-monte-carlo"</span>, <span class="va">measure</span> <span class="op">==</span> <span class="st">"bias"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-monte-carlo"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"bias"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime_utc</span>, y <span class="op">=</span> <span class="va">value</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="va">tier</span>, <span class="va">term</span><span class="op">)</span>, colour <span class="op">=</span> <span class="va">term</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_pointrange</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">value</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span>, </span>
 <span>                        ymax <span class="op">=</span> <span class="va">value</span> <span class="op">+</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span><span class="op">)</span>,</span>
 <span>                    position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_dodge.html" class="external-link">position_dodge</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span>rows <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Per-term bias, mlxs_lm() monte carlo"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Bias"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="va">history_theme</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: Removed 5 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">## (`geom_segment()`).</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Removed 70 rows containing missing values or values outside the scale range</span></span>
+<pre><code><span><span class="co">## Warning: Removed 75 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">## (`geom_segment()`).</span></span></code></pre>
 <pre><code><span><span class="co">## Warning: Removed 5 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">## (`geom_segment()`).</span></span></code></pre>
-<pre><code><span><span class="co">## Warning: Removed 70 rows containing missing values or values outside the scale range</span></span>
+<pre><code><span><span class="co">## Warning: Removed 75 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">## (`geom_segment()`).</span></span></code></pre>
 <pre><code><span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
 <span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
@@ -212,7 +221,9 @@ performance.</p>
 <p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-monte-carlo"</span>, <span class="va">measure</span> <span class="op">==</span> <span class="st">"coverage"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-monte-carlo"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"coverage"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime_utc</span>, y <span class="op">=</span> <span class="va">value</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="va">tier</span>, <span class="va">term</span><span class="op">)</span>, colour <span class="op">=</span> <span class="va">term</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.95</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, colour <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_pointrange</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">value</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span>, </span>
@@ -220,8 +231,137 @@ performance.</p>
 <span>                    position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_dodge.html" class="external-link">position_dodge</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_grid.html" class="external-link">facet_grid</a></span><span class="op">(</span>rows <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Confidence interval coverage, mlxs_lm() monte carlo"</span>,</span>
+<span>      subtitle <span class="op">=</span> <span class="st">"Vertical lines show empirical monte carlo 95% c.i.s"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Coverage"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="va">history_theme</span></span></code></pre></div>
 <p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>, </span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glm-monte-carlo"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"bias"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime_utc</span>, y <span class="op">=</span> <span class="va">value</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="va">tier</span>, <span class="va">term</span><span class="op">)</span>,</span>
+<span>             colour <span class="op">=</span> <span class="va">term</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_pointrange</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">value</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span>, </span>
+<span>                        ymax <span class="op">=</span> <span class="va">value</span> <span class="op">+</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span><span class="op">)</span>,</span>
+<span>                    position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_dodge.html" class="external-link">position_dodge</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span>, <span class="va">family</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Per-term bias, mlxs_glm() monte carlo"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Bias"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="va">history_theme</span></span></code></pre></div>
+<pre><code><span><span class="co">## Warning: Removed 5 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">## (`geom_segment()`).</span></span>
+<span><span class="co">## Removed 5 rows containing missing values or values outside the scale range</span></span>
+<span><span class="co">## (`geom_segment()`).</span></span></code></pre>
+<pre><code><span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span></code></pre>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glm-monte-carlo"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"coverage"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime_utc</span>, y <span class="op">=</span> <span class="va">value</span>, group <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interaction.html" class="external-link">interaction</a></span><span class="op">(</span><span class="va">tier</span>, <span class="va">term</span><span class="op">)</span>, colour <span class="op">=</span> <span class="va">term</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.95</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, colour <span class="op">=</span> <span class="st">"grey30"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">geom_pointrange</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">value</span> <span class="op">-</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span>, </span>
+<span>                        ymax <span class="op">=</span> <span class="va">value</span> <span class="op">+</span> <span class="fl">1.96</span> <span class="op">*</span> <span class="va">value_se</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>                    position <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/position_dodge.html" class="external-link">position_dodge</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>linetype <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span>, <span class="va">family</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Per-term confidence interval coverage, mlxs_glm() monte carlo"</span>,</span>
+<span>      subtitle <span class="op">=</span> <span class="st">"Vertical lines show empirical monte carlo 95% c.i.s"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Coverage"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="va">history_theme</span></span></code></pre></div>
+<pre><code><span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span></code></pre>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glmnet-deterministic"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span><span class="st">"loss"</span>, </span>
+<span>         <span class="va">target</span> <span class="op">==</span> <span class="st">"prediction"</span>, </span>
+<span>         <span class="va">source</span> <span class="op">==</span> <span class="st">"mlx"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime_utc</span>, y <span class="op">=</span> <span class="va">value</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">lambda_index</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span>, <span class="va">family</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Prediction error, mlxs_glmnet() monte carlo"</span></span>
+<span>    <span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="va">history_theme</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>      legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span></code></pre>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-prcomp-deterministic"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"error"</span>, </span>
+<span>         <span class="va">target</span> <span class="op">==</span> <span class="st">"subspace"</span>, </span>
+<span>         <span class="va">source</span> <span class="op">==</span> <span class="st">"mlx"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">datetime_utc</span>, <span class="va">value</span>, linetype <span class="op">=</span> <span class="va">tier</span>, colour <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Subspace error, mlxs_prcomp() deterministic"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Error (log scale)"</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fuzz</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="va">params</span><span class="op">$</span><span class="va">branch</span>, <span class="va">branch</span><span class="op">)</span>,</span>
+<span>         <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-prcomp-monte-carlo"</span>, </span>
+<span>         <span class="va">measure</span> <span class="op">==</span> <span class="st">"error"</span>, </span>
+<span>         <span class="va">target</span> <span class="op">==</span> <span class="st">"subspace"</span>, </span>
+<span>         <span class="va">source</span> <span class="op">==</span> <span class="st">"mlx"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">datetime_utc</span>, <span class="va">value</span>, linetype <span class="op">=</span> <span class="va">tier</span>, colour <span class="op">=</span> <span class="va">tier</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/vars.html" class="external-link">vars</a></span><span class="op">(</span><span class="va">Scenario</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_log10</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
+<span>      title <span class="op">=</span> <span class="st">"Subspace error, mlxs_prcomp() monte carlo"</span>,</span>
+<span>      y <span class="op">=</span> <span class="st">"Error (log scale)"</span></span>
+<span>    <span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span>
+<span><span class="co">## `geom_line()`: Each group consists of only one observation.</span></span>
+<span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Do you need to adjust the <span style="color: #00BB00;">group</span> aesthetic?</span></span></code></pre>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
+</div>
 </div>
 <div class="section level3">
 <h3 class="tabset" id="mlxs_lm">
@@ -246,7 +386,7 @@ is equal to another one plus noise times epsilon</li>
 matrix; per-case <code>fitted</code> values; or the set of
 <code>coefficient</code>s and their <code>standard_error</code>s.</li>
 </ul>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_lm_det</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
 <span>    <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-deterministic"</span>,</span>
@@ -268,7 +408,7 @@ matrix; per-case <code>fitted</code> values; or the set of
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_discrete.html" class="external-link">scale_y_discrete</a></span><span class="op">(</span>labels <span class="op">=</span> \<span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf</a></span><span class="op">(</span></span>
 <span>      <span class="st">"&lt;span style='color:%s'&gt;%s&lt;/span&gt;"</span>, <span class="va">cols</span><span class="op">[</span><span class="va">x</span><span class="op">]</span>, <span class="va">x</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Error (log scale)"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level4">
 <h4 id="monte-carlo-tests">Monte Carlo tests<a class="anchor" aria-label="anchor" href="#monte-carlo-tests"></a>
@@ -285,7 +425,7 @@ coverage!</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo stretchy="false" form="prefix">(</mo><mi>e</mi><mi>s</mi><mi>t</mi><mi>i</mi><mi>m</mi><mi>a</mi><mi>t</mi><mi>e</mi><mo>−</mo><mi>t</mi><mi>r</mi><mi>u</mi><mi>t</mi><mi>h</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">E(estimate - truth)</annotation></semantics></math>
 over the Monte Carlo repetitions, and we calculate standard errors and
 confidence intervals the same way.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_lm_mc</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span></span>
 <span>    <span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-lm-monte-carlo"</span></span>
@@ -305,7 +445,7 @@ look up the code, on the theory we won’t change these much?</li>
 fast linear model….</li>
 <li>Also, why <em>is</em> the bootstrap so slow?</li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_lm_mc</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bias"</span>, <span class="st">"coverage"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/drop_na.html" class="external-link">drop_na</a></span><span class="op">(</span><span class="va">value_se</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -326,7 +466,7 @@ fast linear model….</li>
 <span>      subtitle <span class="op">=</span> <span class="st">"Lines show Monte Carlo confidence intervals for coverage"</span>,</span>
 <span>      x <span class="op">=</span> <span class="st">"Term"</span>, y <span class="op">=</span> <span class="st">"Value"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level5">
 <h5 id="standard-errors">Standard errors<a class="anchor" aria-label="anchor" href="#standard-errors"></a>
@@ -335,7 +475,7 @@ fast linear model….</li>
 from bootstrap option or from normal theory, against the empirical
 standard error, calculated as the standard deviation of the estimate
 over all our Monte Carlo replications.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bootstrap_B</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></span><span class="op">(</span><span class="va">fuzz_lm_mc</span><span class="op">$</span><span class="va">bootstrap_B</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">bootstrap_B</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span></span>
 <span></span>
@@ -358,7 +498,7 @@ over all our Monte Carlo replications.</p>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
 <span>      legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 </div>
@@ -385,11 +525,11 @@ might expect errors to be below this line.</p>
 <li>The choice of p and n is worth revisiting, maybe Codex has been
 ducking errors…</li>
 </ul>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glm_det</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glm-deterministic"</span>, <span class="va">measure</span> <span class="op">==</span> <span class="st">"error"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">case_type</span>, <span class="op">-</span><span class="op">(</span><span class="va">nreps</span><span class="op">:</span><span class="va">term</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cols_glm</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/grDevices/palette.html" class="external-link">palette</a></span><span class="op">(</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">cols_glm</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">fuzz_glm_det</span><span class="op">$</span><span class="va">Target</span><span class="op">)</span></span>
 <span></span>
@@ -411,7 +551,7 @@ ducking errors…</li>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
 <span>      strip.text.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">7</span>, face <span class="op">=</span> <span class="st">"bold"</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level4">
 <h4 id="monte-carlo-tests-1">Monte Carlo tests<a class="anchor" aria-label="anchor" href="#monte-carlo-tests-1"></a>
@@ -427,11 +567,11 @@ coverage? Should have a similar message….</li>
 <div class="section level5">
 <h5 id="bias-and-confidence-interval-coverage-1">Bias and confidence interval coverage<a class="anchor" aria-label="anchor" href="#bias-and-confidence-interval-coverage-1"></a>
 </h5>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glm_mc</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glm-monte-carlo"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">case_type</span>, <span class="op">-</span><span class="op">(</span><span class="va">alpha</span><span class="op">:</span><span class="va">bootstrap_B</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glm_mc</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://tidyr.tidyverse.org/reference/drop_na.html" class="external-link">drop_na</a></span><span class="op">(</span><span class="va">value_se</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -452,12 +592,12 @@ coverage? Should have a similar message….</li>
 <span>      subtitle <span class="op">=</span> <span class="st">"Lines show Monte Carlo confidence intervals for coverage"</span>,</span>
 <span>      x <span class="op">=</span> <span class="st">"Value"</span>, y <span class="op">=</span> <span class="st">"Term"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level5">
 <h5 id="standard-errors-1">Standard errors<a class="anchor" aria-label="anchor" href="#standard-errors-1"></a>
 </h5>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glm_mc</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">==</span> <span class="st">"standard_error"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -475,7 +615,7 @@ coverage? Should have a similar message….</li>
 <span>      subtitle <span class="op">=</span> <span class="st">"Empirical s.e.s are the standard deviation of the estimate across MC repetitions"</span>,</span>
 <span>      x <span class="op">=</span> <span class="st">"Standard error"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 </div>
@@ -486,14 +626,14 @@ coverage? Should have a similar message….</li>
 <div class="section level4">
 <h4 id="deterministic-tests-2">Deterministic tests<a class="anchor" aria-label="anchor" href="#deterministic-tests-2"></a>
 </h4>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glmnet_det</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glmnet-deterministic"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">case_type</span>, <span class="op">-</span><span class="va">nreps</span>, <span class="op">-</span><span class="op">(</span><span class="va">rank</span><span class="op">:</span><span class="va">bootstrap_B</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>We measure prediction accuracy against a test set, with the oracle
 being the true d.g.p. (i.e. if you know that, how well do you predict
 the test set?) We compare glmnet::glmnet as a reference.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">target</span> <span class="op">==</span> <span class="st">"prediction"</span>, <span class="va">measure</span> <span class="op">==</span> <span class="st">"loss"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -511,12 +651,12 @@ the test set?) We compare glmnet::glmnet as a reference.</p>
 <span>      x <span class="op">=</span> <span class="st">"Loss (log scale)"</span>,</span>
 <span>      title <span class="op">=</span> <span class="st">"Prediction error (mse or loglikelihood) on test set"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-20-1.png" class="r-plt" alt="" width="700"></p>
 <p>We also check values of our objective function (within the training
 set). If we do worse than glmnet (positive values of e.g. 0.1 or more)
 that suggests we should check performance of the algorithm - we’re not
 maximizing what we are trying to maximize.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span><span class="op">==</span><span class="st">"delta"</span>, <span class="va">target</span><span class="op">==</span><span class="st">"objective"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -536,7 +676,7 @@ maximizing what we are trying to maximize.</p>
 <span>      subtitle <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"The objective to minimize is training loss plus a lambda penalty.\n"</span>,</span>
 <span>                        <span class="st">"Positive values: worse than glmnet; negative: better."</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="700"></p>
 <p>Lastly, we measure precision and recall of the active set (i.e.
 variables with a non-zero beta).</p>
 <ul>
@@ -545,7 +685,7 @@ what proportion were truly active?</li>
 <li>Recall: out of all truly active variables, what proportion were
 correctly identified?</li>
 </ul>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">target</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"support_precision"</span>, <span class="st">"support_recall"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -559,14 +699,14 @@ correctly identified?</li>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: Removed 15 rows containing missing values or values outside the scale range</span></span>
 <span><span class="co">## (`geom_point()`).</span></span></code></pre>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="" width="700"></p>
 <p>We also examine quality of predictions for an out-of-sample test
 set.The loss statistic is mean squared prediction error for Gaussian
 fits, or mean binomial negative log-likelihood for binomial fits. We
 compare against <code><a href="https://glmnet.stanford.edu/reference/glmnet.html" class="external-link">glmnet::glmnet()</a></code> as a reference
 implementation, and also the “oracle” which is the true data-generating
 process (hence the best possible prediction in expectation).</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cols_glmnet</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Mlx"</span> <span class="op">=</span> <span class="st">"orange"</span>, <span class="st">"Reference"</span> <span class="op">=</span> <span class="st">"grey50"</span>, <span class="st">"Oracle"</span> <span class="op">=</span> <span class="st">"black"</span><span class="op">)</span></span>
 <span><span class="va">fuzz_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">==</span> <span class="st">"loss"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -594,17 +734,17 @@ process (hence the best possible prediction in expectation).</p>
 <span>      colour <span class="op">=</span> <span class="st">"Source"</span>,</span>
 <span>      shape <span class="op">=</span> <span class="st">"Lambda index"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level4">
 <h4 id="monte-carlo-tests-2">Monte Carlo tests<a class="anchor" aria-label="anchor" href="#monte-carlo-tests-2"></a>
 </h4>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_glmnet_mc</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-glmnet-monte-carlo"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">case_type</span>, <span class="op">-</span><span class="op">(</span><span class="va">rank</span><span class="op">:</span><span class="va">term</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>These are only run on the “full” tier.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="va">tier</span> <span class="op">==</span> <span class="st">"full"</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">fuzz_glmnet_mc</span> <span class="op">|&gt;</span> </span>
 <span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">target</span> <span class="op">==</span> <span class="st">"prediction"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -628,7 +768,7 @@ process (hence the best possible prediction in expectation).</p>
 <h3 id="mlxs_cv_glmnet">
 <code>mlxs_cv_glmnet</code><a class="anchor" aria-label="anchor" href="#mlxs_cv_glmnet"></a>
 </h3>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_cv_glmnet_det</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-cv-glmnet-deterministic"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="va">branch</span><span class="op">:</span><span class="va">case_type</span><span class="op">)</span>, <span class="op">-</span><span class="va">nreps</span>, <span class="op">-</span><span class="op">(</span><span class="va">lambda_index</span><span class="op">:</span><span class="va">nfolds</span><span class="op">)</span>, <span class="op">-</span><span class="op">(</span><span class="va">rank</span><span class="op">:</span><span class="va">term</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -650,7 +790,7 @@ lambda</li>
 <code>lambda_1se</code>
 </li>
 </ul>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_cv_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">==</span> <span class="st">"error"</span>, <span class="va">target</span> <span class="op">==</span> <span class="st">"out_of_fold_prediction"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Scenario</span>, x <span class="op">=</span> <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -660,8 +800,8 @@ lambda</li>
 <span>      x <span class="op">=</span> <span class="st">"Max. difference"</span>,</span>
 <span>      y <span class="op">=</span> <span class="st">""</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png" class="r-plt" alt="" width="700"></p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="700"></p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_cv_glmnet_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">==</span> <span class="st">"error"</span>, <span class="va">target</span> <span class="op">!=</span> <span class="st">"out_of_fold_prediction"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">Target</span>, x <span class="op">=</span> <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
@@ -675,7 +815,7 @@ lambda</li>
 <span>    <span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning in scale_x_log10(labels = scales::label_math(format = log10)):</span></span>
 <span><span class="co">## <span style="color: #00BB00;">log-10</span> transformation introduced infinite values.</span></span></code></pre>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-23-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-28-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level3">
 <h3 class="tabset" id="mlxs_prcomp">
@@ -684,7 +824,7 @@ lambda</li>
 <div class="section level4">
 <h4 id="deterministic-tests-3">Deterministic tests<a class="anchor" aria-label="anchor" href="#deterministic-tests-3"></a>
 </h4>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_prcomp_det</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-prcomp-deterministic"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">family</span>, <span class="op">-</span><span class="op">(</span><span class="va">nreps</span><span class="op">:</span><span class="va">lambda</span><span class="op">)</span>, <span class="op">-</span><span class="va">bootstrap_B</span>, <span class="op">-</span><span class="va">term</span><span class="op">)</span> </span></code></pre></div>
@@ -712,7 +852,7 @@ a statistic from the <code>sdev</code>s.</li>
 case but anyway I ignore it here as it is more “diagnostic”.</li>
 <li>Need to think about which of these are indicating problems!</li>
 </ul>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_prcomp_det</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">!=</span> <span class="st">"diagnostic"</span>, <span class="va">Target</span> <span class="op">!=</span> <span class="st">"reconstruction"</span>,</span>
 <span>         <span class="va">case_type</span> <span class="op">!=</span> <span class="st">"metamorphic"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
@@ -733,7 +873,7 @@ case but anyway I ignore it here as it is more “diagnostic”.</li>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
 <span>      legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-30-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 <div class="section level4">
 <h4 id="monte-carlo-tests-3">Monte Carlo tests<a class="anchor" aria-label="anchor" href="#monte-carlo-tests-3"></a>
@@ -745,11 +885,11 @@ errors.</li>
 <li>As with deterministic case, seems to struggle with “sparse
 dense”.</li>
 </ul>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_prcomp_mc</span> <span class="op">&lt;-</span> <span class="fu">latest</span><span class="op">(</span><span class="va">fuzz</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">suite</span> <span class="op">==</span> <span class="st">"mlxs-prcomp-monte-carlo"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">suite</span>, <span class="op">-</span><span class="va">case_type</span>, <span class="op">-</span><span class="va">family</span>, <span class="op">-</span><span class="op">(</span><span class="va">alpha</span><span class="op">:</span><span class="va">lambda</span><span class="op">)</span>, <span class="op">-</span><span class="va">bootstrap_B</span>, <span class="op">-</span><span class="va">term</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fuzz_prcomp_mc</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">measure</span> <span class="op">!=</span> <span class="st">"diagnostic"</span>, <span class="va">Target</span> <span class="op">!=</span> <span class="st">"mean(reconstruction)"</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
@@ -765,7 +905,7 @@ dense”.</li>
 <span>      subtitle <span class="op">=</span> <span class="st">"Reference is stats::prcomp"</span>,</span>
 <span>      x <span class="op">=</span> <span class="st">"Error (log scale)"</span></span>
 <span>    <span class="op">)</span></span></code></pre></div>
-<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-27-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="fuzz-test-results_files/figure-html/unnamed-chunk-32-1.png" class="r-plt" alt="" width="700"></p>
 </div>
 </div>
 </div>

@@ -1,12 +1,12 @@
 # PCA methods for `mlxs_prcomp`
 
-`predict.mlxs_prcomp()` returns MLX scores. The presentation methods
-([`print()`](https://rdrr.io/r/base/print.html),
-[`summary()`](https://rdrr.io/r/base/summary.html),
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html), and
-[`biplot()`](https://rdrr.io/r/stats/biplot.html)) reuse the base
-`prcomp` implementations by converting to a temporary host-backed
-`prcomp` object.
+`predict.mlxs_prcomp()` returns MLX scores.
+[`summary()`](https://rdrr.io/r/base/summary.html) and
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) only
+materialize standard deviations for base-style output;
+[`print()`](https://rdrr.io/r/base/print.html) and
+[`biplot()`](https://rdrr.io/r/stats/biplot.html) materialize rotations
+and scores as needed for display.
 
 ## Usage
 
@@ -21,7 +21,7 @@ print(x, ...)
 summary(object, ...)
 
 # S3 method for class 'mlxs_prcomp'
-plot(x, ...)
+plot(x, main = deparse1(substitute(x)), ...)
 
 # S3 method for class 'mlxs_prcomp'
 biplot(x, ...)
