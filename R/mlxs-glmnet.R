@@ -68,6 +68,7 @@ mlxs_glmnet <- function(x,
   n_obs <- nrow(x)
   n_pred <- ncol(x)
   chunk_size <- 8L
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
 
   design <- .mlxs_glmnet_prepare_design(x, standardize = standardize,
                                         intercept = intercept)
@@ -78,7 +79,7 @@ mlxs_glmnet <- function(x,
   if (family_name == "gaussian") {
     fit <- .mlxs_glmnet_fit_gaussian(
       x_mlx = x_mlx,
-      y = y,
+      y_mlx = y_mlx,
       alpha = alpha,
       lambda = lambda,
       nlambda = nlambda,
@@ -91,7 +92,7 @@ mlxs_glmnet <- function(x,
   } else {
     fit <- .mlxs_glmnet_fit_binomial(
       x_mlx = x_mlx,
-      y = y,
+      y_mlx = y_mlx,
       alpha = alpha,
       lambda = lambda,
       nlambda = nlambda,
@@ -184,7 +185,7 @@ mlxs_glmnet <- function(x,
 #' returns a standardized coefficient path.
 #'
 #' @param x_mlx Standardized MLX predictor matrix.
-#' @param y Numeric response vector.
+#' @param y_mlx MLX response column vector.
 #' @param alpha Elastic-net mixing parameter.
 #' @param lambda Optional penalty path.
 #' @param nlambda Number of generated penalties when `lambda` is `NULL`.
@@ -197,7 +198,7 @@ mlxs_glmnet <- function(x,
 #' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
 #' @noRd
 .mlxs_glmnet_fit_gaussian <- function(x_mlx,
-                                      y,
+                                      y_mlx,
                                       alpha,
                                       lambda,
                                       nlambda,
@@ -219,7 +220,7 @@ mlxs_glmnet <- function(x,
   if (identical(solver, "gram")) {
     return(.mlxs_glmnet_fit_gaussian_gram(
       x_mlx = x_mlx,
-      y = y,
+      y_mlx = y_mlx,
       alpha = alpha,
       lambda = lambda,
       nlambda = nlambda,
@@ -233,7 +234,7 @@ mlxs_glmnet <- function(x,
 
   .mlxs_glmnet_fit_gaussian_dense(
     x_mlx = x_mlx,
-    y = y,
+    y_mlx = y_mlx,
     alpha = alpha,
     lambda = lambda,
     nlambda = nlambda,
@@ -255,7 +256,7 @@ mlxs_glmnet <- function(x,
 #' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
 #' @noRd
 .mlxs_glmnet_fit_gaussian_dense <- function(x_mlx,
-                                            y,
+                                            y_mlx,
                                             alpha,
                                             lambda,
                                             nlambda,
@@ -263,12 +264,11 @@ mlxs_glmnet <- function(x,
                                             intercept,
                                             maxit,
                                             tol,
-                                            chunk_size) {
+  chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
-  y_mean <- if (intercept) as.numeric(mean(y_mlx)) else 0
-  y_mlx <- y_mlx - y_mean
+  y_mean_mlx <- if (intercept) mean(y_mlx) else Rmlx::as_mlx(0)
+  y_mlx <- y_mlx - y_mean_mlx
   shape_sig <- paste(n_obs, n_pred, sep = "x")
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
@@ -281,7 +281,7 @@ mlxs_glmnet <- function(x,
   residual_mlx <- -y_mlx
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
-  intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  intercept_mlx <- y_mean_mlx
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   base_lipschitz <- .mlxs_glmnet_gram_lipschitz(gram_mlx)
@@ -358,7 +358,7 @@ mlxs_glmnet <- function(x,
 #' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
 #' @noRd
 .mlxs_glmnet_fit_gaussian_gram <- function(x_mlx,
-                                           y,
+                                           y_mlx,
                                            alpha,
                                            lambda,
                                            nlambda,
@@ -366,12 +366,11 @@ mlxs_glmnet <- function(x,
                                            intercept,
                                            maxit,
                                            tol,
-                                           chunk_size) {
+  chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
-  y_mean <- if (intercept) as.numeric(mean(y_mlx)) else 0
-  y_mlx <- y_mlx - y_mean
+  y_mean_mlx <- if (intercept) mean(y_mlx) else Rmlx::as_mlx(0)
+  y_mlx <- y_mlx - y_mean_mlx
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
@@ -390,7 +389,7 @@ mlxs_glmnet <- function(x,
   t_prev <- 1
   beta_store_mlx <- Rmlx::mlx_zeros(c(n_pred, n_lambda))
   intercept_store_mlx <- Rmlx::mlx_zeros(c(n_lambda, 1L))
-  intercept_mlx <- Rmlx::mlx_matrix(y_mean, nrow = 1L, ncol = 1L)
+  intercept_mlx <- y_mean_mlx
   gram_lipschitz <- .mlxs_glmnet_gram_lipschitz(gram_mlx)
   effective_maxit <- min(maxit, 200L)
   zero_mlx <- Rmlx::as_mlx(0)
@@ -472,7 +471,7 @@ mlxs_glmnet <- function(x,
 #' @return List with MLX `beta`, MLX `intercept`, and numeric `lambda`.
 #' @noRd
 .mlxs_glmnet_fit_binomial <- function(x_mlx,
-                                      y,
+                                      y_mlx,
                                       alpha,
                                       lambda,
                                       nlambda,
@@ -480,10 +479,9 @@ mlxs_glmnet <- function(x,
                                       intercept,
                                       maxit,
                                       tol,
-                                      chunk_size) {
+  chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
   if (!all((y_mlx == 0) | (y_mlx == 1))) {
     stop("Binomial family requires a 0/1 response.", call. = FALSE)
   }
