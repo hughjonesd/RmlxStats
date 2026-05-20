@@ -474,6 +474,37 @@ predict.mlxs_glmnet <- function(object,
     return(coef(object, s = s, exact = exact, ...))
   }
 
+  if (is.null(s)) {
+    if (type == "nonzero") {
+      return(lapply(seq_len(ncol(object$beta)), function(j) {
+        which(as.logical(abs(object$beta[, j]) > 0))
+      }))
+    }
+
+    if (!inherits(newx, "mlx") && !is.matrix(newx)) {
+      newx <- as.matrix(newx)
+    }
+    newx_mlx <- Rmlx::as_mlx(newx)
+    if (ncol(newx_mlx) != nrow(object$beta)) {
+      stop("newx must have the same number of columns as the fitted x.",
+           call. = FALSE)
+    }
+
+    n_lambda <- length(object$lambda)
+    eta_mlx <- newx_mlx %*% object$beta +
+      Rmlx::mlx_broadcast_to(t(object$a0), c(nrow(newx_mlx), n_lambda))
+
+    if (type == "link" || object$family == "gaussian") {
+      return(as.matrix(eta_mlx))
+    }
+
+    response_mlx <- 1 / (1 + exp(-eta_mlx))
+    if (type == "class") {
+      return(as.matrix(Rmlx::mlx_where(response_mlx >= 0.5, 1, 0)))
+    }
+    return(as.matrix(response_mlx))
+  }
+
   selected <- .mlxs_glmnet_select_path(object, s = s, exact = exact)
   if (type == "nonzero") {
     return(lapply(seq_len(ncol(selected$beta)), function(j) {
