@@ -52,8 +52,12 @@ mlxs_glmnet <- function(x,
          call. = FALSE)
   }
 
-  x <- as.matrix(x)
-  y <- as.numeric(y)
+  if (!inherits(x, "mlx") && !is.matrix(x)) {
+    x <- as.matrix(x)
+  }
+  if (!inherits(y, "mlx")) {
+    y <- as.numeric(y)
+  }
   if (nrow(x) != length(y)) {
     stop("x and y must have the same number of observations.", call. = FALSE)
   }
@@ -259,8 +263,9 @@ mlxs_glmnet <- function(x,
                                             chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mean <- if (intercept) mean(y) else 0
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
+  y_mean <- if (intercept) as.numeric(mean(y_mlx)) else 0
+  y_mlx <- y_mlx - y_mean
   shape_sig <- paste(n_obs, n_pred, sep = "x")
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, -y_mlx, n_obs, alpha)
@@ -361,8 +366,9 @@ mlxs_glmnet <- function(x,
                                            chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mean <- if (intercept) mean(y) else 0
-  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y - y_mean), c(n_obs, 1L))
+  y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
+  y_mean <- if (intercept) as.numeric(mean(y_mlx)) else 0
+  y_mlx <- y_mlx - y_mean
 
   gram_mlx <- crossprod(x_mlx) / n_obs
   xy_mlx <- crossprod(x_mlx, y_mlx) / n_obs
@@ -472,17 +478,16 @@ mlxs_glmnet <- function(x,
                                       maxit,
                                       tol,
                                       chunk_size) {
-  if (!all(y %in% c(0, 1))) {
-    stop("Binomial family requires a 0/1 response.", call. = FALSE)
-  }
-
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
   y_mlx <- Rmlx::mlx_reshape(Rmlx::as_mlx(y), c(n_obs, 1L))
+  if (!all((y_mlx == 0) | (y_mlx == 1))) {
+    stop("Binomial family requires a 0/1 response.", call. = FALSE)
+  }
   ones_mlx <- Rmlx::mlx_ones(c(n_obs, 1L))
   shape_sig <- paste(n_obs, n_pred, fit_intercept = intercept, sep = "x")
 
-  p_hat <- mean(y)
+  p_hat <- as.numeric(mean(y_mlx))
   p_hat <- min(max(p_hat, 1e-6), 1 - 1e-6)
   intercept_val <- if (intercept) log(p_hat / (1 - p_hat)) else 0
   intercept_mlx <- Rmlx::mlx_matrix(intercept_val, nrow = 1L, ncol = 1L)

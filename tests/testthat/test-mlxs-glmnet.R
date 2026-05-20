@@ -115,6 +115,34 @@ test_that("mlxs_glmnet works with standardize = FALSE", {
   expect_equal(as.numeric(fit$a0), as.numeric(ref$a0), tolerance = 1e-6)
 })
 
+test_that("mlxs_glmnet accepts MLX predictors and responses", {
+  set.seed(125)
+  n <- 80
+  p <- 8
+  x <- matrix(rnorm(n * p), nrow = n, ncol = p)
+  y <- drop(x[, 1] - 0.5 * x[, 2] + rnorm(n))
+  lambda <- c(0.2, 0.05)
+
+  fit_r <- mlxs_glmnet(
+    x, y,
+    lambda = lambda,
+    standardize = FALSE,
+    maxit = 500,
+    tol = 1e-6
+  )
+  fit_mlx <- mlxs_glmnet(
+    Rmlx::as_mlx(x),
+    Rmlx::mlx_matrix(y, ncol = 1),
+    lambda = lambda,
+    standardize = FALSE,
+    maxit = 500,
+    tol = 1e-6
+  )
+
+  expect_equal(as.matrix(fit_mlx$beta), as.matrix(fit_r$beta), tolerance = 1e-8)
+  expect_equal(as.numeric(fit_mlx$a0), as.numeric(fit_r$a0), tolerance = 1e-8)
+})
+
 test_that("mlxs_glmnet matches glmnet for gaussian without intercept", {
   set.seed(124)
   n <- 120
