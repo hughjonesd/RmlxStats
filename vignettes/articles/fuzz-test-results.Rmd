@@ -9,6 +9,7 @@ editor_options:
   chunk_output_type: console
 params:
   tier: "any"
+  branch: "master"
 ---
 
 # Fuzz tests {.tabset}
@@ -45,7 +46,7 @@ chosen_tiers <- if (params$tier == "any") c("full", "fast") else params$tier
 latest <- function(fuzz) {
   fuzz |> 
     filter(tier %in% chosen_tiers) |> 
-    filter(branch == "master") |> 
+    filter(grepl(params$branch, branch)) |> 
     # separate filter statements for a reason, given the max() below
     filter(datetime_utc == max(datetime_utc)) 
 }
@@ -99,7 +100,8 @@ history_theme <- theme(panel.grid = element_blank(),
 
 ```{r}
 fuzz |> 
-  filter(suite == "mlxs-benchmarks") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-benchmarks") |> 
   ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
     geom_point() + 
     geom_line(aes(group = scenario, linetype = tier)) +
@@ -116,7 +118,9 @@ fuzz |>
 
 ```{r, fig.height = 10}
 fuzz |> 
-  filter(suite == "mlxs-lm-monte-carlo", measure == "bias") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-lm-monte-carlo", 
+         measure == "bias") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
     geom_pointrange(aes(ymin = value - 1.96 * value_se, 
                         ymax = value + 1.96 * value_se),
@@ -133,7 +137,9 @@ fuzz |>
 
 ```{r}
 fuzz |> 
-  filter(suite == "mlxs-lm-monte-carlo", measure == "coverage") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-lm-monte-carlo", 
+         measure == "coverage") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
     geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
     geom_pointrange(aes(ymin = value - 1.96 * value_se, 
@@ -152,7 +158,8 @@ fuzz |>
 
 ```{r}
 fuzz |> 
-  filter(branch == "master", suite == "mlxs-glm-monte-carlo", 
+  filter(grepl(params$branch, branch), 
+         suite == "mlxs-glm-monte-carlo", 
          measure == "bias") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term),
              colour = term)) + 
@@ -171,7 +178,9 @@ fuzz |>
 
 ```{r}
 fuzz |> 
-  filter(suite == "mlxs-glm-monte-carlo", measure == "coverage") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-glm-monte-carlo", 
+         measure == "coverage") |> 
   ggplot(aes(x = datetime_utc, y = value, group = interaction(tier, term), colour = term)) + 
     geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey30") +
     geom_pointrange(aes(ymin = value - 1.96 * value_se, 
@@ -189,8 +198,11 @@ fuzz |>
 
 ```{r, fig.height=8}
 fuzz |> 
-  filter(suite == "mlxs-glmnet-deterministic", measure =="loss", 
-         target == "prediction", source == "mlx") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-glmnet-deterministic", 
+         measure =="loss", 
+         target == "prediction", 
+         source == "mlx") |> 
   ggplot(aes(x = datetime_utc, y = value, colour = factor(lambda_index))) + 
     geom_point() +
     geom_line() + 
@@ -207,8 +219,11 @@ fuzz |>
 
 ```{r, fig.height = 10}
 fuzz |> 
-  filter(suite == "mlxs-prcomp-deterministic", measure == "error", 
-         target == "subspace", source == "mlx") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-prcomp-deterministic", 
+         measure == "error", 
+         target == "subspace", 
+         source == "mlx") |> 
   ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
     geom_point() + 
     geom_line() + 
@@ -222,8 +237,11 @@ fuzz |>
 
 ```{r, fig.height = 10}
 fuzz |> 
-  filter(suite == "mlxs-prcomp-monte-carlo", measure == "error", 
-         target == "subspace", source == "mlx") |> 
+  filter(grepl(params$branch, branch),
+         suite == "mlxs-prcomp-monte-carlo", 
+         measure == "error", 
+         target == "subspace", 
+         source == "mlx") |> 
   ggplot(aes(datetime_utc, value, linetype = tier, colour = tier)) + 
     geom_point() + 
     geom_line() + 
