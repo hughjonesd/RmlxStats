@@ -110,13 +110,10 @@ mlxs_glmnet <- function(x,
     intercept_unscaled_mlx <- intercept_store_mlx
   }
 
-  beta_unscaled <- as.matrix(beta_unscaled_mlx)
-  intercept_unscaled <- as.numeric(intercept_unscaled_mlx)
-
-  rownames(beta_unscaled) <- colnames(x)
+  rownames(beta_unscaled_mlx) <- colnames(x)
   result <- list(
-    a0 = intercept_unscaled,
-    beta = beta_unscaled,
+    a0 = intercept_unscaled_mlx,
+    beta = beta_unscaled_mlx,
     lambda = fit$lambda,
     alpha = alpha,
     family = family_name,
