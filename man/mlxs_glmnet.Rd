@@ -20,9 +20,9 @@ mlxs_glmnet(
 )
 }
 \arguments{
-\item{x}{Numeric matrix of predictors (observations in rows).}
+\item{x}{Numeric R or mlx matrix of predictors.}
 
-\item{y}{Numeric response vector (for binomial, values must be 0/1).}
+\item{y}{Numeric R or mlx response vector.}
 
 \item{family}{MLX-aware family object, e.g. \code{\link[=mlxs_gaussian]{mlxs_gaussian()}} or
 \code{\link[=mlxs_binomial]{mlxs_binomial()}}.}

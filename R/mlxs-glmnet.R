@@ -9,8 +9,8 @@
 #'  as of April 2026, `mlxs_glmnet()` gets competitive at n x p = 5,000,000 
 #'  or greater.
 #'
-#' @param x Numeric matrix of predictors (observations in rows).
-#' @param y Numeric response vector (for binomial, values must be 0/1).
+#' @param x Numeric R or mlx matrix of predictors.
+#' @param y Numeric R or mlx response vector.
 #' @param family MLX-aware family object, e.g. [mlxs_gaussian()] or
 #'   [mlxs_binomial()].
 #' @param alpha Elastic-net mixing parameter (1 = lasso, currently alpha must
@@ -264,10 +264,10 @@ mlxs_glmnet <- function(x,
                                             intercept,
                                             maxit,
                                             tol,
-  chunk_size) {
+                                            chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mean_mlx <- if (intercept) mean(y_mlx) else Rmlx::as_mlx(0)
+  y_mean_mlx <- mean(y_mlx) * intercept
   y_mlx <- y_mlx - y_mean_mlx
   shape_sig <- paste(n_obs, n_pred, sep = "x")
 
@@ -366,10 +366,10 @@ mlxs_glmnet <- function(x,
                                            intercept,
                                            maxit,
                                            tol,
-  chunk_size) {
+                                           chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
-  y_mean_mlx <- if (intercept) mean(y_mlx) else Rmlx::as_mlx(0)
+  y_mean_mlx <- mean(y_mlx) * intercept
   y_mlx <- y_mlx - y_mean_mlx
 
   gram_mlx <- crossprod(x_mlx) / n_obs
@@ -479,7 +479,7 @@ mlxs_glmnet <- function(x,
                                       intercept,
                                       maxit,
                                       tol,
-  chunk_size) {
+                                      chunk_size) {
   n_obs <- nrow(x_mlx)
   n_pred <- ncol(x_mlx)
   if (!all((y_mlx == 0) | (y_mlx == 1))) {
@@ -488,14 +488,10 @@ mlxs_glmnet <- function(x,
   ones_mlx <- Rmlx::mlx_ones(c(n_obs, 1L))
   shape_sig <- paste(n_obs, n_pred, fit_intercept = intercept, sep = "x")
 
-  p_hat <- as.numeric(mean(y_mlx))
-  p_hat <- min(max(p_hat, 1e-6), 1 - 1e-6)
-  intercept_val <- if (intercept) log(p_hat / (1 - p_hat)) else 0
-  intercept_mlx <- Rmlx::mlx_matrix(intercept_val, nrow = 1L, ncol = 1L)
+  p_hat_mlx <- Rmlx::mlx_clip(mean(y_mlx), 1e-6, 1 - 1e-6)
+  intercept_mlx <- log(p_hat_mlx / (1 - p_hat_mlx)) * intercept
   beta_mlx <- Rmlx::mlx_zeros(c(n_pred, 1L))
-  eta_mlx <- if (intercept) ones_mlx * intercept_mlx else {
-    Rmlx::mlx_zeros(c(n_obs, 1L))
-  }
+  eta_mlx <- ones_mlx * intercept_mlx
   residual_mlx <- (1 / (1 + exp(-eta_mlx))) - y_mlx
 
   lambda_max <- .mlxs_glmnet_lambda_max(x_mlx, residual_mlx, n_obs, alpha)
