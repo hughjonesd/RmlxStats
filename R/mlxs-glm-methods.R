@@ -160,7 +160,7 @@ confint.mlxs_glm <- function(
   if (identical(Rmlx::mlx_dtype(vcov.), "float64")) {
     Rmlx::local_device("cpu")
   }
-  se <- as.numeric(sqrt(Rmlx::diag(vcov(object))))[parm]
+  se <- as.numeric(sqrt(Rmlx::diag(vcov.)))[parm]
   est <- cf_num[parm]
   alpha <- (1 - level) / 2
   z_quant <- qnorm(c(alpha, 1 - alpha))

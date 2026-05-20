@@ -36,10 +36,25 @@ mlxs_gaussian <- function(link = "identity") {
     wt * Rmlx::mlx_mse_loss(mu, y, reduction = "none")
   }
 
+  base_family$initialize_mlx <- function(y, weights, eta, mu, nobs) {
+    if (
+      (base_family$link == "inverse" && any(y == 0)) ||
+        (base_family$link == "log" && any(y <= 0))
+    ) {
+      stop(
+        "cannot find valid starting values: please specify some",
+        call. = FALSE
+      )
+    }
+    list(mu = y, eta = base_family$linkfun(y))
+  }
+
   base_family$aic <- function(y, n, mu, wt, dev) {
     nobs <- length(y)
     nobs * (log(dev / nobs * 2 * pi) + 1) + 2 - sum(log(wt))
   }
+
+  base_family$aic_mlx <- base_family$aic
 
   base_family
 }
@@ -77,6 +92,15 @@ mlxs_poisson <- function(link = "log") {
     2 * res
   }
 
+  base_family$initialize_mlx <- function(y, weights, eta, mu, nobs) {
+    if (any(y < 0)) {
+      stop("negative values not allowed for the 'Poisson' family",
+           call. = FALSE)
+    }
+    mu <- y + 0.1
+    list(mu = mu, eta = base_family$linkfun(mu))
+  }
+
   base_family$aic <- function(y, n, mu, wt, dev) {
     y_num <- as.numeric(as.matrix(y))
     mu_num <- as.numeric(as.matrix(mu))
@@ -94,7 +118,18 @@ mlxs_poisson <- function(link = "log") {
 #' @export
 mlxs_quasibinomial <- function(link = "logit") {
   fam <- mlxs_binomial(link)
+  initialize_mlx <- fam$initialize_mlx
   fam$family <- "quasibinomial"
+  fam$initialize_mlx <- function(y, weights, eta, mu, nobs) {
+    initialize_mlx(
+      y = y,
+      weights = weights,
+      eta = eta,
+      mu = mu,
+      nobs = nobs,
+      warn_noninteger = FALSE
+    )
+  }
   fam$aic <- function(...) NA_real_
   fam$dispersion <- NA_real_
   fam

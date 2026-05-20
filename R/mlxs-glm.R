@@ -255,7 +255,7 @@ mlxs_glm_control <- function(
     w_mlx <- w_mlx * weights_sqrt_mlx
   }
   dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-  dev_prev <- Inf
+  dev_prev_mlx <- Rmlx::mlx_scalar(Inf)
   qr_state <- NULL
   converged <- FALSE
   iter_count <- control$maxit
@@ -265,14 +265,12 @@ mlxs_glm_control <- function(
   step_size_mlx <- Rmlx::mlx_vector(1)
   for (iter in seq_len(control$maxit)) {
     var_mu_mlx <- family$variance(mu_mlx)
-    var_numeric <- as.numeric(var_mu_mlx)
-    if (any(!is.finite(var_numeric))) {
+    if (any(!is.finite(var_mu_mlx))) {
       stop("Non-finite variance function result.", call. = FALSE)
     }
 
     mu_eta_mlx <- family$mu.eta(eta_mlx)
-    mu_eta_numeric <- as.numeric(mu_eta_mlx)
-    if (any(mu_eta_numeric == 0)) {
+    if (any(mu_eta_mlx == 0)) {
       stop("Zero derivative of link function detected.", call. = FALSE)
     }
 
@@ -294,18 +292,18 @@ mlxs_glm_control <- function(
                           step_size_mlx * wls_fit$coefficients
     qr_state <- wls_fit$qr
     delta_vec <- beta_new_mlx - beta_mlx
-    delta_val <- as.numeric(max(abs(delta_vec)))
+    delta_mlx <- max(abs(delta_vec))
 
     eta_mlx <- X_mlx %*% beta_new_mlx
     mu_mlx <- family$linkinv(eta_mlx)
     mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
 
     dev_res_mlx <- family$dev.resids(y_mlx, mu_mlx, weights_mlx)
-    deviance_val <- as.numeric(sum(dev_res_mlx))
-    dev_change_val <- if (is.finite(dev_prev)) {
-      abs(deviance_val - dev_prev) / (0.1 + abs(deviance_val))
+    deviance_mlx <- sum(dev_res_mlx)
+    dev_change_mlx <- if (as.logical(is.finite(dev_prev_mlx))) {
+      abs(deviance_mlx - dev_prev_mlx) / (0.1 + abs(deviance_mlx))
     } else {
-      Inf
+      Rmlx::mlx_scalar(Inf)
     }
 
     if (trace) {
@@ -313,11 +311,11 @@ mlxs_glm_control <- function(
         "Iter ",
         iter,
         ": deviance = ",
-        format(deviance_val, digits = 6),
+        format(as.numeric(deviance_mlx), digits = 6),
         ", delta = ",
-        format(delta_val, digits = 6),
+        format(as.numeric(delta_mlx), digits = 6),
         ", dev_change = ",
-        format(dev_change_val, digits = 6),
+        format(as.numeric(dev_change_mlx), digits = 6),
         ", step_size = ",
         format(as.numeric(step_size_mlx), digits = 6)
       )
@@ -325,14 +323,21 @@ mlxs_glm_control <- function(
 
     # order matters in the next few lines!
 
-    diverging <- ! is.finite(deviance_val) ||
-        (is.finite(dev_prev) && deviance_val - dev_prev > epsilon_target)
+    diverging <- as.logical(
+      !is.finite(deviance_mlx) |
+        (
+          is.finite(dev_prev_mlx) &
+            deviance_mlx - dev_prev_mlx > epsilon_target
+        )
+    )
 
     beta_mlx <- beta_new_mlx
-    dev_prev <- deviance_val
+    dev_prev_mlx <- deviance_mlx
     iter_count <- iter
     
-    if (delta_val < epsilon_target || dev_change_val < epsilon_target) {
+    if (as.logical(
+      delta_mlx < epsilon_target | dev_change_mlx < epsilon_target
+    )) {
       converged <- TRUE
       break
     }
@@ -345,7 +350,9 @@ mlxs_glm_control <- function(
       }
     }
 
-    if (delta_val < epsilon_f64 || dev_change_val < epsilon_f64) {
+    if (as.logical(
+      delta_mlx < epsilon_f64 | dev_change_mlx < epsilon_f64
+    )) {
       if (! moved_to_f64) {
         if (trace) message("Casting to float64 and working on cpu...")
         Rmlx::local_device("cpu")
@@ -358,7 +365,7 @@ mlxs_glm_control <- function(
         weights_mlx <- Rmlx::mlx_cast(weights_mlx, dtype = "float64")
         step_size_mlx <- Rmlx::mlx_cast(step_size_mlx, dtype = "float64")
         moved_to_f64 <- TRUE
-        dev_prev <- Inf # we restart counting the deviance
+        dev_prev_mlx <- Rmlx::mlx_scalar(Inf)
       }
     }
   }
@@ -371,7 +378,7 @@ mlxs_glm_control <- function(
     mu_eta = mu_eta_mlx,
     dev_resids = dev_res_mlx,
     residual = y_mlx - mu_mlx,
-    deviance = dev_prev,
+    deviance = dev_prev_mlx,
     iter = iter_count,
     converged = converged,
     float64 = moved_to_f64,
@@ -440,7 +447,7 @@ mlxs_glm_control <- function(
       call. = FALSE
     )
   }
-  if (any(!Rmlx::mlx_isfinite(weights_mlx))) {
+  if (any(!is.finite(weights_mlx))) {
     stop("Weights must be finite.", call. = FALSE)
   }
   if (any(weights_mlx < 0)) {
@@ -462,29 +469,41 @@ mlxs_glm_control <- function(
   eta_mlx <- X_mlx %*% beta_mlx
   mu_mlx <- family$linkinv(eta_mlx)
   mu_mlx <- .mlxs_glm_clamp_mu(mu_mlx, family)
-  eta <- as.numeric(as.matrix(eta_mlx))
-  mu <- as.numeric(as.matrix(mu_mlx))
 
-  response_vec <- if (inherits(response, "mlx")) {
-    as.numeric(response)
-  } else if (is.matrix(response) && ncol(response) == 1L) {
-    drop(response)
-  } else {
-    response
+  response_vec <- NULL
+  weights_vec <- NULL
+  needs_base_initialize <- is.null(family$initialize_mlx)
+  if (
+    !inherits(response, "mlx") &&
+      is.matrix(response) &&
+      ncol(response) != 1L
+  ) {
+    needs_base_initialize <- TRUE
   }
-
-  offset <- rep.int(0, n_obs)
-  if (!is.null(family$initialize)) {
+  if (!needs_base_initialize) {
+    init <- family$initialize_mlx(
+      y = y_mlx,
+      weights = weights_mlx,
+      eta = eta_mlx,
+      mu = mu_mlx,
+      nobs = n_obs
+    )
+    mu_mlx <- init$mu
+    eta_mlx <- init$eta %||% family$linkfun(mu_mlx)
+  } else if (!is.null(family$initialize)) {
+    response_vec <- drop(as.numeric(response))
+    weights_vec <- as.numeric(weights_mlx)
+    offset <- rep.int(0, n_obs)
     env <- new.env(parent = environment())
     initialize_vars <- list(
       y = response_vec,
-      weights = as.numeric(weights_mlx),
+      weights = weights_vec,
       start = NULL,
       etastart = NULL,
-      mustart = mu,
+      mustart = NULL,
       offset = offset,
       nobs = n_obs,
-      n = as.numeric(weights_mlx)
+      n = weights_vec
     )
     for (nm in names(initialize_vars)) {
       assign(nm, initialize_vars[[nm]], envir = env)
@@ -507,7 +526,6 @@ mlxs_glm_control <- function(
     }
   } else {
     mu_mlx <- family$linkinv(eta_mlx)
-    mu <- as.numeric(mu_mlx)
   }
 
   eps_mlx <- Rmlx::mlx_scalar(.Machine$double.eps)
@@ -535,10 +553,8 @@ mlxs_glm_control <- function(
     Rmlx::local_device("cpu")
   }
 
-  dev_res_vec <- as.numeric(irls_state$dev_resids)
-  deviance <- sum(dev_res_vec)
+  deviance <- as.numeric(sum(irls_state$dev_resids))
 
-  fitted_values <- as.numeric(irls_state$mu)
   deviance_resid_mlx <- sign(irls_state$residual) * sqrt(irls_state$dev_resids)
   working_weights_mlx <- Rmlx::mlx_clip(
     irls_state$w,
@@ -560,24 +576,38 @@ mlxs_glm_control <- function(
     NA_real_
   }
 
-  null_mean <- mean(response_vec)
-  null_mu_mlx <- Rmlx::mlx_full(c(n_obs, 1L), null_mean)
+  null_mu_mlx <- Rmlx::mlx_broadcast_to(mean(y_mlx), c(n_obs, 1L))
   null_mu_mlx <- .mlxs_glm_clamp_mu(null_mu_mlx, family)
-  null_dev <- sum(as.numeric(as.matrix(family$dev.resids(
+  null_dev <- as.numeric(sum(family$dev.resids(
     y_mlx,
     null_mu_mlx,
     weights_mlx
-  ))))
+  )))
 
-  weights_for_aic <- as.numeric(weights_mlx)
-  aic <- family$aic(
-    response_vec,
-    weights_for_aic,
-    fitted_values,
-    weights_for_aic,
-    deviance
-  ) +
-    2 * n_coef
+  aic <- if (!is.null(family$aic_mlx)) {
+    as.numeric(family$aic_mlx(
+      y_mlx,
+      weights_mlx,
+      irls_state$mu,
+      weights_mlx,
+      sum(irls_state$dev_resids)
+    ))
+  } else {
+    if (is.null(response_vec)) {
+      response_vec <- drop(as.numeric(response))
+    }
+    if (is.null(weights_vec)) {
+      weights_vec <- as.numeric(weights_mlx)
+    }
+    family$aic(
+      response_vec,
+      weights_vec,
+      as.numeric(irls_state$mu),
+      weights_vec,
+      deviance
+    )
+  }
+  aic <- aic + 2 * n_coef
 
   list(
     coefficients = irls_state$beta,
