@@ -52,7 +52,10 @@ the computation.}
 }
 \value{
 An object of class \code{mlxs_glmnet} containing the fitted coefficient
-path, intercepts, lambda sequence, and scaling information.
+path, intercepts, lambda sequence, and scaling information. The \code{beta} and
+\code{a0} components are stored as MLX arrays so downstream methods can keep
+path computations on the MLX backend. Use \code{\link[=coef]{coef()}} or \code{\link[=predict]{predict()}} for
+ordinary base-R matrix outputs.
 }
 \description{
 Fit lasso or elastic-net penalised regression paths using MLX arrays for the

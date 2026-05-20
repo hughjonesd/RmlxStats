@@ -28,7 +28,10 @@
 #' @param maxit Maximum proximal-gradient iterations per lambda value.
 #' @param tol Convergence tolerance on the coefficient updates.
 #' @return An object of class `mlxs_glmnet` containing the fitted coefficient
-#'   path, intercepts, lambda sequence, and scaling information.
+#'   path, intercepts, lambda sequence, and scaling information. The `beta` and
+#'   `a0` components are stored as MLX arrays so downstream methods can keep
+#'   path computations on the MLX backend. Use [coef()] or [predict()] for
+#'   ordinary base-R matrix outputs.
 #' @export
 mlxs_glmnet <- function(x,
                         y,
