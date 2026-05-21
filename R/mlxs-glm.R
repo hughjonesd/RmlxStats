@@ -69,7 +69,6 @@ mlxs_glm <- function(
   }
 
   X <- stats::model.matrix(terms, mf)
-  .mlxs_check_full_rank(X, "mlxs_glm()")
   n_obs <- nrow(X)
   n_coef <- ncol(X)
 

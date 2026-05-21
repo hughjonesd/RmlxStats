@@ -2,33 +2,9 @@
 utils::globalVariables("compiled")
 
 
-#' Reject rank-deficient model matrices
-#'
-#' Shared pre-fit guard used by formula interfaces before the design matrix is
-#' sent to MLX solvers. MLXS model objects do not currently represent aliased
-#' coefficients, so rank deficiency is treated as an error.
-#'
-#' @param design Numeric model matrix.
-#' @param context Name of the caller to include in the error message.
-#' @return Invisibly returns `TRUE` when `design` is full rank.
-#' @noRd
-.mlxs_check_full_rank <- function(design, context) {
-  qr_rank <- qr(design)$rank
-  n_coef <- ncol(design)
-  if (qr_rank < n_coef) {
-    stop(
-      context,
-      " requires a full-rank model matrix; rank-deficient fits are not ",
-      "supported.",
-      call. = FALSE
-    )
-  }
-  invisible(TRUE)
-}
-
 .mlxs_check_qr_full_rank <- function(qr_fit, x, context) {
   r_diag <- abs(Rmlx::diag(qr_fit$R))
-  rank_tol <- 1e-7 * max(Rmlx::mlx_shape(x)) * as.numeric(max(r_diag))
+  rank_tol <- 1e-7 * max(Rmlx::mlx_shape(x)) * max(r_diag)
   if (any(r_diag <= rank_tol)) {
     stop(
       context,
