@@ -55,8 +55,7 @@ test_that("mlxs_glmnet null binomial path does not overfit", {
     lambda.min.ratio = 1e-3,
     standardize = FALSE,
     intercept = TRUE,
-    thresh = 1e-12,
-    maxit = 100000L
+    control = list(thresh = 1e-12, maxit = 100000L)
   )$lambda
   ref <- glmnet::glmnet(
     x,
