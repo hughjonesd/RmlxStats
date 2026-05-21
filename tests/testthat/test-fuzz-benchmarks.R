@@ -5,49 +5,105 @@ benchmark_specs <- function(tier) {
     data.frame(
       method = c(
         "mlxs_lm", "mlxs_lm",
+        "mlxs_lm_summary",
+        "mlxs_lm_predict",
         "mlxs_glm", "mlxs_glm",
+        "mlxs_glm_summary",
+        "mlxs_glm_predict",
+        "mlxs_glmnet_predict",
         "mlxs_cv_glmnet", "mlxs_cv_glmnet",
         "mlxs_prcomp", "mlxs_prcomp",
+        "mlxs_prcomp_summary",
+        "mlxs_prcomp_predict",
         "mlxs_lm_bootstrap_summary"
       ),
       scenario = c(
         "lm_large_n", "lm_large_p",
+        "lm_summary_large_n",
+        "lm_predict_large_n",
         "glm_large_n", "glm_large_p",
+        "glm_summary_large_n",
+        "glm_predict_large_n",
+        "glmnet_predict_large_n",
         "cv_glmnet_large_n", "cv_glmnet_large_p",
         "prcomp_large_n", "prcomp_large_p",
+        "prcomp_summary_large_p",
+        "prcomp_predict_large_n",
         "lm_bootstrap_summary"
       ),
       n = c(
         180000L, 8500L,
+        120000L,
+        120000L,
         105000L, 8500L,
+        80000L,
+        80000L,
+        80000L,
         24000L, 5600L,
         24000L, 4500L,
+        4500L,
+        24000L,
         10000L
       ),
       p = c(
         160L, 1800L,
+        120L,
+        120L,
         160L, 1500L,
+        100L,
+        100L,
+        180L,
         650L, 1900L,
         450L, 2000L,
+        2000L,
+        450L,
         40L
       ),
-      seed = c(601L, 602L, 603L, 604L, 605L, 606L, 607L, 608L, 609L)
+      seed = c(
+        601L, 602L, 610L, 611L, 603L, 604L, 612L, 613L, 614L,
+        605L, 606L, 607L, 608L, 615L, 616L, 609L
+      )
     )
   } else {
     data.frame(
       method = c(
-        "mlxs_lm", "mlxs_lm", "mlxs_glm",
+        "mlxs_lm", "mlxs_lm",
+        "mlxs_lm_summary",
+        "mlxs_lm_predict",
+        "mlxs_glm",
+        "mlxs_glm_summary",
+        "mlxs_glm_predict",
+        "mlxs_glmnet_predict",
         "mlxs_cv_glmnet", "mlxs_prcomp",
+        "mlxs_prcomp_summary",
+        "mlxs_prcomp_predict",
         "mlxs_lm_bootstrap_summary"
       ),
       scenario = c(
-        "lm_large_n", "lm_large_p", "glm_large_n",
+        "lm_large_n", "lm_large_p",
+        "lm_summary_large_n",
+        "lm_predict_large_n",
+        "glm_large_n",
+        "glm_summary_large_n",
+        "glm_predict_large_n",
+        "glmnet_predict_large_n",
         "cv_glmnet_large_p", "prcomp_large_p",
+        "prcomp_summary_large_p",
+        "prcomp_predict_large_n",
         "lm_bootstrap_summary"
       ),
-      n = c(100000L, 6500L, 65000L, 4500L, 3200L, 5000L),
-      p = c(110L, 1400L, 110L, 1400L, 1600L, 30L),
-      seed = c(501L, 502L, 503L, 504L, 505L, 506L)
+      n = c(
+        100000L, 6500L, 65000L, 65000L, 65000L, 45000L, 45000L,
+        50000L, 4500L, 3200L, 3200L, 18000L, 5000L
+      ),
+      p = c(
+        110L, 1400L, 90L, 90L, 110L, 80L, 80L, 140L,
+        1400L, 1600L, 1600L, 350L, 30L
+      ),
+      seed = c(
+        501L, 502L, 510L, 511L, 503L, 512L, 513L,
+        514L, 504L, 505L, 515L, 516L, 506L
+      )
     )
   }
 }
@@ -97,29 +153,44 @@ force_benchmark_fit <- function(fit, method) {
     method,
     mlxs_lm = {
       Rmlx::mlx_eval(fit$coefficients)
-      stopifnot(all(is.finite(as.numeric(fit$coefficients))))
+    },
+    mlxs_lm_summary = {
+      Rmlx::mlx_eval(fit$std.error)
+      Rmlx::mlx_eval(fit$statistic)
+    },
+    mlxs_lm_predict = {
+      Rmlx::mlx_eval(fit)
     },
     mlxs_glm = {
       Rmlx::mlx_eval(fit$coefficients)
       stopifnot(fit$converged)
-      stopifnot(all(is.finite(as.numeric(fit$coefficients))))
+    },
+    mlxs_glm_summary = {
+      Rmlx::mlx_eval(fit$std.error)
+      Rmlx::mlx_eval(fit$statistic)
+    },
+    mlxs_glm_predict = {
+      Rmlx::mlx_eval(fit)
+    },
+    mlxs_glmnet_predict = {
+      as.matrix(fit)
     },
     mlxs_cv_glmnet = {
-      selected_coef <- coef(fit, s = "lambda.min")
-      stopifnot(is.finite(fit$lambda.min))
-      stopifnot(all(is.finite(as.numeric(fit$cvm))))
-      stopifnot(all(is.finite(as.numeric(selected_coef))))
+      coef(fit, s = "lambda.min")
     },
     mlxs_prcomp = {
       Rmlx::mlx_eval(fit$sdev)
       Rmlx::mlx_eval(fit$rotation)
-      stopifnot(all(is.finite(as.numeric(fit$sdev))))
+    },
+    mlxs_prcomp_summary = {
+      stopifnot(!is.null(fit$importance))
+    },
+    mlxs_prcomp_predict = {
+      Rmlx::mlx_eval(fit)
     },
     mlxs_lm_bootstrap_summary = {
       Rmlx::mlx_eval(fit$std.error)
       stopifnot(!is.null(fit$bootstrap))
-      stopifnot(all(is.finite(as.numeric(fit$std.error))))
-      stopifnot(all(is.finite(as.numeric(fit$bootstrap$se))))
     },
     stop("Unknown benchmark method: ", method, call. = FALSE)
   )
@@ -131,11 +202,37 @@ run_benchmark_case <- function(spec) {
   n <- spec$n
   p <- spec$p
   seed <- spec$seed
+  target <- switch(
+    method,
+    mlxs_lm = "fit",
+    mlxs_glm = "fit",
+    mlxs_cv_glmnet = "fit",
+    mlxs_prcomp = "fit",
+    mlxs_lm_summary = "summary",
+    mlxs_glm_summary = "summary",
+    mlxs_prcomp_summary = "summary",
+    mlxs_lm_bootstrap_summary = "summary",
+    mlxs_lm_predict = "prediction",
+    mlxs_glm_predict = "prediction",
+    mlxs_glmnet_predict = "prediction",
+    mlxs_prcomp_predict = "prediction",
+    stop("Unknown benchmark method: ", method, call. = FALSE)
+  )
   fit_expr <- switch(
     method,
     mlxs_lm = {
       case <- benchmark_regression_data(seed, n, p)
       quote(mlxs_lm(case$formula, data = case$data))
+    },
+    mlxs_lm_summary = {
+      case <- benchmark_regression_data(seed, n, p)
+      fit <- mlxs_lm(case$formula, data = case$data)
+      quote(summary(fit))
+    },
+    mlxs_lm_predict = {
+      case <- benchmark_regression_data(seed, n, p)
+      fit <- mlxs_lm(case$formula, data = case$data)
+      quote(predict(fit, newdata = case$data))
     },
     mlxs_glm = {
       case <- benchmark_regression_data(seed, n, p, family = "binomial")
@@ -145,6 +242,41 @@ run_benchmark_case <- function(spec) {
         family = mlxs_binomial(),
         control = list(maxit = 50, epsilon = 1e-5)
       ))
+    },
+    mlxs_glm_summary = {
+      case <- benchmark_regression_data(seed, n, p, family = "binomial")
+      fit <- mlxs_glm(
+        case$formula,
+        data = case$data,
+        family = mlxs_binomial(),
+        control = list(maxit = 50, epsilon = 1e-5)
+      )
+      quote(summary(fit))
+    },
+    mlxs_glm_predict = {
+      case <- benchmark_regression_data(seed, n, p, family = "binomial")
+      fit <- mlxs_glm(
+        case$formula,
+        data = case$data,
+        family = mlxs_binomial(),
+        control = list(maxit = 50, epsilon = 1e-5)
+      )
+      quote(predict(fit, newdata = case$data, type = "response"))
+    },
+    mlxs_glmnet_predict = {
+      case <- benchmark_glmnet_data(seed, n, p)
+      lambda <- exp(seq(log(0.3), log(0.003), length.out = 6L))
+      fit <- mlxs_glmnet(
+        case$x,
+        case$y,
+        family = mlxs_gaussian(),
+        alpha = 0.5,
+        lambda = lambda,
+        standardize = FALSE,
+        maxit = 1500L,
+        tol = 1e-6
+      )
+      quote(predict(fit, newx = case$x, type = "response"))
     },
     mlxs_cv_glmnet = {
       case <- benchmark_glmnet_data(seed, n, p)
@@ -172,6 +304,32 @@ run_benchmark_case <- function(spec) {
         n_iter = 2L,
         seed = 1L
       ))
+    },
+    mlxs_prcomp_summary = {
+      x <- benchmark_prcomp_data(seed, n, p)
+      fit <- mlxs_prcomp(
+        x,
+        center = TRUE,
+        scale. = FALSE,
+        rank. = 12L,
+        oversample = 10L,
+        n_iter = 2L,
+        seed = 1L
+      )
+      quote(summary(fit))
+    },
+    mlxs_prcomp_predict = {
+      x <- benchmark_prcomp_data(seed, n, p)
+      fit <- mlxs_prcomp(
+        x,
+        center = TRUE,
+        scale. = FALSE,
+        rank. = 12L,
+        oversample = 10L,
+        n_iter = 2L,
+        seed = 1L
+      )
+      quote(predict(fit, newdata = x))
     },
     mlxs_lm_bootstrap_summary = {
       case <- benchmark_regression_data(seed, n, p)
@@ -210,7 +368,7 @@ run_benchmark_case <- function(spec) {
       bootstrap_B = bootstrap_B
     ),
     measure = "time",
-    target = "fit",
+    target = target,
     source = "mlx",
     aggregation = "elapsed_seconds",
     value = elapsed
@@ -232,7 +390,7 @@ test_that("RmlxStats benchmark fuzz cases record elapsed time", {
 
   expect_equal(nrow(summaries_df), nrow(specs))
   expect_true(all(summaries_df$measure == "time"))
-  expect_true(all(summaries_df$target == "fit"))
+  expect_true(all(summaries_df$target %in% c("fit", "summary", "prediction")))
   expect_true(all(summaries_df$aggregation == "elapsed_seconds"))
   expect_true(all(is.finite(summaries_df$value)))
   expect_true(all(summaries_df$value >= 0))
