@@ -68,3 +68,18 @@ test_that("mlxs_lm_fit applies weights identically to lm.wfit", {
     ignore_attr = TRUE
   )
 })
+
+test_that("mlxs_lm_fit rejects rank-deficient design matrices", {
+  design <- cbind(1, as.matrix(mtcars[c("cyl", "disp")]))
+  design <- cbind(design, disp_copy = design[, "disp"])
+  response <- mtcars$mpg
+
+  expect_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1)
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+})

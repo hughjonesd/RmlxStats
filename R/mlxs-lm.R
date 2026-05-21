@@ -66,7 +66,6 @@ mlxs_lm <- function(
       call. = FALSE
     )
   }
-  .mlxs_check_full_rank(design, "mlxs_lm()")
 
   weights_mlx <- NULL
   if (!is.null(weights_raw)) {
@@ -176,6 +175,7 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
 
   # qr has to be on cpu at present...
   qr_fit <- qr(x_work, device = "cpu")
+  .mlxs_check_qr_full_rank(qr_fit, x_work, "MLX linear model")
   qty_mlx <- crossprod(qr_fit$Q, y_work)
   # so does solve_triangular 
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE, 

@@ -26,6 +26,20 @@ utils::globalVariables("compiled")
   invisible(TRUE)
 }
 
+.mlxs_check_qr_full_rank <- function(qr_fit, x, context) {
+  r_diag <- abs(Rmlx::diag(qr_fit$R))
+  rank_tol <- 1e-7 * max(Rmlx::mlx_shape(x)) * as.numeric(max(r_diag))
+  if (any(r_diag <= rank_tol)) {
+    stop(
+      context,
+      " requires a full-rank model matrix; rank-deficient fits are not ",
+      "supported.",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
 #' Build a coefficient covariance matrix from a QR decomposition
 #'
 #' Used by `vcov()` methods after fitting. The helper reuses the stored QR
