@@ -69,6 +69,33 @@ test_that("mlxs_lm_fit applies weights identically to lm.wfit", {
   )
 })
 
+test_that("mlxs_lm_fit accepts full-rank tall design matrices", {
+  n <- 10000
+  design <- cbind(1, seq_len(n))
+  response <- seq_len(n)
+
+  expect_no_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1)
+    )
+  )
+})
+
+test_that("mlxs_lm_fit rejects underdetermined design matrices", {
+  design <- matrix(seq_len(12), nrow = 3)
+  response <- seq_len(3)
+
+  expect_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1)
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+})
+
 test_that("mlxs_lm_fit rejects rank-deficient design matrices", {
   design <- cbind(1, as.matrix(mtcars[c("cyl", "disp")]))
   design <- cbind(design, disp_copy = design[, "disp"])

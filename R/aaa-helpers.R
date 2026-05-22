@@ -3,8 +3,18 @@ utils::globalVariables("compiled")
 
 
 .mlxs_check_qr_full_rank <- function(qr_fit, x, context) {
+  dims <- Rmlx::mlx_shape(x)
+  if (dims[2] > dims[1]) {
+    stop(
+      context,
+      " requires a full-rank model matrix; rank-deficient fits are not ",
+      "supported.",
+      call. = FALSE
+    )
+  }
+
   r_diag <- abs(Rmlx::diag(qr_fit$R))
-  rank_tol <- 1e-7 * max(Rmlx::mlx_shape(x)) * max(r_diag)
+  rank_tol <- 1e-7 * sqrt(Rmlx::colSums(x * x))
   if (any(r_diag <= rank_tol)) {
     stop(
       context,
