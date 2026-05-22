@@ -14,7 +14,8 @@ utils::globalVariables("compiled")
   }
 
   r_diag <- abs(Rmlx::diag(qr_fit$R))
-  rank_tol <- 1e-7 * sqrt(Rmlx::colSums(x * x))
+  rank_tol_scale <- max(1e-7, .mlxs_tail_epsilon(qr_fit$R))
+  rank_tol <- rank_tol_scale * sqrt(Rmlx::colSums(x * x))
   if (any(r_diag <= rank_tol)) {
     stop(
       context,

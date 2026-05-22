@@ -3,8 +3,8 @@
 * `mlxs_glm()` now moves to float64 on the cpu where necessary to 
   compute more accurate estimates.
 * New `mlxs_glm_control()` function.
-* `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient model matrices with a
-  clear error rather than returning unstable aliased coefficients.
+* `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient `x`. A bug which 
+  meant we calculated `qr(x)` twice has now been fixed.
 * New `bread()`, `estfun()` and `hatvalues()` methods for `mlxs_lm` to allow for
   sandwich-style robust standard errors. 
 * More `mlxs_lm` methods now return base R objects by default, controllable
