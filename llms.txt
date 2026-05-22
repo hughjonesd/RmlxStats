@@ -1,7 +1,7 @@
 # RmlxStats
 
-Run statistics on your Mac GPU with [mlx](https://mlx-framework.org) and
-[Rmlx](https://github.com/hughjonesd/Rmlx).
+Statistical modelling front-ends that run on Apple GPU hardware via the
+[Rmlx](https://github.com/hughjonesd/Rmlx) array library.
 
 GPUs are designed to handle matrices, which is a good fit for
 statistics. But up till now R Mac users have not had access to the power
@@ -17,15 +17,34 @@ for bootstrapping.
 
 RmlxStats offers large speedups against both base R functions, and
 speed-optimized packages like speedglm and RCppEigen. Speedups are
-especially large for regressions with many predictors (large p). Very
-roughly, if you have 50 or more predictors and 10,000 or more rows, or
-if your regressions are taking measurable time to complete, RmlxStats is
-worth trying. See the benchmarks vignette for more details.
+especially large for regressions with many predictors (large p).
+
+Very roughly, if you have 50 or more predictors and 10,000 or more rows,
+or if your regressions are taking measurable time to complete, RmlxStats
+is worth trying:
+
+``` r
+# On my machine
+> system.time(lm(arr_delay ~ dep_delay + factor(paste(month,day)), 
+                 data = nycflights13::flights))
+   user  system elapsed 
+ 31.769   0.544  32.764 
+
+> system.time({
+    fit <- mlxs_lm(arr_delay ~ dep_delay + factor(paste(month,day)), 
+                   data = nycflights13::flights)
+    Rmlx::mlx_eval(fit$coefficients)
+  })
+   user  system elapsed 
+  4.274   0.739   3.351 
+```
+
+See the benchmarks vignette for more details.
 
 GPU calculations use float32 precision, so if you need higher numerical
 accuracy than this, RmlxStats may not be the right tool (though
 [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
-can now finish fitting in float64 on the CPU).
+can now finish in 64-bit precision on the CPU).
 
 ## Installation
 

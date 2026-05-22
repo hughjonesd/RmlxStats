@@ -11,8 +11,8 @@
 - [`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md)
   and
   [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
-  now reject rank-deficient model matrices with a clear error rather
-  than returning unstable aliased coefficients.
+  now reject rank-deficient `x`. A bug which meant we calculated `qr(x)`
+  twice has now been fixed.
 - New `bread()`, `estfun()` and
   [`hatvalues()`](https://rdrr.io/r/stats/influence.measures.html)
   methods for `mlxs_lm` to allow for sandwich-style robust standard

@@ -61,8 +61,8 @@ tier <- latest(fuzz)$tier[1]
 
 | Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-20 |
-| Commit       | ae67404    |
+| Generated on | 2026-05-22 |
+| Commit       | 03bcaaf    |
 | Branch       | master     |
 | Rmlx version | 0.4.0      |
 | Tier         | fast       |

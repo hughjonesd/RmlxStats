@@ -10,8 +10,8 @@ Benchmarking was run on an M2 Macbook Air.
 
 | Metadata     | Metadata   |
 |--------------|------------|
-| Generated on | 2026-05-20 |
-| Commit       | ae67404    |
+| Generated on | 2026-05-22 |
+| Commit       | 03bcaaf    |
 | Branch       | master     |
 | Rmlx version | 0.4.0      |
 
@@ -647,41 +647,41 @@ Data table
 | Method | Median seconds | Rel. to base | Rel. to best |
 |----|----|----|----|
 | n = 10000, p = 50 |  |  |  |
-| fixest::feols | 0.011   | 42.0% | 100.0% |
-| RcppEigen::fastLm | 0.016   | 57.8% | 137.7% |
-| speedglm::speedlm | 0.025   | 93.2% | 221.9% |
-| stats::lm | 0.027   | 100.0% | 238.0% |
-| RmlxStats::mlxs_lm | 0.032   | 118.8% | 282.7% |
+| fixest::feols | 0.010   | 41.5% | 100.0% |
+| RcppEigen::fastLm | 0.015   | 59.9% | 144.4% |
+| speedglm::speedlm | 0.021   | 85.1% | 205.2% |
+| stats::lm | 0.025   | 100.0% | 241.0% |
+| RmlxStats::mlxs_lm | 0.012   | 46.2% | 111.4% |
 | n = 50000, p = 50 |  |  |  |
-| fixest::feols | 0.040   | 33.7% | 100.0% |
-| RcppEigen::fastLm | 0.079   | 66.7% | 197.6% |
-| speedglm::speedlm | 0.10    | 87.5% | 259.3% |
-| stats::lm | 0.12    | 100.0% | 296.3% |
-| RmlxStats::mlxs_lm | 0.14    | 120.3% | 356.5% |
+| fixest::feols | 0.035   | 29.7% | 100.0% |
+| RcppEigen::fastLm | 0.088   | 73.9% | 249.1% |
+| speedglm::speedlm | 0.11    | 90.6% | 305.1% |
+| stats::lm | 0.12    | 100.0% | 336.9% |
+| RmlxStats::mlxs_lm | 0.042   | 34.9% | 117.6% |
 | n = 10000, p = 100 |  |  |  |
-| fixest::feols | 0.027   | 31.3% | 100.0% |
-| RcppEigen::fastLm | 0.039   | 44.5% | 141.9% |
-| speedglm::speedlm | 0.073   | 84.0% | 268.2% |
-| stats::lm | 0.087   | 100.0% | 319.0% |
-| RmlxStats::mlxs_lm | 0.096   | 110.4% | 352.1% |
+| fixest::feols | 0.028   | 31.4% | 128.1% |
+| RcppEigen::fastLm | 0.039   | 44.8% | 182.8% |
+| speedglm::speedlm | 0.076   | 85.8% | 350.5% |
+| stats::lm | 0.088   | 100.0% | 408.4% |
+| RmlxStats::mlxs_lm | 0.022   | 24.5% | 100.0% |
 | n = 50000, p = 100 |  |  |  |
-| fixest::feols | 0.12    | 29.4% | 100.0% |
-| RcppEigen::fastLm | 0.23    | 54.0% | 183.7% |
-| speedglm::speedlm | 0.37    | 88.3% | 300.5% |
-| stats::lm | 0.42    | 100.0% | 340.3% |
-| RmlxStats::mlxs_lm | 0.50    | 117.8% | 400.9% |
+| fixest::feols | 0.10    | 25.1% | 100.0% |
+| RcppEigen::fastLm | 0.21    | 51.1% | 203.6% |
+| speedglm::speedlm | 0.35    | 84.2% | 335.8% |
+| stats::lm | 0.41    | 100.0% | 398.8% |
+| RmlxStats::mlxs_lm | 0.12    | 30.2% | 120.4% |
 | n = 10000, p = 200 |  |  |  |
-| fixest::feols | 0.096   | 30.9% | 100.0% |
-| RcppEigen::fastLm | 0.12    | 39.5% | 128.1% |
-| speedglm::speedlm | 0.27    | 85.5% | 277.2% |
-| stats::lm | 0.31    | 100.0% | 324.1% |
-| RmlxStats::mlxs_lm | 0.34    | 108.6% | 351.9% |
+| fixest::feols | 0.086   | 28.2% | 213.2% |
+| RcppEigen::fastLm | 0.12    | 38.7% | 293.3% |
+| speedglm::speedlm | 0.26    | 86.0% | 651.0% |
+| stats::lm | 0.31    | 100.0% | 756.8% |
+| RmlxStats::mlxs_lm | 0.041   | 13.2% | 100.0% |
 | n = 50000, p = 200 |  |  |  |
-| fixest::feols | 0.39    | 26.0% | 100.0% |
-| RcppEigen::fastLm | 0.68    | 45.0% | 173.4% |
-| speedglm::speedlm | 1.3     | 86.6% | 333.4% |
-| stats::lm | 1.5     | 100.0% | 385.1% |
-| RmlxStats::mlxs_lm | 1.7     | 112.7% | 433.8% |
+| fixest::feols | 0.40    | 26.3% | 196.2% |
+| RcppEigen::fastLm | 0.69    | 45.3% | 337.9% |
+| speedglm::speedlm | 1.3     | 84.4% | 629.6% |
+| stats::lm | 1.5     | 100.0% | 745.9% |
+| RmlxStats::mlxs_lm | 0.21    | 13.4% | 100.0% |
 | Base is base R implementation in 'stats' or 'boot' packages. |  |  |  |
 
 ![](benchmarks_files/figure-html/display-lm-plot-1.png)
@@ -693,29 +693,29 @@ Data table
 | Method | Median seconds | Rel. to base | Rel. to best |
 |----|----|----|----|
 | n = 10000, p = 50 |  |  |  |
-| speedglm::speedglm | 0.087   | 79.9% | 134.1% |
-| stats::glm | 0.11    | 100.0% | 167.9% |
-| RmlxStats::mlxs_glm | 0.065   | 59.6% | 100.0% |
+| speedglm::speedglm | 0.080   | 78.0% | 152.5% |
+| stats::glm | 0.10    | 100.0% | 195.6% |
+| RmlxStats::mlxs_glm | 0.052   | 51.1% | 100.0% |
 | n = 50000, p = 50 |  |  |  |
-| speedglm::speedglm | 0.41    | 71.4% | 128.3% |
-| stats::glm | 0.57    | 100.0% | 179.8% |
-| RmlxStats::mlxs_glm | 0.32    | 55.6% | 100.0% |
+| speedglm::speedglm | 0.42    | 81.0% | 254.7% |
+| stats::glm | 0.52    | 100.0% | 314.4% |
+| RmlxStats::mlxs_glm | 0.16    | 31.8% | 100.0% |
 | n = 10000, p = 100 |  |  |  |
-| speedglm::speedglm | 0.28    | 80.1% | 187.4% |
-| stats::glm | 0.34    | 100.0% | 234.1% |
-| RmlxStats::mlxs_glm | 0.15    | 42.7% | 100.0% |
+| speedglm::speedglm | 0.27    | 81.1% | 369.5% |
+| stats::glm | 0.34    | 100.0% | 455.7% |
+| RmlxStats::mlxs_glm | 0.074   | 21.9% | 100.0% |
 | n = 50000, p = 100 |  |  |  |
-| speedglm::speedglm | 1.5     | 87.5% | 236.1% |
-| stats::glm | 1.7     | 100.0% | 269.8% |
-| RmlxStats::mlxs_glm | 0.62    | 37.1% | 100.0% |
+| speedglm::speedglm | 1.4     | 77.0% | 436.7% |
+| stats::glm | 1.8     | 100.0% | 567.4% |
+| RmlxStats::mlxs_glm | 0.31    | 17.6% | 100.0% |
 | n = 10000, p = 200 |  |  |  |
-| speedglm::speedglm | 1.0     | 81.9% | 244.8% |
-| stats::glm | 1.2     | 100.0% | 299.0% |
-| RmlxStats::mlxs_glm | 0.41    | 33.4% | 100.0% |
+| speedglm::speedglm | 1.0     | 82.5% | 726.5% |
+| stats::glm | 1.2     | 100.0% | 880.4% |
+| RmlxStats::mlxs_glm | 0.14    | 11.4% | 100.0% |
 | n = 50000, p = 200 |  |  |  |
-| speedglm::speedglm | 5.0     | 80.5% | 234.3% |
-| stats::glm | 6.2     | 100.0% | 290.9% |
-| RmlxStats::mlxs_glm | 2.1     | 34.4% | 100.0% |
+| speedglm::speedglm | 5.1     | 81.9% | 791.9% |
+| stats::glm | 6.2     | 100.0% | 966.4% |
+| RmlxStats::mlxs_glm | 0.64    | 10.3% | 100.0% |
 | Base is base R implementation in 'stats' or 'boot' packages. |  |  |  |
 
 ![](benchmarks_files/figure-html/display-glm-plot-1.png)
@@ -727,50 +727,50 @@ Data table
 | Method | Median seconds | Rel. to base | Rel. to best |
 |----|----|----|----|
 | n = 10000, p = 50 |  |  |  |
-| glmnet::cv.glmnet | 0.21    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 1.9     |     | 917.2% |
+| glmnet::cv.glmnet | 0.14    |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 1.9     |     | 1348.6% |
 | n = 50000, p = 50 |  |  |  |
-| glmnet::cv.glmnet | 0.26    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 1.6     |     | 630.1% |
+| glmnet::cv.glmnet | 0.25    |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 1.7     |     | 669.7% |
 | n = 250000, p = 50 |  |  |  |
-| glmnet::cv.glmnet | 1.6     |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 2.7     |     | 167.6% |
+| glmnet::cv.glmnet | 1.8     |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 1.9     |     | 104.7% |
 | n = 10000, p = 100 |  |  |  |
-| glmnet::cv.glmnet | 0.11    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 2.0     |     | 1827.1% |
+| glmnet::cv.glmnet | 0.16    |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 1.9     |     | 1200.0% |
 | n = 50000, p = 100 |  |  |  |
-| glmnet::cv.glmnet | 0.45    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 1.7     |     | 374.3% |
+| glmnet::cv.glmnet | 0.48    |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 1.7     |     | 358.0% |
 | n = 250000, p = 100 |  |  |  |
-| glmnet::cv.glmnet | 3.3     |     | 151.2% |
-| RmlxStats::mlxs_cv_glmnet | 2.2     |     | 100.0% |
+| glmnet::cv.glmnet | 3.3     |     | 127.1% |
+| RmlxStats::mlxs_cv_glmnet | 2.6     |     | 100.0% |
 | n = 10000, p = 200 |  |  |  |
 | glmnet::cv.glmnet | 0.25    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 7.1     |     | 2873.4% |
+| RmlxStats::mlxs_cv_glmnet | 6.0     |     | 2378.5% |
 | n = 50000, p = 200 |  |  |  |
-| glmnet::cv.glmnet | 1.1     |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 1.9     |     | 162.7% |
+| glmnet::cv.glmnet | 1.4     |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 2.2     |     | 157.2% |
 | n = 250000, p = 200 |  |  |  |
-| glmnet::cv.glmnet | 7.4     |     | 192.0% |
-| RmlxStats::mlxs_cv_glmnet | 3.9     |     | 100.0% |
+| glmnet::cv.glmnet | 7.8     |     | 162.4% |
+| RmlxStats::mlxs_cv_glmnet | 4.8     |     | 100.0% |
 | n = 10000, p = 400 |  |  |  |
-| glmnet::cv.glmnet | 0.85    |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 17.      |     | 2020.7% |
+| glmnet::cv.glmnet | 0.90    |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 15.      |     | 1680.8% |
 | n = 50000, p = 400 |  |  |  |
-| glmnet::cv.glmnet | 4.1     |     | 160.7% |
-| RmlxStats::mlxs_cv_glmnet | 2.5     |     | 100.0% |
+| glmnet::cv.glmnet | 4.5     |     | 130.5% |
+| RmlxStats::mlxs_cv_glmnet | 3.5     |     | 100.0% |
 | n = 250000, p = 400 |  |  |  |
-| glmnet::cv.glmnet | 23.      |     | 215.4% |
-| RmlxStats::mlxs_cv_glmnet | 11.      |     | 100.0% |
+| glmnet::cv.glmnet | 34.      |     | 120.3% |
+| RmlxStats::mlxs_cv_glmnet | 28.      |     | 100.0% |
 | n = 10000, p = 800 |  |  |  |
-| glmnet::cv.glmnet | 2.9     |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 25.      |     | 869.4% |
+| glmnet::cv.glmnet | 3.2     |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 30.      |     | 938.0% |
 | n = 50000, p = 800 |  |  |  |
-| glmnet::cv.glmnet | 9.6     |     | 100.0% |
-| RmlxStats::mlxs_cv_glmnet | 56.      |     | 580.0% |
+| glmnet::cv.glmnet | 9.3     |     | 100.0% |
+| RmlxStats::mlxs_cv_glmnet | 54.      |     | 586.9% |
 | n = 250000, p = 800 |  |  |  |
-| glmnet::cv.glmnet | 50.      |     | 134.4% |
-| RmlxStats::mlxs_cv_glmnet | 38.      |     | 100.0% |
+| glmnet::cv.glmnet | 55.      |     | 234.5% |
+| RmlxStats::mlxs_cv_glmnet | 23.      |     | 100.0% |
 | Base is base R implementation in 'stats' or 'boot' packages. |  |  |  |
 
 ![](benchmarks_files/figure-html/display-glmnet-plot-1.png)
@@ -782,53 +782,53 @@ Data table
 | Method | Median seconds | Rel. to base | Rel. to best |
 |----|----|----|----|
 | n = 10000, p = 50 |  |  |  |
-| bigstatsr::big_randomSVD | 0.035   | 59.7% | 145.3% |
-| irlba::prcomp_irlba | 0.031   | 53.2% | 129.5% |
-| rsvd::rpca | 0.10    | 170.8% | 416.0% |
-| stats::prcomp | 0.058   | 100.0% | 243.5% |
-| RmlxStats::mlxs_prcomp | 0.024   | 41.1% | 100.0% |
+| bigstatsr::big_randomSVD | 0.033   | 61.9% | 211.5% |
+| irlba::prcomp_irlba | 0.031   | 56.8% | 194.2% |
+| rsvd::rpca | 0.084   | 154.7% | 529.0% |
+| stats::prcomp | 0.054   | 100.0% | 341.9% |
+| RmlxStats::mlxs_prcomp | 0.016   | 29.3% | 100.0% |
 | n = 50000, p = 50 |  |  |  |
-| bigstatsr::big_randomSVD | 0.12    | 39.5% | 709.8% |
-| irlba::prcomp_irlba | 0.12    | 41.1% | 737.8% |
-| rsvd::rpca | 0.38    | 128.4% | 2307.3% |
-| stats::prcomp | 0.30    | 100.0% | 1796.8% |
-| RmlxStats::mlxs_prcomp | 0.016   | 5.6% | 100.0% |
+| bigstatsr::big_randomSVD | 0.13    | 41.6% | 588.5% |
+| irlba::prcomp_irlba | 0.13    | 42.7% | 604.6% |
+| rsvd::rpca | 0.43    | 141.7% | 2006.8% |
+| stats::prcomp | 0.30    | 100.0% | 1416.1% |
+| RmlxStats::mlxs_prcomp | 0.022   | 7.1% | 100.0% |
 | n = 10000, p = 100 |  |  |  |
-| bigstatsr::big_randomSVD | 0.049   | 23.2% | 322.3% |
-| irlba::prcomp_irlba | 0.051   | 23.9% | 332.9% |
-| rsvd::rpca | 0.13    | 60.3% | 838.3% |
-| stats::prcomp | 0.21    | 100.0% | 1391.0% |
-| RmlxStats::mlxs_prcomp | 0.015   | 7.2% | 100.0% |
+| bigstatsr::big_randomSVD | 0.053   | 23.1% | 397.5% |
+| irlba::prcomp_irlba | 0.057   | 25.2% | 433.0% |
+| rsvd::rpca | 0.14    | 60.0% | 1029.7% |
+| stats::prcomp | 0.23    | 100.0% | 1717.6% |
+| RmlxStats::mlxs_prcomp | 0.013   | 5.8% | 100.0% |
 | n = 50000, p = 100 |  |  |  |
-| bigstatsr::big_randomSVD | 0.25    | 23.0% | 821.1% |
-| irlba::prcomp_irlba | 0.22    | 20.7% | 738.0% |
-| rsvd::rpca | 0.70    | 64.7% | 2310.4% |
-| stats::prcomp | 1.1     | 100.0% | 3569.0% |
-| RmlxStats::mlxs_prcomp | 0.030   | 2.8% | 100.0% |
+| bigstatsr::big_randomSVD | 0.24    | 21.9% | 849.1% |
+| irlba::prcomp_irlba | 0.22    | 20.3% | 785.6% |
+| rsvd::rpca | 0.74    | 67.0% | 2594.3% |
+| stats::prcomp | 1.1     | 100.0% | 3874.0% |
+| RmlxStats::mlxs_prcomp | 0.029   | 2.6% | 100.0% |
 | n = 10000, p = 200 |  |  |  |
-| bigstatsr::big_randomSVD | 0.11    | 12.1% | 666.9% |
-| irlba::prcomp_irlba | 0.11    | 11.8% | 653.2% |
-| rsvd::rpca | 0.24    | 27.1% | 1497.7% |
-| stats::prcomp | 0.89    | 100.0% | 5521.7% |
+| bigstatsr::big_randomSVD | 0.10    | 11.6% | 645.7% |
+| irlba::prcomp_irlba | 0.10    | 11.5% | 641.9% |
+| rsvd::rpca | 0.24    | 26.5% | 1473.8% |
+| stats::prcomp | 0.90    | 100.0% | 5558.4% |
 | RmlxStats::mlxs_prcomp | 0.016   | 1.8% | 100.0% |
 | n = 50000, p = 200 |  |  |  |
-| bigstatsr::big_randomSVD | 0.41    | 9.8% | 516.8% |
-| irlba::prcomp_irlba | 0.45    | 10.7% | 563.7% |
-| rsvd::rpca | 1.3     | 30.6% | 1607.7% |
-| stats::prcomp | 4.2     | 100.0% | 5250.5% |
-| RmlxStats::mlxs_prcomp | 0.080   | 1.9% | 100.0% |
+| bigstatsr::big_randomSVD | 0.43    | 10.2% | 484.9% |
+| irlba::prcomp_irlba | 0.49    | 11.7% | 557.2% |
+| rsvd::rpca | 1.3     | 30.9% | 1465.7% |
+| stats::prcomp | 4.2     | 100.0% | 4746.6% |
+| RmlxStats::mlxs_prcomp | 0.088   | 2.1% | 100.0% |
 | n = 10000, p = 400 |  |  |  |
-| bigstatsr::big_randomSVD | 0.21    | 6.1% | 655.7% |
-| irlba::prcomp_irlba | 0.19    | 5.5% | 594.8% |
-| rsvd::rpca | 0.44    | 12.9% | 1396.4% |
-| stats::prcomp | 3.4     | 100.0% | 10796.6% |
-| RmlxStats::mlxs_prcomp | 0.032   | 0.9% | 100.0% |
+| bigstatsr::big_randomSVD | 0.24    | 6.8% | 640.8% |
+| irlba::prcomp_irlba | 0.21    | 6.0% | 566.6% |
+| rsvd::rpca | 0.49    | 14.1% | 1342.2% |
+| stats::prcomp | 3.5     | 100.0% | 9486.5% |
+| RmlxStats::mlxs_prcomp | 0.037   | 1.1% | 100.0% |
 | n = 50000, p = 400 |  |  |  |
-| bigstatsr::big_randomSVD | 0.76    | 4.7% | 774.5% |
-| irlba::prcomp_irlba | 0.94    | 5.8% | 960.9% |
-| rsvd::rpca | 2.3     | 14.2% | 2342.5% |
-| stats::prcomp | 16.      | 100.0% | 16517.7% |
-| RmlxStats::mlxs_prcomp | 0.098   | 0.6% | 100.0% |
+| bigstatsr::big_randomSVD | 0.76    | 4.6% | 793.3% |
+| irlba::prcomp_irlba | 0.95    | 5.8% | 990.5% |
+| rsvd::rpca | 2.3     | 13.9% | 2368.4% |
+| stats::prcomp | 16.      | 100.0% | 17068.6% |
+| RmlxStats::mlxs_prcomp | 0.096   | 0.6% | 100.0% |
 | Base is base R implementation in 'stats' or 'boot' packages. |  |  |  |
 
 ![](benchmarks_files/figure-html/display-pca-plot-1.png)
@@ -840,29 +840,29 @@ Data table
 | Method | Median seconds | Rel. to base | Rel. to best |
 |----|----|----|----|
 | n = 10000, p = 50 |  |  |  |
-| boot::boot | 2.9     | 100.0% | 2066.6% |
-| lmboot::paired.boot | 4.4     | 154.0% | 3183.4% |
+| boot::boot | 2.9     | 100.0% | 2094.3% |
+| lmboot::paired.boot | 4.4     | 153.9% | 3223.2% |
 | lmboot::residual.boot | 0.14    | 4.8% | 100.0% |
-| mlxs_case | 0.95    | 33.0% | 681.2% |
-| mlxs_resid | 0.22    | 7.5% | 155.1% |
+| mlxs_case | 1.0     | 36.0% | 754.0% |
+| mlxs_resid | 0.22    | 7.7% | 161.9% |
 | n = 50000, p = 50 |  |  |  |
-| boot::boot | 15.      | 100.0% | 3574.1% |
-| lmboot::paired.boot | 22.      | 146.6% | 5237.9% |
-| lmboot::residual.boot | 0.64    | 4.2% | 151.4% |
-| mlxs_case | 3.0     | 19.6% | 699.7% |
+| boot::boot | 15.      | 100.0% | 3523.0% |
+| lmboot::paired.boot | 22.      | 149.5% | 5267.4% |
+| lmboot::residual.boot | 0.63    | 4.2% | 147.9% |
+| mlxs_case | 3.2     | 21.6% | 759.8% |
 | mlxs_resid | 0.43    | 2.8% | 100.0% |
 | n = 10000, p = 100 |  |  |  |
-| boot::boot | 8.9     | 100.0% | 3754.0% |
-| lmboot::paired.boot | 15.      | 172.4% | 6470.2% |
-| lmboot::residual.boot | 0.34    | 3.8% | 144.5% |
-| mlxs_case | 1.8     | 20.7% | 777.9% |
-| mlxs_resid | 0.24    | 2.7% | 100.0% |
+| boot::boot | 9.4     | 100.0% | 3670.3% |
+| lmboot::paired.boot | 17.      | 185.1% | 6793.4% |
+| lmboot::residual.boot | 0.38    | 4.0% | 147.1% |
+| mlxs_case | 2.1     | 22.0% | 808.8% |
+| mlxs_resid | 0.26    | 2.7% | 100.0% |
 | n = 50000, p = 100 |  |  |  |
-| boot::boot | 48.      | 100.0% | 9826.6% |
-| lmboot::paired.boot | 78.      | 163.9% | 16104.4% |
-| lmboot::residual.boot | 1.8     | 3.8% | 368.9% |
-| mlxs_case | 6.7     | 14.1% | 1385.1% |
-| mlxs_resid | 0.49    | 1.0% | 100.0% |
+| boot::boot | 60.      | 100.0% | 10427.6% |
+| lmboot::paired.boot | 93.      | 154.2% | 16079.0% |
+| lmboot::residual.boot | 1.9     | 3.2% | 333.2% |
+| mlxs_case | 20.      | 33.3% | 3467.2% |
+| mlxs_resid | 0.58    | 1.0% | 100.0% |
 | Base is base R implementation in 'stats' or 'boot' packages. |  |  |  |
 
 ![](benchmarks_files/figure-html/display-bootstrap-plot-1.png)
