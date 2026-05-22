@@ -51,6 +51,14 @@ This project builds on the `Rmlx` GPU math package to expose statistical workflo
   implementation is correct before building theories about algorithmic trade-offs or
   architectural constraints. Profile to find bottlenecks, then inspect the actual code
   at those hot spots. Be empirical and modest about your capabilities.
+- **BLUNDER REVIEW.** For non-trivial changes, and always for numerical,
+  performance-sensitive, data-model, concurrency, security, or broad refactor
+  changes, do a separate adversarial review before committing: give the staged
+  diff to a second agent/reviewer if available and ask only for severe mistakes
+  such as duplicated expensive work, wrong abstraction layer, missed existing
+  APIs, unnecessary helpers, changed semantics, hidden broad costs, or untested
+  edge cases; address real blockers before committing, or explicitly explain why
+  they are not blockers.
 - **KEEP VARIABLES IN MLX**. The package exists to test the `Rmlx` package. 
   Any speedups can 
   only be gained by using Rmlx data structures. Any data-dependent variables
