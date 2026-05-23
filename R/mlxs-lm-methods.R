@@ -446,7 +446,8 @@ print.summary.mlxs_lm <- function(x, ...) {
     stat_col = "t value",
     p_col = "Pr(>|t|)"
   )
-  rownames(coef_table) <- names(x$coef)
+  coef_names <- rownames(x$coef) %||% names(x$coef)
+  rownames(coef_table) <- coef_names
   printCoefmat(coef_table, has.Pvalue = TRUE)
   cat(
     "\nResidual standard error:",

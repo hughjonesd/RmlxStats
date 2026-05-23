@@ -130,6 +130,10 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   sum_obj <- summary(mlx_fit)
   expect_s3_class(sum_obj, "summary.mlxs_lm")
   expect_equal(drop(as.matrix(sum_obj$coef)), coef(base_fit), tolerance = 1e-6, ignore_attr = TRUE)
+  expect_equal(rownames(sum_obj$coef), names(coef(base_fit)))
+  summary_output <- capture.output(print(sum_obj))
+  expect_true(any(grepl("^\\(Intercept\\)", summary_output)))
+  expect_false(any(grepl("^\\[1,\\]", summary_output)))
 })
 
 test_that("mlxs_lm handles weights like stats::lm", {
