@@ -8,7 +8,8 @@ mlxs_glm_control(
   epsilon = 1e-08,
   epsilon_f64 = 1e-06,
   maxit = 25,
-  trace = FALSE
+  trace = FALSE,
+  rank_tol = NULL
 )
 }
 \arguments{
@@ -23,6 +24,10 @@ precision but slows computation.}
 \item{maxit}{Maximum number of IWLS iterations.}
 
 \item{trace}{Logical: trace each iteration?}
+
+\item{rank_tol}{Optional relative tolerance used to detect rank-deficient
+systems. \code{NULL} uses the package default, preserving the historical
+dtype-sensitive cutoff. Set to \code{FALSE} to skip rank checks entirely.}
 }
 \value{
 A list with default values filled in.

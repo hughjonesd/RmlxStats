@@ -2,7 +2,11 @@
 utils::globalVariables("compiled")
 
 
-.mlxs_check_qr_full_rank <- function(qr_fit, x, context) {
+.mlxs_check_qr_full_rank <- function(qr_fit, x, context, rank_tol = NULL) {
+  if (identical(rank_tol, FALSE)) {
+    return(invisible(TRUE))
+  }
+
   dims <- Rmlx::mlx_shape(x)
   if (dims[2] > dims[1]) {
     stop(
@@ -13,10 +17,13 @@ utils::globalVariables("compiled")
     )
   }
 
+  # Force the QR result before extracting its diagonal. For large matrices,
+  # evaluating diag(R) directly from the lazy QR graph can time out in Metal.
+  Rmlx::mlx_eval(qr_fit$R)
   r_diag <- abs(Rmlx::diag(qr_fit$R))
-  rank_tol_scale <- max(1e-7, .mlxs_tail_epsilon(qr_fit$R))
-  rank_tol <- rank_tol_scale * sqrt(Rmlx::colSums(x * x))
-  if (any(r_diag <= rank_tol)) {
+  rank_tol_scale <- rank_tol %||% max(1e-7, .mlxs_tail_epsilon(qr_fit$R))
+  rank_tol_vec <- rank_tol_scale * sqrt(Rmlx::colSums(x * x))
+  if (any(r_diag <= rank_tol_vec)) {
     stop(
       context,
       " requires a full-rank model matrix; rank-deficient fits are not ",
@@ -25,6 +32,21 @@ utils::globalVariables("compiled")
     )
   }
   invisible(TRUE)
+}
+
+.mlxs_check_rank_tol <- function(rank_tol) {
+  if (is.null(rank_tol)) {
+    return(NULL)
+  }
+  if (identical(rank_tol, FALSE)) {
+    return(FALSE)
+  }
+  if (!is.numeric(rank_tol) || length(rank_tol) != 1L ||
+      is.na(rank_tol) || !is.finite(rank_tol) || rank_tol < 0) {
+    stop("'rank_tol' must be NULL, FALSE, or a non-negative finite number.",
+         call. = FALSE)
+  }
+  rank_tol
 }
 
 #' Build a coefficient covariance matrix from a QR decomposition

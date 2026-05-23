@@ -4,7 +4,7 @@
 \alias{mlxs_lm_fit}
 \title{Fit an MLX linear model from design matrices}
 \usage{
-mlxs_lm_fit(x, y, weights = NULL)
+mlxs_lm_fit(x, y, weights = NULL, rank_tol = NULL)
 }
 \arguments{
 \item{x}{MLX design matrix (or object coercible via \code{\link[Rmlx:as_mlx]{Rmlx::as_mlx()}}) whose
@@ -16,6 +16,10 @@ the response values.}
 \item{weights}{Optional MLX column vector or numeric vector of non-negative
 observation weights. When supplied, weighted least squares are fit via the
 standard square-root weighting.}
+
+\item{rank_tol}{Optional relative tolerance used to detect rank-deficient
+systems. \code{NULL} uses the package default, preserving the historical
+dtype-sensitive cutoff. Set to \code{FALSE} to skip rank checks entirely.}
 }
 \value{
 A list with components \code{coefficients}, \code{fitted.values}, \code{residuals},

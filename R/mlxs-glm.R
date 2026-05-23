@@ -4,15 +4,15 @@
 #' with MLX providing the heavy lifting for weighted least squares solves. Final
 #' convergence is done at double precision on the cpu.
 #'
-#' @inheritParams stats::glm
+#' @inheritParams mlxs_model_params
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
 #'   [mlxs_poisson()]). You can use `"gaussian"` etc.
-#' @param na.action A function indicating how missing values should be handled.
-#'   Defaults to [stats::na.exclude()] so residuals, fitted values, and
-#'   training-data predictions are padded back to the original row count.
+#' @param start Starting values for the parameters in the linear predictor.
 #' @param control Optional list of control parameters passed to
 #'   [mlxs_glm_control()]. Control parameters can include `epsilon`, `epsilon_f64`,
-#'   `maxit` and `trace`.
+#'   `maxit`, `trace`, and `rank_tol`.
+#' @param ... Additional arguments passed to the family function when `family`
+#'   is supplied as a function or string.
 #' @returns An object of class `c("mlxs_glm", "mlxs_model")` containing elements
 #'   similar to the result of [stats::glm()]. Unlike [stats::glm()],
 #'   rank-deficient model matrices are rejected rather than fit with aliased
@@ -106,15 +106,24 @@ mlxs_glm <- function(
 #'   precision but slows computation.
 #' @param maxit Maximum number of IWLS iterations.
 #' @param trace Logical: trace each iteration?
+#' @inheritParams mlxs_model_params
 #' @returns A list with default values filled in.
 #' @export
 mlxs_glm_control <- function(
     epsilon = 1e-8, 
     epsilon_f64 = 1e-6, 
     maxit = 25, 
-    trace = FALSE
+    trace = FALSE,
+    rank_tol = NULL
   ) {
-  list(epsilon = epsilon, epsilon_f64 = epsilon_f64, maxit = maxit, trace = trace)
+  rank_tol <- .mlxs_check_rank_tol(rank_tol)
+  list(
+    epsilon = epsilon,
+    epsilon_f64 = epsilon_f64,
+    maxit = maxit,
+    trace = trace,
+    rank_tol = rank_tol
+  )
 }
 
 #' Clamp fitted GLM means to the valid response range
@@ -285,7 +294,11 @@ mlxs_glm_control <- function(
     )
     w_mlx <- step_inputs$w
 
-    wls_fit <- mlxs_lm_fit(step_inputs$x_w, step_inputs$z_w)
+    wls_fit <- mlxs_lm_fit(
+      step_inputs$x_w,
+      step_inputs$z_w,
+      rank_tol = control$rank_tol
+    )
     
     beta_new_mlx <- (1 - step_size_mlx) * beta_mlx + 
                           step_size_mlx * wls_fit$coefficients

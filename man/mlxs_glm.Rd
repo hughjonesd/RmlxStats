@@ -17,44 +17,30 @@ mlxs_glm(
 )
 }
 \arguments{
-\item{formula}{an object of class \code{"\link[stats]{formula}"} (or one that
-    can be coerced to that class): a symbolic description of the
-    model to be fitted.  The details of model specification are given
-    under \sQuote{Details}.}
+\item{formula}{Model formula.}
 
 \item{family}{A mlxs family object (e.g., \code{\link[=mlxs_gaussian]{mlxs_gaussian()}}, \code{\link[=mlxs_binomial]{mlxs_binomial()}},
 \code{\link[=mlxs_poisson]{mlxs_poisson()}}). You can use \code{"gaussian"} etc.}
 
-\item{data}{an optional data frame, list or environment (or object
-    coercible by \code{\link{as.data.frame}} to a data frame) containing
-    the variables in the model.  If not found in \code{data}, the
-    variables are taken from \code{environment(formula)},
-    typically the environment from which \code{glm} is called.}
+\item{data}{Optional data frame, tibble, or environment containing the
+variables in the model.}
 
-\item{subset}{an optional vector specifying a subset of observations
-    to be used in the fitting process.  (See additional details about how
-    this argument interacts with data-dependent bases in the
-    \sQuote{Details} below.)}
+\item{subset}{Optional expression for subsetting observations.}
 
-\item{weights}{an optional vector of \sQuote{prior weights} to be used
-    in the fitting process.  Should be \code{NULL} or a numeric vector.}
+\item{weights}{Optional non-negative observation weights.}
 
 \item{na.action}{A function indicating how missing values should be handled.
 Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
 training-data predictions are padded back to the original row count.}
 
-\item{start}{starting values for the parameters in the linear predictor.}
+\item{start}{Starting values for the parameters in the linear predictor.}
 
 \item{control}{Optional list of control parameters passed to
 \code{\link[=mlxs_glm_control]{mlxs_glm_control()}}. Control parameters can include \code{epsilon}, \code{epsilon_f64},
-\code{maxit} and \code{trace}.}
+\code{maxit}, \code{trace}, and \code{rank_tol}.}
 
-\item{...}{
-    For \code{glm}: arguments to be used to form the default
-    \code{control} argument if it is not supplied directly.
-
-    For \code{weights}: further arguments passed to or from other methods.
-  }
+\item{...}{Additional arguments passed to the family function when \code{family}
+is supplied as a function or string.}
 }
 \value{
 An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements

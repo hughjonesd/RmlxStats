@@ -110,3 +110,42 @@ test_that("mlxs_lm_fit rejects rank-deficient design matrices", {
     fixed = TRUE
   )
 })
+
+test_that("mlxs_lm_fit uses rank_tol for near rank-deficient designs", {
+  x <- seq_len(12)
+  design <- cbind(
+    1,
+    x = x,
+    almost_x = x + rep(c(-1, 1), 6) * 1e-3
+  )
+  response <- seq_len(12)
+
+  expect_no_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1),
+      rank_tol = 1e-8
+    )
+  )
+  expect_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1),
+      rank_tol = 1e-1
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+  expect_no_error(
+    mlxs_lm_fit(
+      x = Rmlx::as_mlx(design),
+      y = Rmlx::mlx_matrix(response, ncol = 1),
+      rank_tol = FALSE
+    )
+  )
+  expect_error(
+    mlxs_lm_fit(design, response, rank_tol = -1),
+    "'rank_tol' must be NULL, FALSE, or a non-negative finite number",
+    fixed = TRUE
+  )
+})

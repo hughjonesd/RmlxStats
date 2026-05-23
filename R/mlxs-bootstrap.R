@@ -188,8 +188,9 @@ mlxs_boot <- function(
   )
 
   case_fun <- if (fit_type == "lm") {
+    rank_tol <- object$rank_tol
     function(X, y, weights = NULL) {
-      mlxs_lm_fit(X, y, weights = weights)$coefficients
+      mlxs_lm_fit(X, y, weights = weights, rank_tol = rank_tol)$coefficients
     }
   } else {
     family <- object$family

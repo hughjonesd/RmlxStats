@@ -4,7 +4,14 @@
 \alias{mlxs_lm}
 \title{MLX-backed linear regression}
 \usage{
-mlxs_lm(formula, data, subset, weights, na.action = stats::na.exclude)
+mlxs_lm(
+  formula,
+  data,
+  subset,
+  weights,
+  na.action = stats::na.exclude,
+  rank_tol = NULL
+)
 }
 \arguments{
 \item{formula}{Model formula.}
@@ -14,13 +21,15 @@ variables in the model.}
 
 \item{subset}{Optional expression for subsetting observations.}
 
-\item{weights}{Optional non-negative observation weights. Treated like the
-\code{weights} argument to \code{\link[stats:lm]{stats::lm()}}, i.e. they enter the fit via weighted
-least squares.}
+\item{weights}{Optional non-negative observation weights.}
 
 \item{na.action}{A function indicating how missing values should be handled.
 Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
 training-data predictions are padded back to the original row count.}
+
+\item{rank_tol}{Optional relative tolerance used to detect rank-deficient
+systems. \code{NULL} uses the package default, preserving the historical
+dtype-sensitive cutoff. Set to \code{FALSE} to skip rank checks entirely.}
 }
 \value{
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing

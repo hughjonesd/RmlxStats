@@ -227,6 +227,47 @@ test_that("mlxs_glm rejects rank-deficient model matrices", {
   )
 })
 
+test_that("mlxs_glm_control exposes rank_tol", {
+  control <- mlxs_glm_control(rank_tol = 1e-4)
+  expect_equal(control$rank_tol, 1e-4)
+  expect_false(mlxs_glm_control(rank_tol = FALSE)$rank_tol)
+  expect_error(
+    mlxs_glm_control(rank_tol = Inf),
+    "'rank_tol' must be NULL, FALSE, or a non-negative finite number",
+    fixed = TRUE
+  )
+
+  data <- data.frame(y = seq_len(12), x = seq_len(12))
+  data$almost_x <- data$x + rep(c(-1, 1), 6) * 1e-3
+
+  expect_no_error(
+    mlxs_glm(
+      y ~ x + almost_x,
+      data = data,
+      family = mlxs_gaussian(),
+      control = list(rank_tol = 1e-8)
+    )
+  )
+  expect_error(
+    mlxs_glm(
+      y ~ x + almost_x,
+      data = data,
+      family = mlxs_gaussian(),
+      control = list(rank_tol = 1e-1)
+    ),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+  expect_no_error(
+    mlxs_glm(
+      y ~ x + almost_x,
+      data = data,
+      family = mlxs_gaussian(),
+      control = list(rank_tol = FALSE)
+    )
+  )
+})
+
 test_that("mlxs_glm bootstrap summary works", {
   formula <- vs ~ mpg + wt
   data <- transform(mtcars, vs = as.integer(vs > 0))

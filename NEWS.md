@@ -5,6 +5,9 @@
 * New `mlxs_glm_control()` function.
 * `mlxs_lm()` and `mlxs_glm()` now reject rank-deficient `x`. A bug which 
   meant we calculated `qr(x)` twice has now been fixed.
+* `mlxs_lm()`, `mlxs_lm_fit()`, and `mlxs_glm_control()` now expose
+  `rank_tol` to tune rank-deficiency detection. Set `rank_tol = FALSE`
+  to skip rank checks entirely.
 * New `bread()`, `estfun()` and `hatvalues()` methods for `mlxs_lm` to allow for
   sandwich-style robust standard errors. 
 * More `mlxs_lm` methods now return base R objects by default, controllable

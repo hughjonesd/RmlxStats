@@ -3,16 +3,7 @@
 #' Fit a linear model via QR decomposition using MLX arrays on Apple Silicon
 #' devices. The interface mirrors [stats::lm()] for the common arguments.
 #'
-#' @param formula Model formula.
-#' @param data Optional data frame, tibble, or environment containing the
-#'   variables in the model.
-#' @param subset Optional expression for subsetting observations.
-#' @param weights Optional non-negative observation weights. Treated like the
-#'   `weights` argument to [stats::lm()], i.e. they enter the fit via weighted
-#'   least squares.
-#' @param na.action A function indicating how missing values should be handled.
-#'   Defaults to [stats::na.exclude()] so residuals, fitted values, and
-#'   training-data predictions are padded back to the original row count.
+#' @inheritParams mlxs_model_params
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -31,9 +22,11 @@ mlxs_lm <- function(
   data,
   subset,
   weights,
-  na.action = stats::na.exclude
+  na.action = stats::na.exclude,
+  rank_tol = NULL
 ) {
   call <- match.call()
+  rank_tol <- .mlxs_check_rank_tol(rank_tol)
 
   mf <- match.call(expand.dots = FALSE)
   arg_names <- c("formula", "data", "subset", "weights", "na.action")
@@ -99,7 +92,8 @@ mlxs_lm <- function(
   fit_res <- mlxs_lm_fit(
     x = design_mlx,
     y = response_mlx,
-    weights = weights_mlx
+    weights = weights_mlx,
+    rank_tol = rank_tol
   )
 
   result <- list(
@@ -115,7 +109,8 @@ mlxs_lm <- function(
     model = mf,
     qr = fit_res$qr,
     weights = weights_mlx,
-    assign = assign_vec
+    assign = assign_vec,
+    rank_tol = rank_tol
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")
@@ -135,6 +130,7 @@ mlxs_lm <- function(
 #' @param weights Optional MLX column vector or numeric vector of non-negative
 #'   observation weights. When supplied, weighted least squares are fit via the
 #'   standard square-root weighting.
+#' @inheritParams mlxs_model_params
 #'
 #' @return A list with components `coefficients`, `fitted.values`, `residuals`,
 #'   `effects`, and `qr`, mirroring the corresponding pieces of [stats::lm()].
@@ -154,7 +150,8 @@ mlxs_lm <- function(
 #' drop(as.matrix(fit$coefficients))
 #'
 #' @export
-mlxs_lm_fit <- function(x, y, weights = NULL) {
+mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL) {
+  rank_tol <- .mlxs_check_rank_tol(rank_tol)
   x_orig <- Rmlx::as_mlx(x)
   y_orig <- if (inherits(y, "mlx")) y else Rmlx::mlx_matrix(y, ncol = 1)
 
@@ -175,7 +172,12 @@ mlxs_lm_fit <- function(x, y, weights = NULL) {
 
   # qr has to be on cpu at present...
   qr_fit <- qr(x_work, device = "cpu")
-  .mlxs_check_qr_full_rank(qr_fit, x_work, "MLX linear model")
+  .mlxs_check_qr_full_rank(
+    qr_fit,
+    x_work,
+    "MLX linear model",
+    rank_tol = rank_tol
+  )
   qty_mlx <- crossprod(qr_fit$Q, y_work)
   # so does solve_triangular 
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE, 

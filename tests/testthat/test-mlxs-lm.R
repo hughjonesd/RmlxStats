@@ -245,6 +245,23 @@ test_that("mlxs_lm rejects rank-deficient model matrices", {
   )
 })
 
+test_that("mlxs_lm exposes rank_tol", {
+  data <- data.frame(y = seq_len(12), x = seq_len(12))
+  data$almost_x <- data$x + rep(c(-1, 1), 6) * 1e-3
+
+  expect_no_error(
+    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = 1e-8)
+  )
+  expect_error(
+    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = 1e-1),
+    "full-rank model matrix",
+    fixed = TRUE
+  )
+  expect_no_error(
+    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = FALSE)
+  )
+})
+
 test_that("mlxs_lm bootstrap summary provides se", {
   fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
   sum_boot <- summary(
