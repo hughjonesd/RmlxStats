@@ -35,6 +35,7 @@ mlxs_lm <- function(
   if (!"na.action" %in% names(mf)) {
     mf$na.action <- na.action
   }
+  mf$drop.unused.levels <- TRUE
   mf[[1L]] <- quote(model.frame)
   mf <- eval(mf, parent.frame())
 

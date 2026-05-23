@@ -155,6 +155,26 @@ test_that("mlxs_lm handles weights like stats::lm", {
   expect_equal(anova_weighted[["Mean Sq"]], base_weighted[["Mean Sq"]], tolerance = 1e-6)
 })
 
+test_that("mlxs_lm drops unused factor levels like stats::lm", {
+  data <- data.frame(
+    y = seq_len(10),
+    x = factor(rep(1:2, length.out = 10), levels = 1:5)
+  )
+
+  base_fit <- lm(y ~ x, data = data)
+  mlx_fit <- mlxs_lm(y ~ x, data = data)
+
+  expect_equal(model.matrix(mlx_fit), model.matrix(base_fit),
+               ignore_attr = TRUE)
+  expect_equal(
+    drop(as.matrix(coef(mlx_fit, output = "mlx"))),
+    coef(base_fit),
+    tolerance = 1e-6,
+    ignore_attr = TRUE
+  )
+  expect_equal(levels(model.frame(mlx_fit)$x), levels(model.frame(base_fit)$x))
+})
+
 test_that("mlxs_lm defaults to na.exclude and pads training predictions", {
   data <- mtcars
   data$disp[c(2, 7)] <- NA_real_
