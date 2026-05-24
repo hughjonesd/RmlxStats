@@ -105,6 +105,7 @@ fuzz |>
   ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
     geom_point() + 
     geom_line(aes(group = scenario, linetype = tier)) +
+    scale_y_log10() + 
     labs(
       y = "Time (seconds)"
     ) +
