@@ -8,8 +8,7 @@
 * `mlxs_lm()`, `mlxs_lm_fit()`, and `mlxs_glm_control()` now expose
   `rank_tol` to tune rank-deficiency detection. Set `rank_tol = FALSE`
   to skip rank checks entirely.
-* `mlxs_lm()` now drops unused factor levels before building model matrices,
-  matching [stats::lm()].
+* Bugfix: `mlxs_lm()` now drops unused factor levels.
 * New `bread()`, `estfun()` and `hatvalues()` methods for `mlxs_lm` to allow for
   sandwich-style robust standard errors. 
 * More `mlxs_lm` methods now return base R objects by default, controllable

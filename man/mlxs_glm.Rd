@@ -29,9 +29,7 @@ variables in the model.}
 
 \item{weights}{Optional non-negative observation weights.}
 
-\item{na.action}{A function indicating how missing values should be handled.
-Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
-training-data predictions are padded back to the original row count.}
+\item{na.action}{How to handle missing values.}
 
 \item{start}{Starting values for the parameters in the linear predictor.}
 

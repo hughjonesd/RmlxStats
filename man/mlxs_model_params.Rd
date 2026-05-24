@@ -13,13 +13,12 @@ variables in the model.}
 
 \item{weights}{Optional non-negative observation weights.}
 
-\item{na.action}{A function indicating how missing values should be handled.
-Defaults to \code{\link[stats:na.exclude]{stats::na.exclude()}} so residuals, fitted values, and
-training-data predictions are padded back to the original row count.}
+\item{na.action}{How to handle missing values.}
 
 \item{rank_tol}{Optional relative tolerance used to detect rank-deficient
-systems. \code{NULL} uses the package default, preserving the historical
-dtype-sensitive cutoff. Set to \code{FALSE} to skip rank checks entirely.}
+systems. \code{NULL} uses the package default, which varies by dtype and is
+1e-6 for float32 matrices. Set to \code{FALSE} to skip rank checks entirely.
+Note that higher numbers indicate \emph{lower} tolerance.}
 }
 \description{
 Shared model parameter documentation

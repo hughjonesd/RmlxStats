@@ -18,8 +18,9 @@ observation weights. When supplied, weighted least squares are fit via the
 standard square-root weighting.}
 
 \item{rank_tol}{Optional relative tolerance used to detect rank-deficient
-systems. \code{NULL} uses the package default, preserving the historical
-dtype-sensitive cutoff. Set to \code{FALSE} to skip rank checks entirely.}
+systems. \code{NULL} uses the package default, which varies by dtype and is
+1e-6 for float32 matrices. Set to \code{FALSE} to skip rank checks entirely.
+Note that higher numbers indicate \emph{lower} tolerance.}
 }
 \value{
 A list with components \code{coefficients}, \code{fitted.values}, \code{residuals},
