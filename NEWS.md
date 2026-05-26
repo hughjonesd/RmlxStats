@@ -1,4 +1,4 @@
-# RmlxStats (development version)
+# RmlxStats 0.3.0
 
 * `mlxs_glm()` now moves to float64 on the cpu where necessary to 
   compute more accurate estimates.
