@@ -4,7 +4,13 @@
 \alias{mlxs_lm_fit}
 \title{Fit an MLX linear model from design matrices}
 \usage{
-mlxs_lm_fit(x, y, weights = NULL, rank_tol = NULL)
+mlxs_lm_fit(
+  x,
+  y,
+  weights = NULL,
+  rank_tol = NULL,
+  qr_method = c("auto", "cpu", "cholqr2", "tsqr")
+)
 }
 \arguments{
 \item{x}{MLX design matrix (or object coercible via \code{\link[Rmlx:as_mlx]{Rmlx::as_mlx()}}) whose
@@ -21,6 +27,10 @@ standard square-root weighting.}
 systems. \code{NULL} uses the package default, which varies by dtype and is
 1e-6 for float32 matrices. Set to \code{FALSE} to skip rank checks entirely.
 Note that higher numbers indicate \emph{lower} tolerance.}
+
+\item{qr_method}{QR implementation. \code{"auto"} uses Rmlx CholeskyQR2 on the
+GPU when \code{nrow(x) * ncol(x) > 1e7} and otherwise uses MLX QR on the CPU.
+\code{"cholqr2"}, \code{"tsqr"}, and \code{"cpu"} force a specific implementation.}
 }
 \value{
 A list with components \code{coefficients}, \code{fitted.values}, \code{residuals},
@@ -36,7 +46,8 @@ entirely on MLX arrays.
 Inputs that are not already MLX objects are converted with
 \code{\link[Rmlx:as_mlx]{Rmlx::as_mlx()}} or \code{\link[Rmlx:mlx_matrix]{Rmlx::mlx_matrix()}} so callers can provide base-R
 matrices or vectors. Weighted fits are performed by applying the standard
-square-root weight transform before solving the QR system.
+square-root weight transform before solving the QR system. Rmlx applies a
+GPU residual-correction pass to well-conditioned CholeskyQR2 fits.
 }
 \examples{
 x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))

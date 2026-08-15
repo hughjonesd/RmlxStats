@@ -131,6 +131,9 @@ mlxs_lm <- function(
 #' @param weights Optional MLX column vector or numeric vector of non-negative
 #'   observation weights. When supplied, weighted least squares are fit via the
 #'   standard square-root weighting.
+#' @param qr_method QR implementation. `"auto"` uses Rmlx CholeskyQR2 on the
+#'   GPU when `nrow(x) * ncol(x) > 1e7` and otherwise uses MLX QR on the CPU.
+#'   `"cholqr2"`, `"tsqr"`, and `"cpu"` force a specific implementation.
 #' @inheritParams mlxs_model_params
 #'
 #' @return A list with components `coefficients`, `fitted.values`, `residuals`,
@@ -142,7 +145,8 @@ mlxs_lm <- function(
 #' Inputs that are not already MLX objects are converted with
 #' [Rmlx::as_mlx()] or [Rmlx::mlx_matrix()] so callers can provide base-R
 #' matrices or vectors. Weighted fits are performed by applying the standard
-#' square-root weight transform before solving the QR system.
+#' square-root weight transform before solving the QR system. Rmlx applies a
+#' GPU residual-correction pass to well-conditioned CholeskyQR2 fits.
 #'
 #' @examples
 #' x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))
@@ -151,8 +155,10 @@ mlxs_lm <- function(
 #' drop(as.matrix(fit$coefficients))
 #'
 #' @export
-mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL) {
+mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
+                        qr_method = c("auto", "cpu", "cholqr2", "tsqr")) {
   rank_tol <- .mlxs_check_rank_tol(rank_tol)
+  qr_method <- match.arg(qr_method)
   x_orig <- Rmlx::as_mlx(x)
   y_orig <- if (inherits(y, "mlx")) y else Rmlx::mlx_matrix(y, ncol = 1)
 
@@ -171,17 +177,33 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL) {
     y_work <- y_orig * w_sqrt
   }
 
-  # qr has to be on cpu at present...
-  qr_fit <- qr(x_work, device = "cpu")
+  dims <- Rmlx::mlx_shape(x_work)
+  if (identical(qr_method, "auto")) {
+    use_gpu <- Rmlx::mlx_has_gpu() &&
+      identical(Rmlx::mlx_dtype(x_work), "float32") &&
+      identical(Rmlx::mlx_dtype(y_work), "float32") &&
+      prod(as.double(dims)) > 1e7
+    qr_method <- if (use_gpu) "cholqr2" else "cpu"
+  }
+
+  if (identical(qr_method, "cpu")) {
+    qr_fit <- qr(x_work, device = "cpu")
+    qty_mlx <- crossprod(qr_fit$Q, y_work)
+  } else {
+    qr_fit <- Rmlx::mlx_qr_gpu(x_work, y_work, tol = 0, method = qr_method)
+    qty_mlx <- qr_fit$qty
+  }
+  effects_mlx <- qty_mlx
+  if (!is.null(qr_fit$qty_corrected)) {
+    qty_mlx <- qr_fit$qty_corrected
+  }
   .mlxs_check_qr_full_rank(
     qr_fit,
     x_work,
     "MLX linear model",
     rank_tol = rank_tol
   )
-  qty_mlx <- crossprod(qr_fit$Q, y_work)
-  # so does solve_triangular 
-  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE, 
+  coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE,
                                          device = "cpu")
   fitted_mlx <- x_orig %*% coef_mlx
   residual_mlx <- y_orig - fitted_mlx
@@ -190,7 +212,7 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL) {
     coefficients = coef_mlx,
     fitted.values = fitted_mlx,
     residuals = residual_mlx,
-    effects = qty_mlx,
+    effects = effects_mlx,
     qr = qr_fit
   )
 }

@@ -1,5 +1,9 @@
 # RmlxStats 0.3.0
 
+* `mlxs_lm_fit()` now uses Rmlx's stabilized GPU QR automatically when the
+  design has more than 10 million elements, with `qr_method` available for
+  explicit selection. A GPU residual-correction pass improves the accuracy of
+  CholeskyQR2 fits.
 * `mlxs_glm()` now moves to float64 on the cpu where necessary to 
   compute more accurate estimates.
 * New `mlxs_glm_control()` function.

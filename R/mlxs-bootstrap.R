@@ -240,7 +240,7 @@ mlxs_boot <- function(
 #'
 #' Resamples centered residuals around the fitted values and reuses the original
 #' QR decomposition to solve each bootstrap coefficient vector without
-#' rebuilding the design matrix.
+#' rebuilding the decomposition.
 #'
 #' @param object Fitted `mlxs_lm` object or Gaussian `mlxs_glm` object with QR
 #'   state.
@@ -257,15 +257,52 @@ mlxs_boot <- function(
   fitted_mlx <- object$fitted.values
   qr_state <- object$qr
 
-  if (is.null(qr_state$Q) || is.null(qr_state$R)) {
+  if (is.null(qr_state$R)) {
     stop("QR decomposition is required for residual bootstrap.", call. = FALSE)
   }
 
-  residual_fun <- function(residuals) {
-    y_boot <- fitted_mlx + residuals
-    qty <- crossprod(qr_state$Q, y_boot)
-    Rmlx::mlx_solve_triangular(qr_state$R, qty, upper = TRUE, 
-                               device = "cpu")
+  if (is.null(qr_state$Q)) {
+    design_mlx <- Rmlx::as_mlx(stats::model.matrix(object$terms, object$model))
+    weights_mlx <- if (inherits(object, "mlxs_glm")) {
+      object$working.weights
+    } else {
+      object$weights
+    }
+    if (!is.null(weights_mlx)) {
+      weights_sqrt <- sqrt(Rmlx::as_mlx(weights_mlx))
+      if (length(Rmlx::mlx_shape(weights_sqrt)) == 1L) {
+        weights_sqrt <- Rmlx::mlx_reshape(
+          weights_sqrt, c(Rmlx::mlx_shape(design_mlx)[1L], 1L)
+        )
+      }
+      design_work <- design_mlx * Rmlx::mlx_broadcast_to(
+        weights_sqrt, Rmlx::mlx_shape(design_mlx)
+      )
+    } else {
+      design_work <- design_mlx
+    }
+
+    residual_fun <- function(residuals) {
+      y_boot <- fitted_mlx + residuals
+      if (!is.null(weights_mlx)) {
+        y_boot <- y_boot * weights_sqrt
+      }
+      normal_rhs <- crossprod(design_work, y_boot)
+      qty <- Rmlx::mlx_solve_triangular(
+        t(qr_state$R), normal_rhs, upper = FALSE, device = "cpu"
+      )
+      Rmlx::mlx_solve_triangular(
+        qr_state$R, qty, upper = TRUE, device = "cpu"
+      )
+    }
+  } else {
+    residual_fun <- function(residuals) {
+      y_boot <- fitted_mlx + residuals
+      qty <- crossprod(qr_state$Q, y_boot)
+      Rmlx::mlx_solve_triangular(
+        qr_state$R, qty, upper = TRUE, device = "cpu"
+      )
+    }
   }
 
   boot_res <- mlxs_boot(
