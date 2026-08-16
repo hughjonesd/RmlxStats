@@ -141,7 +141,7 @@ test_that("mlxs_lm_fit can use Rmlx GPU QR", {
   x <- cbind(1, matrix(rnorm(400), 100, 4))
   y <- matrix(rnorm(100), 100, 1)
 
-  fit <- mlxs_lm_fit(x, y, qr_method = "cholqr2")
+  fit <- mlxs_lm_fit(x, y, qr_method = "cholqr")
   expected <- qr.solve(x, y)
 
   expect_equal(
@@ -149,10 +149,10 @@ test_that("mlxs_lm_fit can use Rmlx GPU QR", {
     expected,
     tolerance = 1e-4
   )
-  expect_equal(fit$qr$method, "cholqr2")
+  expect_equal(fit$qr$method, "cholqr")
 })
 
-test_that("mlxs_lm_fit corrects CholeskyQR2 coefficients on the GPU", {
+test_that("mlxs_lm_fit corrects Cholesky QR coefficients on the GPU", {
   set.seed(9300)
   n <- 5000L
   p <- 200L
@@ -160,7 +160,7 @@ test_that("mlxs_lm_fit corrects CholeskyQR2 coefficients on the GPU", {
   beta <- seq_len(p) / p
   y <- matrix(drop(x %*% beta) + rnorm(n), n, 1L)
 
-  fit <- mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr2")
+  fit <- mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr")
 
   expect_equal(
     drop(as.matrix(fit$coefficients)),
@@ -184,7 +184,7 @@ test_that("mlxs_lm_fit applies its own rank tolerance to GPU QR", {
   y <- matrix(rnorm(n), n, 1L)
 
   expect_no_error(
-    mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr2")
+    mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr")
   )
 })
 
@@ -403,7 +403,7 @@ test_that("mlxs_lm residual bootstrap supports compact GPU QR state", {
   fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
   design <- model.matrix(fit$terms, fit$model)
   response <- model.response(fit$model)
-  gpu_fit <- mlxs_lm_fit(design, response, qr_method = "cholqr2")
+  gpu_fit <- mlxs_lm_fit(design, response, qr_method = "cholqr")
   fit$qr <- gpu_fit$qr
 
   boot <- summary(

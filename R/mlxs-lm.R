@@ -131,9 +131,9 @@ mlxs_lm <- function(
 #' @param weights Optional MLX column vector or numeric vector of non-negative
 #'   observation weights. When supplied, weighted least squares are fit via the
 #'   standard square-root weighting.
-#' @param qr_method QR implementation. `"auto"` uses Rmlx CholeskyQR2 on the
+#' @param qr_method QR implementation. `"auto"` uses Rmlx Cholesky QR on the
 #'   GPU when `nrow(x) * ncol(x) > 1e7` and otherwise uses MLX QR on the CPU.
-#'   `"cholqr2"`, `"tsqr"`, and `"cpu"` force a specific implementation.
+#'   `"cholqr"`, `"tsqr"`, and `"cpu"` force a specific implementation.
 #' @inheritParams mlxs_model_params
 #'
 #' @return A list with components `coefficients`, `fitted.values`, `residuals`,
@@ -146,7 +146,7 @@ mlxs_lm <- function(
 #' [Rmlx::as_mlx()] or [Rmlx::mlx_matrix()] so callers can provide base-R
 #' matrices or vectors. Weighted fits are performed by applying the standard
 #' square-root weight transform before solving the QR system. Rmlx applies a
-#' GPU residual-correction pass to well-conditioned CholeskyQR2 fits.
+#' GPU residual-correction pass to well-conditioned Cholesky QR fits.
 #'
 #' @examples
 #' x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))
@@ -156,7 +156,7 @@ mlxs_lm <- function(
 #'
 #' @export
 mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
-                        qr_method = c("auto", "cpu", "cholqr2", "tsqr")) {
+                        qr_method = c("auto", "cpu", "cholqr", "tsqr")) {
   rank_tol <- .mlxs_check_rank_tol(rank_tol)
   qr_method <- match.arg(qr_method)
   x_orig <- Rmlx::as_mlx(x)
@@ -183,7 +183,7 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
       identical(Rmlx::mlx_dtype(x_work), "float32") &&
       identical(Rmlx::mlx_dtype(y_work), "float32") &&
       prod(as.double(dims)) > 1e7
-    qr_method <- if (use_gpu) "cholqr2" else "cpu"
+    qr_method <- if (use_gpu) "cholqr" else "cpu"
   }
 
   if (identical(qr_method, "cpu")) {
