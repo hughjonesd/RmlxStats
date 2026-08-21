@@ -37,8 +37,9 @@ expect_mlxs_lm_matches_lm <- function(
   list(base = base_fit, mlx = mlx_fit)
 }
 
-compare_lm_to_stats_lm <- function(scenario, formula, data, case_type) {
-  mlx_fit <- mlxs_lm(formula, data = data)
+compare_lm_to_stats_lm <- function(scenario, formula, data, case_type,
+                                   rank_tol = NULL) {
+  mlx_fit <- mlxs_lm(formula, data = data, rank_tol = rank_tol)
   base_fit <- lm(formula, data = data)
   mlx_coef <- coef(mlx_fit)
   mlx_vcov <- as.matrix(vcov(mlx_fit))
@@ -250,7 +251,8 @@ test_that("mlxs_lm near-rank-deficient stability is tracked", {
       scenario = scenario,
       formula = y ~ x1 + x2 + x3,
       data = data,
-      case_type = "near_rank_deficient"
+      case_type = "near_rank_deficient",
+      rank_tol = FALSE
     )
   }
 

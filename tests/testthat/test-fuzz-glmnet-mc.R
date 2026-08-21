@@ -29,8 +29,7 @@ run_glmnet_prediction_rep <- function(
     lambda.min.ratio = 1e-3,
     standardize = FALSE,
     intercept = TRUE,
-    thresh = 1e-12,
-    maxit = 100000L
+    control = list(thresh = 1e-12, maxit = 100000L)
   )
   lambda <- as.numeric(ref$lambda)
 
@@ -86,7 +85,7 @@ run_glmnet_prediction_rep <- function(
     reference_prediction_risk = ref_risk[[best_idx]],
     prediction_risk_delta = mlx_risk - ref_risk[[best_idx]],
     all_finite = all(is.finite(c(
-      mlx$a0,
+      as.numeric(mlx$a0),
       as.matrix(mlx$beta),
       mlx_risk,
       ref_risk
