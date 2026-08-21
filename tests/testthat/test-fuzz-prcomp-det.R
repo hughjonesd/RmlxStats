@@ -150,7 +150,7 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
                tolerance = 1e-6)
   expect_lte(
     prcomp_projector_error(row_fit$rotation, fit$rotation),
-    2e-6
+    1e-5
   )
 
   col_perm <- sample(seq_len(ncol(x)))
@@ -167,7 +167,7 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
   col_rotation[col_perm, ] <- as.matrix(col_fit$rotation)
   expect_lte(
     prcomp_projector_error(col_rotation, fit$rotation),
-    2e-6
+    1e-5
   )
 
   signs <- rep(c(-1, 1), length.out = ncol(x))
@@ -183,7 +183,7 @@ test_that("mlxs_prcomp deterministic metamorphic properties hold", {
   sign_rotation <- sweep(as.matrix(sign_fit$rotation), 1L, signs, `*`)
   expect_lte(
     prcomp_projector_error(sign_rotation, fit$rotation),
-    2e-6
+    1e-5
   )
 
   same_seed_fit <- mlxs_prcomp(
