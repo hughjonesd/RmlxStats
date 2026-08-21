@@ -22,7 +22,7 @@ Imports:
     Rmlx (>= 0.4.0),
     generics
 Remotes: 
-    hughjonesd/Rmlx
+    github::hughjonesd/Rmlx#44
 Suggests:
     glmnet,
     knitr,
