@@ -1,3 +1,5 @@
+# RmlxStats (development version)
+
 # RmlxStats 0.3.0
 
 * `mlxs_lm_fit()` now uses Rmlx's stabilized GPU QR automatically when the
