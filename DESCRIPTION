@@ -1,6 +1,6 @@
 Package: RmlxStats
 Title: MLX-Accelerated Statistical Models
-Version: 0.3.0.9000
+Version: 0.4.0
 Authors@R: 
     c(
       person("David", "Hugh-Jones", , "davidhughjones@gmail.com", role = c("aut", "cre")),
