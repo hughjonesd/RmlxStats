@@ -136,6 +136,71 @@ test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   expect_false(any(grepl("^\\[1,\\]", summary_output)))
 })
 
+test_that("mlxs_lm_fit can use Rmlx GPU QR", {
+  set.seed(20260815)
+  x <- cbind(1, matrix(rnorm(400), 100, 4))
+  y <- matrix(rnorm(100), 100, 1)
+
+  fit <- mlxs_lm_fit(x, y, qr_method = "cholqr")
+  expected <- qr.solve(x, y)
+
+  expect_equal(
+    as.matrix(fit$coefficients),
+    expected,
+    tolerance = 1e-4
+  )
+  expect_equal(fit$qr$method, "cholqr")
+})
+
+test_that("mlxs_lm_fit corrects Cholesky QR coefficients on the GPU", {
+  set.seed(9300)
+  n <- 5000L
+  p <- 200L
+  x <- cbind(1, matrix(rnorm(n * (p - 1L)), n, p - 1L))
+  beta <- seq_len(p) / p
+  y <- matrix(drop(x %*% beta) + rnorm(n), n, 1L)
+
+  fit <- mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr")
+
+  expect_equal(
+    drop(as.matrix(fit$coefficients)),
+    unname(lm.fit(x, y)$coefficients),
+    tolerance = 1e-7
+  )
+  expect_equal(
+    as.matrix(fit$coefficients),
+    as.matrix(Rmlx::mlx_solve_triangular(
+      fit$qr$R, fit$qr$qty_corrected, upper = TRUE, device = "cpu"
+    )),
+    tolerance = 1e-7
+  )
+  expect_equal(as.matrix(fit$effects), as.matrix(fit$qr$qty))
+})
+
+test_that("mlxs_lm_fit applies its own rank tolerance to GPU QR", {
+  set.seed(20260819)
+  n <- 1000L
+  x <- cbind(1, rnorm(n), 1e-5 * rnorm(n))
+  y <- matrix(rnorm(n), n, 1L)
+
+  expect_no_error(
+    mlxs_lm_fit(x, y, rank_tol = FALSE, qr_method = "cholqr")
+  )
+})
+
+test_that("mlxs_lm_fit auto keeps CPU-only response dtypes on the CPU", {
+  n <- 100000L
+  p <- 101L
+  x <- Rmlx::mlx_rand_normal(c(n, p))
+  Rmlx::local_device("cpu")
+  y <- Rmlx::mlx_cast(Rmlx::mlx_rand_normal(c(n, 1L)), "float64")
+
+  fit <- mlxs_lm_fit(x, y, rank_tol = FALSE)
+
+  expect_null(fit$qr$method)
+  expect_equal(Rmlx::mlx_dtype(fit$coefficients), "float64")
+})
+
 test_that("mlxs_lm handles weights like stats::lm", {
   formula <- mpg ~ cyl + disp
   w <- seq_len(nrow(mtcars)) / nrow(mtcars)
@@ -332,6 +397,29 @@ test_that("mlxs_lm bootstrap summary provides se", {
     tolerance = 1e-6,
     ignore_attr = TRUE
   )
+})
+
+test_that("mlxs_lm residual bootstrap supports compact GPU QR state", {
+  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
+  design <- model.matrix(fit$terms, fit$model)
+  response <- model.response(fit$model)
+  gpu_fit <- mlxs_lm_fit(design, response, qr_method = "cholqr")
+  fit$qr <- gpu_fit$qr
+
+  boot <- summary(
+    fit,
+    bootstrap = TRUE,
+    bootstrap_args = list(
+      bootstrap_type = "residual",
+      B = 5,
+      seed = 20260819,
+      progress = FALSE
+    )
+  )
+
+  expect_equal(boot$bootstrap$B, 5)
+  expect_equal(boot$bootstrap$method, "residual")
+  expect_true(all(is.finite(as.numeric(boot$bootstrap$se))))
 })
 
 test_that("confint.mlxs_lm supports bootstrap percentile intervals", {
