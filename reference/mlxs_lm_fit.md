@@ -7,7 +7,13 @@ by wrapping the QR-based solver that runs entirely on MLX arrays.
 ## Usage
 
 ``` r
-mlxs_lm_fit(x, y, weights = NULL)
+mlxs_lm_fit(
+  x,
+  y,
+  weights = NULL,
+  rank_tol = NULL,
+  qr_method = c("auto", "cpu", "cholqr", "tsqr")
+)
 ```
 
 ## Arguments
@@ -30,6 +36,19 @@ mlxs_lm_fit(x, y, weights = NULL)
   observation weights. When supplied, weighted least squares are fit via
   the standard square-root weighting.
 
+- rank_tol:
+
+  Optional relative tolerance used to detect rank-deficient systems.
+  `NULL` uses the package default, which varies by dtype and is 1e-6 for
+  float32 matrices. Set to `FALSE` to skip rank checks entirely. Note
+  that higher numbers indicate *lower* tolerance.
+
+- qr_method:
+
+  QR implementation. `"auto"` uses Rmlx Cholesky QR on the GPU when
+  `nrow(x) * ncol(x) > 1e7` and otherwise uses MLX QR on the CPU.
+  `"cholqr"`, `"tsqr"`, and `"cpu"` force a specific implementation.
+
 ## Value
 
 A list with components `coefficients`, `fitted.values`, `residuals`,
@@ -46,7 +65,8 @@ or
 [`Rmlx::mlx_matrix()`](https://hughjonesd.github.io/Rmlx/reference/mlx_matrix.html)
 so callers can provide base-R matrices or vectors. Weighted fits are
 performed by applying the standard square-root weight transform before
-solving the QR system.
+solving the QR system. Rmlx applies a GPU residual-correction pass to
+well-conditioned Cholesky QR fits.
 
 ## Examples
 

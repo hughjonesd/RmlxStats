@@ -24,11 +24,7 @@ mlxs_glm(
 
 - formula:
 
-  an object of class
-  `"`[`formula`](https://rdrr.io/r/stats/formula.html)`"` (or one that
-  can be coerced to that class): a symbolic description of the model to
-  be fitted. The details of model specification are given under
-  ‘Details’.
+  Model formula.
 
 - family:
 
@@ -40,47 +36,36 @@ mlxs_glm(
 
 - data:
 
-  an optional data frame, list or environment (or object coercible by
-  [`as.data.frame`](https://rdrr.io/r/base/as.data.frame.html) to a data
-  frame) containing the variables in the model. If not found in `data`,
-  the variables are taken from `environment(formula)`, typically the
-  environment from which `glm` is called.
+  Optional data frame, tibble, or environment containing the variables
+  in the model.
 
 - subset:
 
-  an optional vector specifying a subset of observations to be used in
-  the fitting process. (See additional details about how this argument
-  interacts with data-dependent bases in the ‘Details’ below.)
+  Optional expression for subsetting observations.
 
 - weights:
 
-  an optional vector of ‘prior weights’ to be used in the fitting
-  process. Should be `NULL` or a numeric vector.
+  Optional non-negative observation weights.
 
 - na.action:
 
-  A function indicating how missing values should be handled. Defaults
-  to [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html) so
-  residuals, fitted values, and training-data predictions are padded
-  back to the original row count.
+  How to handle missing values.
 
 - start:
 
-  starting values for the parameters in the linear predictor.
+  Starting values for the parameters in the linear predictor.
 
 - control:
 
   Optional list of control parameters passed to
   [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md).
-  Control parameters can include `epsilon`, `epsilon_f64`, `maxit` and
-  `trace`.
+  Control parameters can include `epsilon`, `epsilon_f64`, `maxit`,
+  `trace`, and `rank_tol`.
 
 - ...:
 
-  For `glm`: arguments to be used to form the default `control` argument
-  if it is not supplied directly.
-
-  For `weights`: further arguments passed to or from other methods.
+  Additional arguments passed to the family function when `family` is
+  supplied as a function or string.
 
 ## Value
 

@@ -36,7 +36,8 @@ latest <- function(fuzz) {
     filter(tier %in% chosen_tiers) |> 
     filter(grepl(params$branch, branch)) |> 
     # separate filter statements for a reason, given the max() below
-    filter(datetime_utc == max(datetime_utc)) 
+    filter(.by = c(tier, branch),
+           datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -61,11 +62,11 @@ tier <- latest(fuzz)$tier[1]
 
 | Metadata     |            |
 |--------------|------------|
-| Generated on | 2026-05-22 |
-| Commit       | 03bcaaf    |
+| Generated on | 2026-08-24 |
+| Commit       | f6fc279    |
 | Branch       | master     |
 | Rmlx version | 0.4.0      |
-| Tier         | fast       |
+| Tier         | full       |
 
 ### History
 
@@ -94,7 +95,8 @@ fuzz |>
          suite == "mlxs-benchmarks") |> 
   ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
     geom_point() + 
-    geom_line(aes(group = scenario, linetype = tier)) +
+    geom_line(aes(group = interaction(scenario, tier), linetype = tier)) +
+    scale_y_log10() + 
     labs(
       y = "Time (seconds)"
     ) +
@@ -125,22 +127,17 @@ fuzz |>
     history_theme
 ```
 
-    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## Warning: Removed 10 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 75 rows containing missing values or values outside the scale range
+    ## Warning: Removed 95 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## Warning: Removed 10 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
 
-    ## Warning: Removed 75 rows containing missing values or values outside the scale range
+    ## Warning: Removed 95 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
-
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-3-1.png)
 
@@ -187,21 +184,10 @@ fuzz |>
     history_theme
 ```
 
-    ## Warning: Removed 5 rows containing missing values or values outside the scale range
+    ## Warning: Removed 10 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
-    ## Removed 5 rows containing missing values or values outside the scale range
+    ## Removed 10 rows containing missing values or values outside the scale range
     ## (`geom_segment()`).
-
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-5-1.png)
 
@@ -226,13 +212,6 @@ fuzz |>
     history_theme
 ```
 
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-6-1.png)
 
 ``` r
@@ -256,11 +235,6 @@ fuzz |>
       legend.position = "bottom"
     )
 ```
-
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-7-1.png)
 
@@ -303,15 +277,6 @@ fuzz |>
       y = "Error (log scale)"
     )
 ```
-
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
-    ## `geom_line()`: Each group consists of only one observation.
-    ## ℹ Do you need to adjust the group aesthetic?
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-9-1.png)
 
@@ -431,7 +396,7 @@ Carlo replications.
 ``` r
 
 bootstrap_B <- na.omit(fuzz_lm_mc$bootstrap_B)
-stopifnot(n_distinct(bootstrap_B) == 1)
+# stopifnot(n_distinct(bootstrap_B) == 1)
 
 fuzz_lm_mc |> 
   drop_na(bootstrap_B) |> 
@@ -444,7 +409,7 @@ fuzz_lm_mc |>
                     position = position_dodge2(0.25)) +
     facet_wrap(vars(Scenario)) +
     labs(
-      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory standard errors with non-normal errors"),
+      title = glue("Bootstrap and normal-theory standard errors with non-normal errors"),
       subtitle = paste0("Empirical s.e.s are calculated over multiple Monte Carlo runs.\n",
                         "Lines are Monte Carlo standard errors x 1.96 of the s.e. itself"),
       x = "Coefficient s.e."
@@ -668,7 +633,7 @@ fuzz_glmnet_det |>
     theme(legend.position = "bottom")
 ```
 
-    ## Warning: Removed 15 rows containing missing values or values outside the scale range
+    ## Warning: Removed 30 rows containing missing values or values outside the scale range
     ## (`geom_point()`).
 
 ![](fuzz-test-results_files/figure-html/unnamed-chunk-22-1.png)
@@ -746,6 +711,8 @@ if (tier == "full") {
       )
 }
 ```
+
+![](fuzz-test-results_files/figure-html/unnamed-chunk-25-1.png)
 
 ### `mlxs_cv_glmnet`
 

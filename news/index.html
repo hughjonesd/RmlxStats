@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,12 +38,20 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="rmlxstats-development-version">RmlxStats (development version)<a class="anchor" aria-label="anchor" href="#rmlxstats-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.0" id="rmlxstats-040">RmlxStats 0.4.0<a class="anchor" aria-label="anchor" href="#rmlxstats-040"></a></h2>
+<ul><li>
+<code><a href="../reference/mlxs_lm_fit.html">mlxs_lm_fit()</a></code> now uses Rmlx’s specialized code for QR on the GPU when the design has more than 10 million elements, with <code>qr_method</code> available for explicit selection.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="rmlxstats-030">RmlxStats 0.3.0<a class="anchor" aria-label="anchor" href="#rmlxstats-030"></a></h2>
 <ul><li>
 <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> now moves to float64 on the cpu where necessary to compute more accurate estimates.</li>
 <li>New <code><a href="../reference/mlxs_glm_control.html">mlxs_glm_control()</a></code> function.</li>
 <li>
 <code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code> and <code><a href="../reference/mlxs_glm.html">mlxs_glm()</a></code> now reject rank-deficient <code>x</code>. A bug which meant we calculated <code>qr(x)</code> twice has now been fixed.</li>
+<li>
+<code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code>, <code><a href="../reference/mlxs_lm_fit.html">mlxs_lm_fit()</a></code>, and <code><a href="../reference/mlxs_glm_control.html">mlxs_glm_control()</a></code> now expose <code>rank_tol</code> to tune rank-deficiency detection. Set <code>rank_tol = FALSE</code> to skip rank checks entirely.</li>
+<li>Bugfix: <code><a href="../reference/mlxs_lm.html">mlxs_lm()</a></code> now drops unused factor levels.</li>
 <li>New <code>bread()</code>, <code>estfun()</code> and <code><a href="https://rdrr.io/r/stats/influence.measures.html" class="external-link">hatvalues()</a></code> methods for <code>mlxs_lm</code> to allow for sandwich-style robust standard errors.</li>
 <li>More <code>mlxs_lm</code> methods now return base R objects by default, controllable via the <code>output</code> argument.</li>
 <li>

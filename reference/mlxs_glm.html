@@ -11,7 +11,7 @@ convergence is done at double precision on the cpu."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,10 +68,7 @@ convergence is done at double precision on the cpu.</p>
 
 
 <dl><dt id="arg-formula">formula<a class="anchor" aria-label="anchor" href="#arg-formula"></a></dt>
-<dd><p>an object of class <code>"<a href="https://rdrr.io/r/stats/formula.html" class="external-link">formula</a>"</code> (or one that
-    can be coerced to that class): a symbolic description of the
-    model to be fitted.  The details of model specification are given
-    under ‘Details’.</p></dd>
+<dd><p>Model formula.</p></dd>
 
 
 <dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
@@ -80,45 +77,35 @@ convergence is done at double precision on the cpu.</p>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
-<dd><p>an optional data frame, list or environment (or object
-    coercible by <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></code> to a data frame) containing
-    the variables in the model.  If not found in <code>data</code>, the
-    variables are taken from <code>environment(formula)</code>,
-    typically the environment from which <code>glm</code> is called.</p></dd>
+<dd><p>Optional data frame, tibble, or environment containing the
+variables in the model.</p></dd>
 
 
 <dt id="arg-subset">subset<a class="anchor" aria-label="anchor" href="#arg-subset"></a></dt>
-<dd><p>an optional vector specifying a subset of observations
-    to be used in the fitting process.  (See additional details about how
-    this argument interacts with data-dependent bases in the
-    ‘Details’ below.)</p></dd>
+<dd><p>Optional expression for subsetting observations.</p></dd>
 
 
 <dt id="arg-weights">weights<a class="anchor" aria-label="anchor" href="#arg-weights"></a></dt>
-<dd><p>an optional vector of ‘prior weights’ to be used
-    in the fitting process.  Should be <code>NULL</code> or a numeric vector.</p></dd>
+<dd><p>Optional non-negative observation weights.</p></dd>
 
 
 <dt id="arg-na-action">na.action<a class="anchor" aria-label="anchor" href="#arg-na-action"></a></dt>
-<dd><p>A function indicating how missing values should be handled.
-Defaults to <code><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">stats::na.exclude()</a></code> so residuals, fitted values, and
-training-data predictions are padded back to the original row count.</p></dd>
+<dd><p>How to handle missing values.</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>starting values for the parameters in the linear predictor.</p></dd>
+<dd><p>Starting values for the parameters in the linear predictor.</p></dd>
 
 
 <dt id="arg-control">control<a class="anchor" aria-label="anchor" href="#arg-control"></a></dt>
 <dd><p>Optional list of control parameters passed to
 <code><a href="mlxs_glm_control.html">mlxs_glm_control()</a></code>. Control parameters can include <code>epsilon</code>, <code>epsilon_f64</code>,
-<code>maxit</code> and <code>trace</code>.</p></dd>
+<code>maxit</code>, <code>trace</code>, and <code>rank_tol</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>For <code>glm</code>: arguments to be used to form the default
-    <code>control</code> argument if it is not supplied directly.</p>
-<p>For <code>weights</code>: further arguments passed to or from other methods.</p></dd>
+<dd><p>Additional arguments passed to the family function when <code>family</code>
+is supplied as a function or string.</p></dd>
 
 </dl></div>
     <div class="section level2">

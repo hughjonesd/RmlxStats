@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,7 +48,8 @@
 <span>  epsilon <span class="op">=</span> <span class="fl">1e-08</span>,</span>
 <span>  epsilon_f64 <span class="op">=</span> <span class="fl">1e-06</span>,</span>
 <span>  maxit <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>  trace <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  trace <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  rank_tol <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,6 +75,13 @@ precision but slows computation.</p></dd>
 
 <dt id="arg-trace">trace<a class="anchor" aria-label="anchor" href="#arg-trace"></a></dt>
 <dd><p>Logical: trace each iteration?</p></dd>
+
+
+<dt id="arg-rank-tol">rank_tol<a class="anchor" aria-label="anchor" href="#arg-rank-tol"></a></dt>
+<dd><p>Optional relative tolerance used to detect rank-deficient
+systems. <code>NULL</code> uses the package default, which varies by dtype and is
+1e-6 for float32 matrices. Set to <code>FALSE</code> to skip rank checks entirely.
+Note that higher numbers indicate <em>lower</em> tolerance.</p></dd>
 
 </dl></div>
     <div class="section level2">

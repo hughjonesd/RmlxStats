@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">RmlxStats</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +83,7 @@
 <li>
 <strong>CHECK YOUR CODE BEFORE THEORIZING.</strong> When debugging performance issues, verify the implementation is correct before building theories about algorithmic trade-offs or architectural constraints. Profile to find bottlenecks, then inspect the actual code at those hot spots. Be empirical and modest about your capabilities.</li>
 <li>
-<strong>BLUNDER REVIEW.</strong> For non-trivial changes, and always for numerical, performance-sensitive, data-model, concurrency, security, or broad refactor changes, do a separate adversarial review before committing: give the staged diff to a second agent/reviewer if available and ask only for severe mistakes such as duplicated expensive work, wrong abstraction layer, missed existing APIs, unnecessary helpers, changed semantics, hidden broad costs, or untested edge cases; address real blockers before committing, or explicitly explain why they are not blockers.</li>
+<strong>BLUNDER REVIEW.</strong> For non-trivial changes, and always for numerical, performance-sensitive, data-model, concurrency, security, or broad refactor changes, do a separate adversarial review before committing: spawn a subagent for the review, and ask only for severe mistakes such as duplicated expensive work, wrong abstraction layer, missed existing APIs, unnecessary helpers, changed semantics, hidden broad costs, or untested edge cases; address real blockers before committing, or explicitly explain why they are not blockers.</li>
 <li>
 <strong>KEEP VARIABLES IN MLX</strong>. The package exists to test the <code>Rmlx</code> package. Any speedups can only be gained by using Rmlx data structures. Any data-dependent variables (broadly, anything on the scale of “n” or “p”, including e.g. regression coefficients) should be mlx variables. Mlx variables should be accepted as inputs (use <code>as_mlx()</code>). Computations should be done using Rmlx including mlx-specific methods for base generics (see <code>help("mlx-methods")</code>). If you have to convert to R, that is a failure: ask for help or rethink. Familiarize yourself with <code>mlx_matrix()</code>, <code>mlx_vector()</code> and <code>as_mlx()</code> for conversion; look at <code>ls(package="Rmlx")</code> for mlx functions.</li>
 </ul></div>

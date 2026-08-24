@@ -8,7 +8,14 @@ arguments.
 ## Usage
 
 ``` r
-mlxs_lm(formula, data, subset, weights, na.action = stats::na.exclude)
+mlxs_lm(
+  formula,
+  data,
+  subset,
+  weights,
+  na.action = stats::na.exclude,
+  rank_tol = NULL
+)
 ```
 
 ## Arguments
@@ -28,16 +35,18 @@ mlxs_lm(formula, data, subset, weights, na.action = stats::na.exclude)
 
 - weights:
 
-  Optional non-negative observation weights. Treated like the `weights`
-  argument to [`stats::lm()`](https://rdrr.io/r/stats/lm.html), i.e.
-  they enter the fit via weighted least squares.
+  Optional non-negative observation weights.
 
 - na.action:
 
-  A function indicating how missing values should be handled. Defaults
-  to [`stats::na.exclude()`](https://rdrr.io/r/stats/na.fail.html) so
-  residuals, fitted values, and training-data predictions are padded
-  back to the original row count.
+  How to handle missing values.
+
+- rank_tol:
+
+  Optional relative tolerance used to detect rank-deficient systems.
+  `NULL` uses the package default, which varies by dtype and is 1e-6 for
+  float32 matrices. Set to `FALSE` to skip rank checks entirely. Note
+  that higher numbers indicate *lower* tolerance.
 
 ## Value
 

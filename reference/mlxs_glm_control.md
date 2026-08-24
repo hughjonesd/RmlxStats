@@ -9,7 +9,8 @@ mlxs_glm_control(
   epsilon = 1e-08,
   epsilon_f64 = 1e-06,
   maxit = 25,
-  trace = FALSE
+  trace = FALSE,
+  rank_tol = NULL
 )
 ```
 
@@ -35,6 +36,13 @@ mlxs_glm_control(
 - trace:
 
   Logical: trace each iteration?
+
+- rank_tol:
+
+  Optional relative tolerance used to detect rank-deficient systems.
+  `NULL` uses the package default, which varies by dtype and is 1e-6 for
+  float32 matrices. Set to `FALSE` to skip rank checks entirely. Note
+  that higher numbers indicate *lower* tolerance.
 
 ## Value
 

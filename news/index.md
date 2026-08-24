@@ -1,6 +1,13 @@
 # Changelog
 
-## RmlxStats (development version)
+## RmlxStats 0.4.0
+
+- [`mlxs_lm_fit()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm_fit.md)
+  now uses Rmlx’s specialized code for QR on the GPU when the design has
+  more than 10 million elements, with `qr_method` available for explicit
+  selection.
+
+## RmlxStats 0.3.0
 
 - [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
   now moves to float64 on the cpu where necessary to compute more
@@ -13,6 +20,15 @@
   [`mlxs_glm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm.md)
   now reject rank-deficient `x`. A bug which meant we calculated `qr(x)`
   twice has now been fixed.
+- [`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md),
+  [`mlxs_lm_fit()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm_fit.md),
+  and
+  [`mlxs_glm_control()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_glm_control.md)
+  now expose `rank_tol` to tune rank-deficiency detection. Set
+  `rank_tol = FALSE` to skip rank checks entirely.
+- Bugfix:
+  [`mlxs_lm()`](https://hughjonesd.github.io/RmlxStats/reference/mlxs_lm.md)
+  now drops unused factor levels.
 - New `bread()`, `estfun()` and
   [`hatvalues()`](https://rdrr.io/r/stats/influence.measures.html)
   methods for `mlxs_lm` to allow for sandwich-style robust standard
