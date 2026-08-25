@@ -48,7 +48,8 @@ latest <- function(fuzz) {
     filter(tier %in% chosen_tiers) |> 
     filter(grepl(params$branch, branch)) |> 
     # separate filter statements for a reason, given the max() below
-    filter(datetime_utc == max(datetime_utc)) 
+    filter(.by = c(tier, branch),
+           datetime_utc == max(datetime_utc)) 
 }
 
 prettify <- function(x) {
@@ -102,15 +103,25 @@ history_theme <- theme(panel.grid = element_blank(),
 fuzz |> 
   filter(grepl(params$branch, branch),
          suite == "mlxs-benchmarks") |> 
-  ggplot(aes(y = value, x = datetime_utc, colour = scenario)) + 
+  mutate(
+    model = stringr::str_extract(scenario, "(.*?)_", group = 1),
+    model = ifelse(model == "cv", "cv_glmnet", model),
+    Scenario = stringr::str_extract(scenario, "(.*?)_(.*)", group = 2),
+    Scenario = stringr::str_replace_all(Scenario, "_", " "),
+    Scenario = stringr::str_replace_all(Scenario, "glmnet ", "")
+  ) |> 
+  ggplot(aes(y = value, x = datetime_utc, colour = Scenario, 
+             shape = interaction(tier, branch))) + 
     geom_point() + 
-    geom_line(aes(group = interaction(scenario, tier), linetype = tier)) +
+    geom_line(aes(group = interaction(Scenario, tier, branch), 
+                  linetype = interaction(tier, branch))) +
     scale_y_log10() + 
+    facet_wrap(vars(model)) + 
     labs(
       y = "Time (seconds)"
     ) +
     history_theme +
-    theme(legend.position="bottom")
+    theme(legend.position="right")
 
 ```
 
@@ -363,7 +374,7 @@ our Monte Carlo replications.
 
 ```{r}
 bootstrap_B <- na.omit(fuzz_lm_mc$bootstrap_B)
-stopifnot(n_distinct(bootstrap_B) == 1)
+# stopifnot(n_distinct(bootstrap_B) == 1)
 
 fuzz_lm_mc |> 
   drop_na(bootstrap_B) |> 
@@ -376,7 +387,7 @@ fuzz_lm_mc |>
                     position = position_dodge2(0.25)) +
     facet_wrap(vars(Scenario)) +
     labs(
-      title = glue("Bootstrap ({bootstrap_B[1]} bootstraps) and normal-theory standard errors with non-normal errors"),
+      title = glue("Bootstrap and normal-theory standard errors with non-normal errors"),
       subtitle = paste0("Empirical s.e.s are calculated over multiple Monte Carlo runs.\n",
                         "Lines are Monte Carlo standard errors x 1.96 of the s.e. itself"),
       x = "Coefficient s.e."
