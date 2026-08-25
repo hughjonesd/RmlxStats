@@ -105,10 +105,10 @@ fuzz |>
          suite == "mlxs-benchmarks") |> 
   mutate(
     model = stringr::str_extract(scenario, "(.*?)_", group = 1),
-    model = ifelse(model == "cv", "cv_glmnet", model),
+    model = replace_values(model, "cv" ~ "cv_glmnet"),
     Scenario = stringr::str_extract(scenario, "(.*?)_(.*)", group = 2),
-    Scenario = stringr::str_replace_all(Scenario, "_", " "),
-    Scenario = stringr::str_replace_all(Scenario, "glmnet ", "")
+    Scenario = stringr::str_replace(Scenario, "glmnet_", ""),
+    Scenario = prettify(Scenario)
   ) |> 
   ggplot(aes(y = value, x = datetime_utc, colour = Scenario, 
              shape = interaction(tier, branch))) + 
