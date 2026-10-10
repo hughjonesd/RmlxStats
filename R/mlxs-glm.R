@@ -5,16 +5,12 @@
 #' Iterations can move to CPU double precision near convergence.
 #'
 #' @inheritParams mlxs_model_params
-#' @inheritParams mlxs_lm
 #' @details
-#' After IRLS, the precision check evaluates the final score in CPU float64
-#' using the original data, family and prior weights. Scaling by the last
-#' working QR factor and fitted dispersion estimates the size of a further
-#' scoring step in joint standard-error units. A warning can indicate either
-#' numerical error or incomplete convergence. The final working weights may
-#' differ from those used in the last QR factor, so this is a local,
-#' approximate check; it does not certify accuracy or exclude separation.
-#' Checks are skipped without residual degrees of freedom or residual scale.
+#' The float64 precision check estimates a further IRLS step on the combined
+#' error scale described in [mlxs_lm()]. A warning may indicate numerical
+#' error or incomplete convergence. It uses the last working QR factor, so
+#' is approximate, and is skipped without residual degrees of freedom or
+#' residual scale.
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
 #'   [mlxs_poisson()]). You can use `"gaussian"` etc.
 #' @param start Starting values for the parameters in the linear predictor.
@@ -27,7 +23,7 @@
 #'   similar to the result of [stats::glm()]. Unlike [stats::glm()],
 #'   rank-deficient model matrices are rejected rather than fit with aliased
 #'   coefficients.
-#'   `precision_error` stores the estimated joint error, or `NA` when no
+#'   `precision_error` stores the estimated combined error, or `NA` when no
 #'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'

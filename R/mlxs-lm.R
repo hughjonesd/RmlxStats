@@ -4,19 +4,13 @@
 #' devices. The interface mirrors [stats::lm()] for the common arguments.
 #'
 #' @inheritParams mlxs_model_params
-#' @param precision_tol Warning threshold for estimated numerical error in
-#'   joint standard-error units. Defaults to `0.1`. Use `NULL` to disable
-#'   the check and its additional CPU float64 pass over the original data.
-#'   A larger threshold permits greater numerical error before warning.
-#'
 #' @details
-#' The final precision check evaluates the residual equations in float64,
-#' using the original model data and the stored QR factor. It estimates the
-#' joint coefficient error in standard-error units; it can exceed individual
-#' coefficient errors because it combines directions. An inaccurate QR
-#' factor can mislead the check, and it cannot recover input precision lost
-#' before fitting. A small score is therefore not a guarantee of accuracy.
-#' Checks are skipped without residual degrees of freedom or residual scale.
+#' For one coefficient, `precision_error` estimates numerical error divided
+#' by its standard error. For several, it combines errors, accounting for
+#' correlation between estimates. The check uses float64 residual equations
+#' and the stored QR factor, so it is approximate. It cannot recover precision
+#' lost in the inputs, and is skipped without residual degrees of freedom or
+#' residual scale.
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -25,7 +19,7 @@
 #'   diagnostics may differ from `stats::lm()` at around the 1e-6 level. Unlike
 #'   [stats::lm()], rank-deficient model matrices are rejected rather than fit
 #'   with aliased coefficients.
-#'   `precision_error` stores the estimated joint error, or `NA` when no
+#'   `precision_error` stores the estimated combined error, or `NA` when no
 #'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'
@@ -231,8 +225,9 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE,
                                          device = "cpu")
   if (qr_method != "cpu" && is.null(qr_fit$qty_corrected)) {
-    # Reuse Rmlx's correction when available; otherwise correct the solve,
-    # including TSQR/CPU fallbacks, without another QR factorization.
+    # Rmlx only supplies qty_corrected for CholQR with first-pass
+    # orthogonality error <= 1e-3. Correct the other cases (including QR
+    # fallbacks) here, reusing R rather than repeating the factorization.
     residual_work <- y_work - x_work %*% coef_mlx
     qty_delta <- Rmlx::mlx_solve_triangular(
       t(qr_fit$R), crossprod(x_work, residual_work), upper = FALSE,

@@ -19,6 +19,10 @@ variables in the model.}
 systems. \code{NULL} uses the package default, which varies by dtype and is
 1e-6 for float32 matrices. Set to \code{FALSE} to skip rank checks entirely.
 Note that higher numbers indicate \emph{lower} tolerance.}
+
+\item{precision_tol}{Warning threshold for combined numerical coefficient
+error relative to statistical uncertainty. Defaults to \code{0.1}; \code{NULL}
+disables the CPU float64 check.}
 }
 \description{
 Shared model parameter documentation

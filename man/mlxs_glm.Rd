@@ -38,10 +38,9 @@ variables in the model.}
 \code{\link[=mlxs_glm_control]{mlxs_glm_control()}}. Control parameters can include \code{epsilon}, \code{epsilon_f64},
 \code{maxit}, \code{trace}, and \code{rank_tol}.}
 
-\item{precision_tol}{Warning threshold for estimated numerical error in
-joint standard-error units. Defaults to \code{0.1}. Use \code{NULL} to disable
-the check and its additional CPU float64 pass over the original data.
-A larger threshold permits greater numerical error before warning.}
+\item{precision_tol}{Warning threshold for combined numerical coefficient
+error relative to statistical uncertainty. Defaults to \code{0.1}; \code{NULL}
+disables the CPU float64 check.}
 
 \item{...}{Additional arguments passed to the family function when \code{family}
 is supplied as a function or string.}
@@ -51,7 +50,7 @@ An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements
 similar to the result of \code{\link[stats:glm]{stats::glm()}}. Unlike \code{\link[stats:glm]{stats::glm()}},
 rank-deficient model matrices are rejected rather than fit with aliased
 coefficients.
-\code{precision_error} stores the estimated joint error, or \code{NA} when no
+\code{precision_error} stores the estimated combined error, or \code{NA} when no
 residual scale is available. It is absent when the check is disabled.
 }
 \description{
@@ -60,14 +59,11 @@ with MLX providing the heavy lifting for weighted least squares solves.
 Iterations can move to CPU double precision near convergence.
 }
 \details{
-After IRLS, the precision check evaluates the final score in CPU float64
-using the original data, family and prior weights. Scaling by the last
-working QR factor and fitted dispersion estimates the size of a further
-scoring step in joint standard-error units. A warning can indicate either
-numerical error or incomplete convergence. The final working weights may
-differ from those used in the last QR factor, so this is a local,
-approximate check; it does not certify accuracy or exclude separation.
-Checks are skipped without residual degrees of freedom or residual scale.
+The float64 precision check estimates a further IRLS step on the combined
+error scale described in \code{\link[=mlxs_lm]{mlxs_lm()}}. A warning may indicate numerical
+error or incomplete convergence. It uses the last working QR factor, so
+is approximate, and is skipped without residual degrees of freedom or
+residual scale.
 }
 \examples{
 fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)

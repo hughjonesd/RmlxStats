@@ -53,6 +53,9 @@
   }
   # An exact fit has no residual scale in which to express the error.
   if (is.finite(dispersion) && dispersion == 0) return(NA_real_)
+  # Residual correlations with predictors measure unsatisfied fit equations.
+  # Solving with t(R) puts these discrepancies on comparable, uncorrelated
+  # axes; their length below measures error relative to coefficient uncertainty.
   qty_error <- Rmlx::mlx_solve_triangular(
     t(r), crossprod(x, score_residual), upper = FALSE, device = "cpu"
   )
@@ -60,7 +63,7 @@
   if (!is.finite(error_se) || error_se > tol) {
     warning(
       warning_text, " may exceed precision_tol = ", tol,
-      " joint standard-error units (estimated ", signif(error_se, 3),
+      " standard errors (combined estimate ", signif(error_se, 3),
       "); ", warning_action,
       call. = FALSE
     )

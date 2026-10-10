@@ -10,6 +10,9 @@
 #'   systems. `NULL` uses the package default, which varies by dtype and is
 #'   1e-6 for float32 matrices. Set to `FALSE` to skip rank checks entirely. 
 #'   Note that higher numbers indicate *lower* tolerance.
+#' @param precision_tol Warning threshold for combined numerical coefficient
+#'   error relative to statistical uncertainty. Defaults to `0.1`; `NULL`
+#'   disables the CPU float64 check.
 #' @keywords internal
 #' @name mlxs_model_params
 NULL

@@ -67,8 +67,12 @@ Run `Rscript dev/lm-precision-benchmark/plot.R` to recreate `tradeoff.png`.
 ## Automatic precision checks
 
 `mlxs_lm()` and `mlxs_glm()` now check the final fit automatically. The
-`precision_tol` argument gives the warning threshold in joint standard-error
-units; both default to `0.1`. `NULL` disables the check and its CPU data pass.
+`precision_tol` thresholds combined numerical coefficient error relative to
+statistical uncertainty; both default to `0.1`. For one coefficient the score
+is estimated error divided by its standard error. For independent estimates,
+it is `sqrt(sum((error / SE)^2))`; correlated estimates use their covariance
+to avoid counting overlapping directions twice. `NULL` disables the check
+and its CPU data pass.
 `NULL` is the usual R convention for an absent optional operation.
 Checked fits store the scalar score as `precision_error`, allowing later
 comparison with a stricter threshold without another check. Disabled fits

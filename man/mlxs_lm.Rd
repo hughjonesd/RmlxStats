@@ -31,10 +31,9 @@ systems. \code{NULL} uses the package default, which varies by dtype and is
 1e-6 for float32 matrices. Set to \code{FALSE} to skip rank checks entirely.
 Note that higher numbers indicate \emph{lower} tolerance.}
 
-\item{precision_tol}{Warning threshold for estimated numerical error in
-joint standard-error units. Defaults to \code{0.1}. Use \code{NULL} to disable
-the check and its additional CPU float64 pass over the original data.
-A larger threshold permits greater numerical error before warning.}
+\item{precision_tol}{Warning threshold for combined numerical coefficient
+error relative to statistical uncertainty. Defaults to \code{0.1}; \code{NULL}
+disables the CPU float64 check.}
 }
 \value{
 An object of class \code{c("mlxs_lm", "mlxs_model")} containing
@@ -44,7 +43,7 @@ Note that MLX currently operates in single precision, so fitted values and
 diagnostics may differ from \code{stats::lm()} at around the 1e-6 level. Unlike
 \code{\link[stats:lm]{stats::lm()}}, rank-deficient model matrices are rejected rather than fit
 with aliased coefficients.
-\code{precision_error} stores the estimated joint error, or \code{NA} when no
+\code{precision_error} stores the estimated combined error, or \code{NA} when no
 residual scale is available. It is absent when the check is disabled.
 }
 \description{
@@ -52,13 +51,12 @@ Fit a linear model via QR decomposition using MLX arrays on Apple Silicon
 devices. The interface mirrors \code{\link[stats:lm]{stats::lm()}} for the common arguments.
 }
 \details{
-The final precision check evaluates the residual equations in float64,
-using the original model data and the stored QR factor. It estimates the
-joint coefficient error in standard-error units; it can exceed individual
-coefficient errors because it combines directions. An inaccurate QR
-factor can mislead the check, and it cannot recover input precision lost
-before fitting. A small score is therefore not a guarantee of accuracy.
-Checks are skipped without residual degrees of freedom or residual scale.
+For one coefficient, \code{precision_error} estimates numerical error divided
+by its standard error. For several, it combines errors, accounting for
+correlation between estimates. The check uses float64 residual equations
+and the stored QR factor, so it is approximate. It cannot recover precision
+lost in the inputs, and is skipped without residual degrees of freedom or
+residual scale.
 }
 \examples{
 fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars)
