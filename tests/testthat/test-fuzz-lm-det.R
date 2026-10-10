@@ -38,8 +38,9 @@ expect_mlxs_lm_matches_lm <- function(
 }
 
 compare_lm_to_stats_lm <- function(scenario, formula, data, case_type,
-                                   rank_tol = NULL) {
-  mlx_fit <- mlxs_lm(formula, data = data, rank_tol = rank_tol)
+                                   rank_tol = NULL, precision_tol = 0.1) {
+  mlx_fit <- mlxs_lm(formula, data = data, rank_tol = rank_tol,
+                     precision_tol = precision_tol)
   base_fit <- lm(formula, data = data)
   mlx_coef <- coef(mlx_fit)
   mlx_vcov <- as.matrix(vcov(mlx_fit))
@@ -53,17 +54,20 @@ compare_lm_to_stats_lm <- function(scenario, formula, data, case_type,
       n = nrow(model.frame(formula, data)),
       p = ncol(model.matrix(formula, data))
     ),
-    measure     = c("diagnostic",       "error",       "error",     "error", "diagnostic"),
-    target      = c("condition_number", "coefficient", "fitted",    "vcov",  "finite"),
-    source      = c("design",           "mlx",         "mlx",       "mlx",   "mlx"),
-    baseline    = c(NA,                 "reference",   "reference", "reference", NA),
-    aggregation = c("value",            "max",         "max",       "max",   "all"),
+    measure = c("diagnostic", "error", "error", "error", "diagnostic",
+                "diagnostic"),
+    target = c("condition_number", "coefficient", "fitted", "vcov", "finite",
+               "coefficient_error_se"),
+    source = c("design", rep("mlx", 5)),
+    baseline = c(NA, rep("reference", 3), NA, NA),
+    aggregation = c("value", "max", "max", "max", "all", "joint"),
     value = c(
       kappa(model.matrix(formula, data)),
       max(abs(mlx_coef - coef(base_fit))),
       max(abs(mlx_fitted - fitted(base_fit))),
       max(abs(mlx_vcov - vcov(base_fit))),
-      as.numeric(all(is.finite(finite_values)))
+      as.numeric(all(is.finite(finite_values))),
+      mlx_fit$precision_error
     )
   )
 }
@@ -192,7 +196,12 @@ test_that("GPU least squares retains precision with small residuals", {
       lm.wfit(x, y, weights)
     }
     data <- data.frame(y, x[, -1L])
-    fit <- mlxs_lm(y ~ ., data = data, weights = weights)
+    if (specs$method[i] == "cholqr") {
+      expect_warning(fit <- mlxs_lm(y ~ ., data = data, weights = weights),
+                     "Numerical coefficient error")
+    } else {
+      fit <- mlxs_lm(y ~ ., data = data, precision_tol = NULL)
+    }
     if (specs$method[i] == "tsqr") {
       # Preserve the real model frame for the post-fit diagnostic while
       # explicitly exercising TSQR regardless of the automatic fallback.
@@ -208,7 +217,9 @@ test_that("GPU least squares retains precision with small residuals", {
     ))
     expect_lt(error_se, 0.5, label = specs$scenario[i])
     expect_lt(abs(rss_mlx / rss - 1), 1e-3, label = specs$scenario[i])
-    diagnostic <- mlxs_lm_precision(fit)
+    diagnostic <- if (specs$method[i] == "tsqr") {
+      .mlxs_precision_check(fit, x, y, weights, Inf)
+    } else fit$precision_error
     expect_lt(diagnostic, 1, label = specs$scenario[i])
     summaries[[i]] <- fuzz_metric_rows(
       list(case_type = "gpu_precision", scenario = specs$scenario[i],
@@ -314,7 +325,8 @@ test_that("mlxs_lm near-rank-deficient stability is tracked", {
       formula = y ~ x1 + x2 + x3,
       data = data,
       case_type = "near_rank_deficient",
-      rank_tol = FALSE
+      rank_tol = FALSE,
+      precision_tol = Inf
     )
   }
 
@@ -379,7 +391,12 @@ test_that("mlxs_lm NIST StRD fixtures are checked", {
   names(summaries) <- names(nist_lm_cases)
   for (case_name in names(nist_lm_cases)) {
     case <- nist_lm_cases[[case_name]]
-    fit <- mlxs_lm(case$formula, data = case$data)
+    if (identical(case$name, "Wampler1")) {
+      expect_warning(fit <- mlxs_lm(case$formula, data = case$data),
+                     "Numerical coefficient error")
+    } else {
+      fit <- mlxs_lm(case$formula, data = case$data)
+    }
     fit_summary <- summary(fit)
     coefs <- coef(fit)
     se <- setNames(as.numeric(fit_summary$std.error), names(coefs))

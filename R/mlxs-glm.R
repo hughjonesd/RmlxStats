@@ -1,10 +1,20 @@
 #' MLX-backed generalized linear model
 #'
 #' Fit generalized linear models using iterative reweighted least squares (IRLS)
-#' with MLX providing the heavy lifting for weighted least squares solves. Final
-#' convergence is done at double precision on the cpu.
+#' with MLX providing the heavy lifting for weighted least squares solves.
+#' Iterations can move to CPU double precision near convergence.
 #'
 #' @inheritParams mlxs_model_params
+#' @inheritParams mlxs_lm
+#' @details
+#' After IRLS, the precision check evaluates the final score in CPU float64
+#' using the original data, family and prior weights. Scaling by the last
+#' working QR factor and fitted dispersion estimates the size of a further
+#' scoring step in joint standard-error units. A warning can indicate either
+#' numerical error or incomplete convergence. The final working weights may
+#' differ from those used in the last QR factor, so this is a local,
+#' approximate check; it does not certify accuracy or exclude separation.
+#' Checks are skipped without residual degrees of freedom or residual scale.
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
 #'   [mlxs_poisson()]). You can use `"gaussian"` etc.
 #' @param start Starting values for the parameters in the linear predictor.
@@ -17,6 +27,8 @@
 #'   similar to the result of [stats::glm()]. Unlike [stats::glm()],
 #'   rank-deficient model matrices are rejected rather than fit with aliased
 #'   coefficients.
+#'   `precision_error` stores the estimated joint error, or `NA` when no
+#'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'
 #' @examples
@@ -31,9 +43,11 @@ mlxs_glm <- function(
   na.action = stats::na.exclude,
   start = NULL,
   control = list(),
+  precision_tol = 0.1,
   ...
 ) {
   call <- match.call()
+  precision_tol <- .mlxs_check_precision_tol(precision_tol)
 
   if (is.character(family)) {
     family <- paste0("mlxs_", family)
@@ -93,6 +107,9 @@ mlxs_glm <- function(
   core_fit$na.action <- attr(mf, "na.action")
 
   class(core_fit) <- c("mlxs_glm", "mlxs_model")
+  core_fit$precision_error <- .mlxs_precision_check(
+    core_fit, X, y, weights_raw, precision_tol
+  )
   core_fit
 }
 

@@ -4,6 +4,19 @@
 #' devices. The interface mirrors [stats::lm()] for the common arguments.
 #'
 #' @inheritParams mlxs_model_params
+#' @param precision_tol Warning threshold for estimated numerical error in
+#'   joint standard-error units. Defaults to `0.1`. Use `NULL` to disable
+#'   the check and its additional CPU float64 pass over the original data.
+#'   A larger threshold permits greater numerical error before warning.
+#'
+#' @details
+#' The final precision check evaluates the residual equations in float64,
+#' using the original model data and the stored QR factor. It estimates the
+#' joint coefficient error in standard-error units; it can exceed individual
+#' coefficient errors because it combines directions. An inaccurate QR
+#' factor can mislead the check, and it cannot recover input precision lost
+#' before fitting. A small score is therefore not a guarantee of accuracy.
+#' Checks are skipped without residual degrees of freedom or residual scale.
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -12,6 +25,8 @@
 #'   diagnostics may differ from `stats::lm()` at around the 1e-6 level. Unlike
 #'   [stats::lm()], rank-deficient model matrices are rejected rather than fit
 #'   with aliased coefficients.
+#'   `precision_error` stores the estimated joint error, or `NA` when no
+#'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'
 #' @examples
@@ -23,10 +38,12 @@ mlxs_lm <- function(
   subset,
   weights,
   na.action = stats::na.exclude,
-  rank_tol = NULL
+  rank_tol = NULL,
+  precision_tol = 0.1
 ) {
   call <- match.call()
   rank_tol <- .mlxs_check_rank_tol(rank_tol)
+  precision_tol <- .mlxs_check_precision_tol(precision_tol)
 
   mf <- match.call(expand.dots = FALSE)
   arg_names <- c("formula", "data", "subset", "weights", "na.action")
@@ -116,6 +133,9 @@ mlxs_lm <- function(
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")
+  result$precision_error <- .mlxs_precision_check(
+    result, design, response, weights_raw, precision_tol
+  )
   result
 }
 
@@ -150,8 +170,8 @@ mlxs_lm <- function(
 #' GPU residual-correction pass to well-conditioned Cholesky QR fits.
 #' When Rmlx omits that pass, `mlxs_lm_fit()` corrects the GPU solve using
 #' the weighted residual equations and the existing QR factor. This also
-#' applies after a GPU QR fallback. For a post-fit precision diagnostic,
-#' see [mlxs_lm_precision()].
+#' applies after a GPU QR fallback. The formula interface [mlxs_lm()] also
+#' checks the final fit according to its `precision_tol` argument.
 #'
 #' @examples
 #' x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))

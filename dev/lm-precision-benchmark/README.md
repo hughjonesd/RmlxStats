@@ -3,7 +3,8 @@
 Measured on an Apple M2 MacBook Air (16 GB), R 4.6.1, macOS 27.0.1.
 Each fixture/method has 30 timed repetitions after an untimed warm-up.
 Methods are randomly ordered within each round. GPU jobs were run alone.
-Input construction and transfers are outside the timer; coefficients,
+For these array-solver measurements, input construction and transfers
+are outside the timer; coefficients,
 fitted values and residuals are evaluated inside it.
 
 The baseline is RmlxStats `547a1a6`; the candidate adds the missing residual
@@ -63,48 +64,69 @@ their results. The fast tier adds two low-noise cases; full adds one weighted
 case. Benchmarks are manual and do not impose speed assertions on CI.
 Run `Rscript dev/lm-precision-benchmark/plot.R` to recreate `tradeoff.png`.
 
-## Warning diagnostic
+## Automatic precision checks
 
-`mlxs_lm_precision(fit)` makes an optional CPU float64 pass over the original
-model frame and evaluates `||R^-T X' residual|| / sigma`. It warns above
-one joint standard-error unit by default; `tol` adjusts the threshold.
-Original factor contrasts and square-root weights are preserved.
-It performs no second QR factorization and adds no work to ordinary fits.
-The score is approximate: an inaccurate QR factor can mislead it, and it
-cannot recover input precision lost before the data reached the fit.
+`mlxs_lm()` and `mlxs_glm()` now check the final fit automatically. The
+`precision_tol` argument gives the warning threshold in joint standard-error
+units; both default to `0.1`. `NULL` disables the check and its CPU data pass.
+`NULL` is the usual R convention for an absent optional operation.
+Checked fits store the scalar score as `precision_error`, allowing later
+comparison with a stricter threshold without another check. Disabled fits
+have no score. Fits without residual degrees of freedom or residual scale
+store `NA`.
 
-### Diagnostic cost versus a complete formula fit
+The LM check evaluates `||R^-T X' W residual|| / sigma` in CPU float64, using
+the original data, prior weights and existing weighted QR factor. The GLM
+check evaluates `X' W (y-mu) mu_eta / variance(mu)` at the final coefficients,
+using the family, original data and prior weights; its transformed norm is
+scaled by dispersion. Gaussian dispersion is recomputed from float64
+residuals. Other GLMs use their fitted dispersion, with one for binomial and
+Poisson models.
 
-`dev/benchmark-lm-precision-cost.R` compares the diagnostic with an actual
-`mlxs_lm(y ~ ., data)` call, including model-frame construction, the design
-matrix and array conversion. Fit outputs are evaluated inside the timer;
-the diagnostic's scalar result forces its evaluation. Both use the same
-data, with 30 warmed, randomly ordered repetitions per method.
+Both checks reuse the original design matrix already constructed by the
+formula interface, perform no second QR, and run once after fitting. The
+last GLM QR factor uses the preceding iteration's working weights, so its
+score is a local approximation to the size of a further scoring step. It
+can detect numerical error or incomplete convergence; it cannot distinguish
+them or exclude separation. An inaccurate QR factor can mislead either
+check, and precision lost before supplying the data cannot be recovered.
+A small score is not an accuracy certificate.
 
-| Rows | Columns including intercept | Fit median | Diagnostic median | Added time |
-|---:|---:|---:|---:|---:|
-| 1,000 | 6 | about 3 ms | about 1 ms | about 33% |
-| 200,000 | 51 | 72 ms | 13 ms | 18% |
-| 1,000,000 | 51 | 351.5 ms | 60 ms | 17% |
-| 60,000 | 201 | 66 ms | 14 ms | 21% |
+The 0.1 threshold seeks numerical error substantially below sampling
+uncertainty. It deliberately warns on the corrected low-noise fixtures:
+although their worst coefficient errors are below 0.5 reference SE, their
+joint scores remain around 0.65–0.74. Users can relax the threshold to one
+unit, or disable it for workloads such as repeated bootstrap fits.
 
-The small fit uses CPU QR; the others use Cholesky QR. Millisecond timer
-resolution limits the small-case precision. Raw timings and percentile
-summaries are in `diagnostic-cost/`. The formula fit times are greater than
-the earlier solver timings because input preparation is included here.
-These are separate fit/check measurements; percentages divide their medians.
+No diagnostic function is exported. The internal checker is shared by the
+two formula interfaces; the array solver used inside IRLS remains unchanged
+apart from the residual correction described above.
 
-The diagnostic computes two matrix-vector products, reductions and one
-triangular solve: O(np + p²) arithmetic, plus O(np) design reconstruction
-and copying. Cholesky QR requires matrix-matrix products and small dense
-factorizations: O(np² + p³), plus its own O(np) input preparation. The
-diagnostic therefore saves a factor of approximately p in the dominant
-arithmetic as n grows relative to p. Actual time does not follow this ratio:
-the fit uses float32 GPU operations; the check uses float64 CPU operations;
-both incur allocation and memory traffic. At these sizes, data preparation
-accounts for much of the full formula fit's time.
+### Cost versus complete formula fits
 
-The check is reasonably cheap relative to the complete formula API, but
-is not free. Against the earlier array-only solver timings, its cost is a
-much larger fraction. It remains optional so applications can choose when
-to pay for the additional assurance.
+`dev/benchmark-lm-precision-cost.R` times actual formula fits with
+`precision_tol = NULL` versus the default `0.1`. It includes model-frame
+construction, the design matrix and array conversion, and evaluates fit
+outputs inside the timer. There are 30 warmed, randomly ordered repetitions
+per method. Raw timings and percentiles are in `automatic-check-cost/`.
+These costs include the check inside the fit, rather than adding together
+separate fit and diagnostic timing medians.
+
+| Model and dimensions | Check disabled | Default check | Added time |
+|---|---:|---:|---:|
+| LM, 200,000 × 51 | 67 ms | 76.5 ms | 14.2% |
+| LM, 1,000,000 × 51 | 347.5 ms | 395 ms | 13.7% |
+| LM, 60,000 × 201 | 64.5 ms | 73.5 ms | 14.0% |
+| Gaussian GLM, 200,000 × 51 | 101 ms | 112 ms | 10.9% |
+| Binomial GLM, 200,000 × 51 | 563 ms | 571 ms | 1.4% |
+| Poisson GLM, 200,000 × 51 | 192.5 ms | 201 ms | 4.4% |
+
+The 1,000 × 6 CPU fit takes approximately 3 ms unchecked and 4 ms checked;
+millisecond timer resolution limits that small-case comparison. Overhead
+percentages compare medians; raw percentile ranges show the timing variability.
+
+The check needs O(np + p²) arithmetic and O(np) conversion and memory
+traffic. Cholesky QR needs O(np² + p³), plus O(np) input preparation. Actual
+time also depends on CPU float64 versus GPU float32 throughput, allocation,
+and retained arrays. A final check is a smaller fraction of an iterative
+GLM fit than of a single linear solve in these measurements.

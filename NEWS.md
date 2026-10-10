@@ -3,8 +3,10 @@
 * GPU linear-model solves now receive a residual correction when Rmlx omits
   its correction, including QR fallbacks. This improves coefficient and
   residual precision for nearly deterministic models.
-* New `mlxs_lm_precision()` checks residual equations in CPU float64 and
-  warns about potential numerical coefficient error in standard-error units.
+* `mlxs_lm()` and `mlxs_glm()` now check the final fit in CPU float64 and
+  warn above `precision_tol = 0.1` joint standard-error units. Use
+  `precision_tol = NULL` to disable the check. Checked fits store the
+  estimated error as `precision_error`.
 
 * `mlxs_lm_fit()` now uses Rmlx's specialized code for QR on the GPU when the
   design has more than 10 million elements, with `qr_method` available for
