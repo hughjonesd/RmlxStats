@@ -47,11 +47,13 @@ compare_glm_to_stats_glm <- function(
       n = nrow(model.frame(formula, data)),
       p = ncol(model.matrix(formula, data))
     ),
-    measure     = c("diagnostic",       "error",       "error",     "error",            "error", "error",    "error", "diagnostic",  "diagnostic", "diagnostic"),
-    target      = c("condition_number", "coefficient", "fitted",    "linear_predictor", "vcov",  "deviance", "aic",   "convergence", "iterations", "finite"),
-    source      = c("design",           "mlx",         "mlx",       "mlx",              "mlx",   "mlx",      "mlx",   "mlx",         "mlx",        "mlx"),
-    baseline    = c(NA,                 "reference",   "reference", "reference",        "reference", "reference", "reference", NA,  NA,           NA),
-    aggregation = c("value",            "max",         "max",       "max",              "max",   "value",    "value", "value",       "value",      "all"),
+    measure = c("diagnostic", rep("error", 6), rep("diagnostic", 4)),
+    target = c("condition_number", "coefficient", "fitted", "linear_predictor",
+               "vcov", "deviance", "aic", "convergence", "iterations", "finite",
+               "coefficient_error_se"),
+    source = c("design", rep("mlx", 10)),
+    baseline = c(NA, rep("reference", 6), rep(NA, 4)),
+    aggregation = c("value", rep("max", 4), rep("value", 4), "all", "joint"),
     value = c(
       kappa(model.matrix(formula, data)),
       max(abs(mlx_coef - coef(base_fit))),
@@ -62,7 +64,8 @@ compare_glm_to_stats_glm <- function(
       abs(mlx_fit$aic - base_fit$aic),
       as.numeric(mlx_fit$converged),
       mlx_fit$iter,
-      as.numeric(all(is.finite(finite_values)))
+      as.numeric(all(is.finite(finite_values))),
+      mlx_fit$precision_error
     )
   )
 }

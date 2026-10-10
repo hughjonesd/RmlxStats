@@ -1,10 +1,16 @@
 #' MLX-backed generalized linear model
 #'
 #' Fit generalized linear models using iterative reweighted least squares (IRLS)
-#' with MLX providing the heavy lifting for weighted least squares solves. Final
-#' convergence is done at double precision on the cpu.
+#' with MLX providing the heavy lifting for weighted least squares solves.
+#' Iterations can move to CPU double precision near convergence.
 #'
 #' @inheritParams mlxs_model_params
+#' @details
+#' The float64 precision check estimates a further IRLS step on the combined
+#' error scale described in [mlxs_lm()]. A warning may indicate numerical
+#' error or incomplete convergence. It uses the last working QR factor, so
+#' is approximate, and is skipped without residual degrees of freedom or
+#' residual scale.
 #' @param family A mlxs family object (e.g., [mlxs_gaussian()], [mlxs_binomial()],
 #'   [mlxs_poisson()]). You can use `"gaussian"` etc.
 #' @param start Starting values for the parameters in the linear predictor.
@@ -17,6 +23,8 @@
 #'   similar to the result of [stats::glm()]. Unlike [stats::glm()],
 #'   rank-deficient model matrices are rejected rather than fit with aliased
 #'   coefficients.
+#'   `precision_error` stores the estimated combined error, or `NA` when no
+#'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'
 #' @examples
@@ -31,9 +39,11 @@ mlxs_glm <- function(
   na.action = stats::na.exclude,
   start = NULL,
   control = list(),
+  precision_tol = 0.1,
   ...
 ) {
   call <- match.call()
+  precision_tol <- .mlxs_check_precision_tol(precision_tol)
 
   if (is.character(family)) {
     family <- paste0("mlxs_", family)
@@ -93,6 +103,9 @@ mlxs_glm <- function(
   core_fit$na.action <- attr(mf, "na.action")
 
   class(core_fit) <- c("mlxs_glm", "mlxs_model")
+  core_fit$precision_error <- .mlxs_precision_check(
+    core_fit, X, y, weights_raw, precision_tol
+  )
   core_fit
 }
 

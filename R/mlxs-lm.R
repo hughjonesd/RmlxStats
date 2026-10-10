@@ -4,6 +4,13 @@
 #' devices. The interface mirrors [stats::lm()] for the common arguments.
 #'
 #' @inheritParams mlxs_model_params
+#' @details
+#' For one coefficient, `precision_error` estimates numerical error divided
+#' by its standard error. For several, it combines errors, accounting for
+#' correlation between estimates. The check uses float64 residual equations
+#' and the stored QR factor, so it is approximate. It cannot recover precision
+#' lost in the inputs, and is skipped without residual degrees of freedom or
+#' residual scale.
 #'
 #' @return An object of class `c("mlxs_lm", "mlxs_model")` containing
 #'   components similar to an `"lm"` fit, along with MLX intermediates stored in
@@ -12,6 +19,8 @@
 #'   diagnostics may differ from `stats::lm()` at around the 1e-6 level. Unlike
 #'   [stats::lm()], rank-deficient model matrices are rejected rather than fit
 #'   with aliased coefficients.
+#'   `precision_error` stores the estimated combined error, or `NA` when no
+#'   residual scale is available. It is absent when the check is disabled.
 #' @export
 #'
 #' @examples
@@ -23,10 +32,12 @@ mlxs_lm <- function(
   subset,
   weights,
   na.action = stats::na.exclude,
-  rank_tol = NULL
+  rank_tol = NULL,
+  precision_tol = 0.1
 ) {
   call <- match.call()
   rank_tol <- .mlxs_check_rank_tol(rank_tol)
+  precision_tol <- .mlxs_check_precision_tol(precision_tol)
 
   mf <- match.call(expand.dots = FALSE)
   arg_names <- c("formula", "data", "subset", "weights", "na.action")
@@ -111,10 +122,14 @@ mlxs_lm <- function(
     qr = fit_res$qr,
     weights = weights_mlx,
     assign = assign_vec,
+    contrasts = attr(design, "contrasts"),
     rank_tol = rank_tol
   )
 
   class(result) <- c("mlxs_lm", "mlxs_model")
+  result$precision_error <- .mlxs_precision_check(
+    result, design, response, weights_raw, precision_tol
+  )
   result
 }
 
@@ -147,6 +162,10 @@ mlxs_lm <- function(
 #' matrices or vectors. Weighted fits are performed by applying the standard
 #' square-root weight transform before solving the QR system. Rmlx applies a
 #' GPU residual-correction pass to well-conditioned Cholesky QR fits.
+#' When Rmlx omits that pass, `mlxs_lm_fit()` corrects the GPU solve using
+#' the weighted residual equations and the existing QR factor. This also
+#' applies after a GPU QR fallback. The formula interface [mlxs_lm()] also
+#' checks the final fit according to its `precision_tol` argument.
 #'
 #' @examples
 #' x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))
@@ -205,6 +224,21 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
   )
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE,
                                          device = "cpu")
+  if (qr_method != "cpu" && is.null(qr_fit$qty_corrected)) {
+    # Rmlx only supplies qty_corrected for CholQR with first-pass
+    # orthogonality error <= 1e-3. Correct the other cases (including QR
+    # fallbacks) here, reusing R rather than repeating the factorization.
+    residual_work <- y_work - x_work %*% coef_mlx
+    qty_delta <- Rmlx::mlx_solve_triangular(
+      t(qr_fit$R), crossprod(x_work, residual_work), upper = FALSE,
+      device = "cpu"
+    )
+    qty_mlx <- qty_mlx + qty_delta
+    qr_fit$qty_corrected <- qty_mlx
+    coef_mlx <- Rmlx::mlx_solve_triangular(
+      qr_fit$R, qty_mlx, upper = TRUE, device = "cpu"
+    )
+  }
   fitted_mlx <- x_orig %*% coef_mlx
   residual_mlx <- y_orig - fitted_mlx
 

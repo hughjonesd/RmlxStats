@@ -1,3 +1,29 @@
+test_that("linear model precision thresholds check once and can be disabled", {
+  device <- Rmlx::mlx_device()
+  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars, weights = wt)
+  expect_lt(fit$precision_error, 1e-3)
+  expect_equal(Rmlx::mlx_device(), device)
+  expect_warning(strict <- mlxs_lm(
+    mpg ~ cyl + disp, data = mtcars, weights = wt, precision_tol = 0
+  ), "Numerical coefficient error")
+  expect_equal(strict$precision_error, fit$precision_error)
+  unchecked <- mlxs_lm(
+    mpg ~ cyl + disp, data = mtcars, weights = wt, precision_tol = NULL
+  )
+  expect_null(unchecked$precision_error)
+  expect_equal(coef(unchecked), coef(fit))
+  expect_error(mlxs_lm(mpg ~ cyl, mtcars, precision_tol = -1),
+               "non-negative")
+  expect_error(mlxs_lm(mpg ~ cyl, mtcars, precision_tol = NA_real_),
+               "non-negative")
+  saturated <- mlxs_lm(y ~ x + I(x^2),
+                       data.frame(y = 1:3, x = c(1, 2, 4)))
+  expect_true(is.na(saturated$precision_error))
+
+  factor_fit <- mlxs_lm(mpg ~ factor(cyl), data = mtcars)
+  expect_lt(factor_fit$precision_error, 1e-3)
+})
+
 test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   formula <- mpg ~ cyl + disp
   subset_expr <- mtcars$mpg > 20
@@ -338,16 +364,18 @@ test_that("mlxs_lm exposes rank_tol", {
   data <- data.frame(y = seq_len(12), x = seq_len(12))
   data$almost_x <- data$x + rep(c(-1, 1), 6) * 1e-3
 
-  expect_no_error(
-    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = 1e-8)
+  expect_warning(
+    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = 1e-8),
+    "Numerical coefficient error"
   )
   expect_error(
     mlxs_lm(y ~ x + almost_x, data = data, rank_tol = 1e-1),
     "full-rank model matrix",
     fixed = TRUE
   )
-  expect_no_error(
-    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = FALSE)
+  expect_warning(
+    mlxs_lm(y ~ x + almost_x, data = data, rank_tol = FALSE),
+    "Numerical coefficient error"
   )
 })
 

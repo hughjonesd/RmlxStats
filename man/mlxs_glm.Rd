@@ -13,6 +13,7 @@ mlxs_glm(
   na.action = stats::na.exclude,
   start = NULL,
   control = list(),
+  precision_tol = 0.1,
   ...
 )
 }
@@ -37,6 +38,10 @@ variables in the model.}
 \code{\link[=mlxs_glm_control]{mlxs_glm_control()}}. Control parameters can include \code{epsilon}, \code{epsilon_f64},
 \code{maxit}, \code{trace}, and \code{rank_tol}.}
 
+\item{precision_tol}{Warning threshold for combined numerical coefficient
+error relative to statistical uncertainty. Defaults to \code{0.1}; \code{NULL}
+disables the CPU float64 check.}
+
 \item{...}{Additional arguments passed to the family function when \code{family}
 is supplied as a function or string.}
 }
@@ -45,11 +50,20 @@ An object of class \code{c("mlxs_glm", "mlxs_model")} containing elements
 similar to the result of \code{\link[stats:glm]{stats::glm()}}. Unlike \code{\link[stats:glm]{stats::glm()}},
 rank-deficient model matrices are rejected rather than fit with aliased
 coefficients.
+\code{precision_error} stores the estimated combined error, or \code{NA} when no
+residual scale is available. It is absent when the check is disabled.
 }
 \description{
 Fit generalized linear models using iterative reweighted least squares (IRLS)
-with MLX providing the heavy lifting for weighted least squares solves. Final
-convergence is done at double precision on the cpu.
+with MLX providing the heavy lifting for weighted least squares solves.
+Iterations can move to CPU double precision near convergence.
+}
+\details{
+The float64 precision check estimates a further IRLS step on the combined
+error scale described in \code{\link[=mlxs_lm]{mlxs_lm()}}. A warning may indicate numerical
+error or incomplete convergence. It uses the last working QR factor, so
+is approximate, and is skipped without residual degrees of freedom or
+residual scale.
 }
 \examples{
 fit <- mlxs_glm(mpg ~ cyl + disp, family = mlxs_gaussian(), data = mtcars)

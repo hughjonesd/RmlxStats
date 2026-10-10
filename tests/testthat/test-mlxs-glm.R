@@ -1,3 +1,41 @@
+test_that("GLM precision checks use the final family score and prior weights", {
+  device <- Rmlx::mlx_device()
+  fit <- mlxs_glm(mpg ~ cyl + disp, data = mtcars, weights = wt)
+  linear <- mlxs_lm(mpg ~ cyl + disp, data = mtcars, weights = wt)
+  expect_equal(fit$precision_error, linear$precision_error, tolerance = 1e-6)
+  expect_equal(Rmlx::mlx_device(), device)
+  expect_warning(mlxs_glm(mpg ~ cyl + disp, data = mtcars, weights = wt,
+                          precision_tol = 0),
+                  "Numerical error or incomplete GLM convergence")
+  unchecked <- mlxs_glm(mpg ~ cyl + disp, data = mtcars, weights = wt,
+                        precision_tol = NULL)
+  expect_null(unchecked$precision_error)
+  expect_equal(coef(unchecked), coef(fit))
+  expect_error(mlxs_glm(mpg ~ cyl, data = mtcars, precision_tol = NA_real_),
+               "non-negative")
+
+  # An independently computed final Fisher score checks the binomial scaling.
+  binomial <- mlxs_glm(am ~ wt + hp, data = mtcars,
+                       family = mlxs_binomial(), weights = rep(2, 32))
+  x <- model.matrix(am ~ wt + hp, mtcars)
+  mu <- drop(plogis(x %*% coef(binomial)))
+  score <- crossprod(x, 2 * (mtcars$am - mu))
+  information <- crossprod(x, x * (2 * mu * (1 - mu)))
+  reference <- sqrt(drop(crossprod(score, solve(information, score))))
+  expect_equal(binomial$precision_error, reference, tolerance = 1e-6)
+  binomial$coefficients <- Rmlx::with_device("cpu",
+    binomial$coefficients + Rmlx::mlx_matrix(
+      c(0.001, 0, 0), ncol = 1L, dtype = "float64"
+    )
+  )
+  mu <- drop(plogis(x %*% coef(binomial)))
+  score <- crossprod(x, 2 * (mtcars$am - mu))
+  information <- crossprod(x, x * (2 * mu * (1 - mu)))
+  reference <- sqrt(drop(crossprod(score, solve(information, score))))
+  checked <- .mlxs_precision_check(binomial, x, mtcars$am, rep(2, 32), Inf)
+  expect_equal(checked / reference, 1, tolerance = 1e-3)
+})
+
 test_that("mlxs_glm gaussian matches stats::glm", {
   formula <- mpg ~ cyl + disp
   base_fit <- glm(formula, data = mtcars, family = gaussian())
@@ -240,13 +278,14 @@ test_that("mlxs_glm_control exposes rank_tol", {
   data <- data.frame(y = seq_len(12), x = seq_len(12))
   data$almost_x <- data$x + rep(c(-1, 1), 6) * 1e-3
 
-  expect_no_error(
+  expect_warning(
     mlxs_glm(
       y ~ x + almost_x,
       data = data,
       family = mlxs_gaussian(),
       control = list(rank_tol = 1e-8)
-    )
+    ),
+    "Numerical error or incomplete GLM convergence"
   )
   expect_error(
     mlxs_glm(
@@ -258,13 +297,14 @@ test_that("mlxs_glm_control exposes rank_tol", {
     "full-rank model matrix",
     fixed = TRUE
   )
-  expect_no_error(
+  expect_warning(
     mlxs_glm(
       y ~ x + almost_x,
       data = data,
       family = mlxs_gaussian(),
       control = list(rank_tol = FALSE)
-    )
+    ),
+    "Numerical error or incomplete GLM convergence"
   )
 })
 
