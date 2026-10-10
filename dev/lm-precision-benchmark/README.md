@@ -72,3 +72,39 @@ Original factor contrasts and square-root weights are preserved.
 It performs no second QR factorization and adds no work to ordinary fits.
 The score is approximate: an inaccurate QR factor can mislead it, and it
 cannot recover input precision lost before the data reached the fit.
+
+### Diagnostic cost versus a complete formula fit
+
+`dev/benchmark-lm-precision-cost.R` compares the diagnostic with an actual
+`mlxs_lm(y ~ ., data)` call, including model-frame construction, the design
+matrix and array conversion. Fit outputs are evaluated inside the timer;
+the diagnostic's scalar result forces its evaluation. Both use the same
+data, with 30 warmed, randomly ordered repetitions per method.
+
+| Rows | Columns including intercept | Fit median | Diagnostic median | Added time |
+|---:|---:|---:|---:|---:|
+| 1,000 | 6 | about 3 ms | about 1 ms | about 33% |
+| 200,000 | 51 | 72 ms | 13 ms | 18% |
+| 1,000,000 | 51 | 351.5 ms | 60 ms | 17% |
+| 60,000 | 201 | 66 ms | 14 ms | 21% |
+
+The small fit uses CPU QR; the others use Cholesky QR. Millisecond timer
+resolution limits the small-case precision. Raw timings and percentile
+summaries are in `diagnostic-cost/`. The formula fit times are greater than
+the earlier solver timings because input preparation is included here.
+These are separate fit/check measurements; percentages divide their medians.
+
+The diagnostic computes two matrix-vector products, reductions and one
+triangular solve: O(np + p²) arithmetic, plus O(np) design reconstruction
+and copying. Cholesky QR requires matrix-matrix products and small dense
+factorizations: O(np² + p³), plus its own O(np) input preparation. The
+diagnostic therefore saves a factor of approximately p in the dominant
+arithmetic as n grows relative to p. Actual time does not follow this ratio:
+the fit uses float32 GPU operations; the check uses float64 CPU operations;
+both incur allocation and memory traffic. At these sizes, data preparation
+accounts for much of the full formula fit's time.
+
+The check is reasonably cheap relative to the complete formula API, but
+is not free. Against the earlier array-only solver timings, its cost is a
+much larger fraction. It remains optional so applications can choose when
+to pay for the additional assurance.
