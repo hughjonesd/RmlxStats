@@ -162,6 +162,68 @@ test_that("mlxs_lm deterministic differential fuzz cases match stats::lm", {
   )
 })
 
+test_that("GPU least squares retains precision with small residuals", {
+  specs <- data.frame(
+    scenario = c("cholqr_low_noise", "tsqr_low_noise"),
+    method = c("cholqr", "tsqr"), weighted = c(FALSE, FALSE)
+  )
+  if (identical(fuzz_tier, "full")) {
+    specs <- rbind(specs, data.frame(
+      scenario = "weighted_cholqr_low_noise", method = "cholqr",
+      weighted = TRUE
+    ))
+  }
+  summaries <- vector("list", nrow(specs))
+  for (i in seq_len(nrow(specs))) {
+    set.seed(20261011)
+    n <- 200000L
+    p <- 51L
+    x <- cbind(1, matrix(rnorm(n * (p - 1L)), n, p - 1L))
+    x[, 3L] <- x[, 2L] + 0.02 * x[, 3L]
+    y <- drop(x %*% seq(-0.5, 0.5, length.out = p)) +
+      rnorm(n, sd = 1e-4)
+    weights <- if (specs$weighted[i]) {
+      seq(0.25, 1.5, length.out = n)
+    } else NULL
+    weights_mlx <- if (is.null(weights)) NULL else {
+      Rmlx::mlx_matrix(weights, ncol = 1L)
+    }
+    ref <- if (is.null(weights)) lm.fit(x, y) else {
+      lm.wfit(x, y, weights)
+    }
+    data <- data.frame(y, x[, -1L])
+    fit <- mlxs_lm(y ~ ., data = data, weights = weights)
+    if (specs$method[i] == "tsqr") {
+      # Preserve the real model frame for the post-fit diagnostic while
+      # explicitly exercising TSQR regardless of the automatic fallback.
+      tsqr_fit <- mlxs_lm_fit(x, y, qr_method = "tsqr")
+      fit[names(tsqr_fit)] <- tsqr_fit
+    }
+    rss <- sum(ref$residuals^2 * if (is.null(weights)) 1 else weights)
+    se <- sqrt(diag(base::chol2inv(qr.R(ref$qr))) * rss / (n - p))
+    error_se <- max(abs(drop(as.matrix(fit$coefficients)) -
+                         ref$coefficients) / se)
+    rss_mlx <- as.numeric(.mlxs_weighted_sum_of_squares(
+      fit$residuals, weights_mlx
+    ))
+    expect_lt(error_se, 0.5, label = specs$scenario[i])
+    expect_lt(abs(rss_mlx / rss - 1), 1e-3, label = specs$scenario[i])
+    diagnostic <- mlxs_lm_precision(fit)
+    expect_lt(diagnostic, 1, label = specs$scenario[i])
+    summaries[[i]] <- fuzz_metric_rows(
+      list(case_type = "gpu_precision", scenario = specs$scenario[i],
+           n = n, p = p, method = fit$qr$method, noise_sd = 1e-4),
+      measure = c("error", "ratio", "diagnostic"),
+      target = c("coefficient", "residual_sigma", "coefficient_error_se"),
+      baseline = c("reference", "reference", NA),
+      aggregation = c("max_se", "value", "joint"),
+      value = c(error_se, sqrt(rss_mlx / rss), diagnostic)
+    )
+  }
+  write_fuzz_summaries(do.call(rbind, summaries),
+                       suite = "mlxs-lm-deterministic", tier = fuzz_tier)
+})
+
 test_that("mlxs_lm metamorphic fuzz properties hold", {
   case <- make_case(seed = 17, n = 70, p = 3, rho = 0.5)
   data <- case$data

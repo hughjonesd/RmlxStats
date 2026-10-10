@@ -48,6 +48,10 @@ Inputs that are not already MLX objects are converted with
 matrices or vectors. Weighted fits are performed by applying the standard
 square-root weight transform before solving the QR system. Rmlx applies a
 GPU residual-correction pass to well-conditioned Cholesky QR fits.
+When Rmlx omits that pass, \code{mlxs_lm_fit()} corrects the GPU solve using
+the weighted residual equations and the existing QR factor. This also
+applies after a GPU QR fallback. For a post-fit precision diagnostic,
+see \code{\link[=mlxs_lm_precision]{mlxs_lm_precision()}}.
 }
 \examples{
 x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))

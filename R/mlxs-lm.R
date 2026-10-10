@@ -111,6 +111,7 @@ mlxs_lm <- function(
     qr = fit_res$qr,
     weights = weights_mlx,
     assign = assign_vec,
+    contrasts = attr(design, "contrasts"),
     rank_tol = rank_tol
   )
 
@@ -147,6 +148,10 @@ mlxs_lm <- function(
 #' matrices or vectors. Weighted fits are performed by applying the standard
 #' square-root weight transform before solving the QR system. Rmlx applies a
 #' GPU residual-correction pass to well-conditioned Cholesky QR fits.
+#' When Rmlx omits that pass, `mlxs_lm_fit()` corrects the GPU solve using
+#' the weighted residual equations and the existing QR factor. This also
+#' applies after a GPU QR fallback. For a post-fit precision diagnostic,
+#' see [mlxs_lm_precision()].
 #'
 #' @examples
 #' x <- Rmlx::as_mlx(cbind(1, as.matrix(mtcars[c("cyl", "disp")])))
@@ -205,6 +210,20 @@ mlxs_lm_fit <- function(x, y, weights = NULL, rank_tol = NULL,
   )
   coef_mlx <- Rmlx::mlx_solve_triangular(qr_fit$R, qty_mlx, upper = TRUE,
                                          device = "cpu")
+  if (qr_method != "cpu" && is.null(qr_fit$qty_corrected)) {
+    # Reuse Rmlx's correction when available; otherwise correct the solve,
+    # including TSQR/CPU fallbacks, without another QR factorization.
+    residual_work <- y_work - x_work %*% coef_mlx
+    qty_delta <- Rmlx::mlx_solve_triangular(
+      t(qr_fit$R), crossprod(x_work, residual_work), upper = FALSE,
+      device = "cpu"
+    )
+    qty_mlx <- qty_mlx + qty_delta
+    qr_fit$qty_corrected <- qty_mlx
+    coef_mlx <- Rmlx::mlx_solve_triangular(
+      qr_fit$R, qty_mlx, upper = TRUE, device = "cpu"
+    )
+  }
   fitted_mlx <- x_orig %*% coef_mlx
   residual_mlx <- y_orig - fitted_mlx
 

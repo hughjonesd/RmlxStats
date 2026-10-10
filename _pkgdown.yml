@@ -6,6 +6,7 @@ reference:
     contents:
       - mlxs_lm
       - mlxs_lm_fit
+      - mlxs_lm_precision
       - mlxs-lm-methods
   - title: Generalized Linear Models
     contents:

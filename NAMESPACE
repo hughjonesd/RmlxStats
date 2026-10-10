@@ -70,39 +70,46 @@ export(mlxs_glm_control)
 export(mlxs_glmnet)
 export(mlxs_lm)
 export(mlxs_lm_fit)
+export(mlxs_lm_precision)
 export(mlxs_poisson)
 export(mlxs_prcomp)
 export(mlxs_quasibinomial)
 export(mlxs_quasipoisson)
 export(tidy)
-importFrom(generics,augment)
-importFrom(generics,glance)
-importFrom(generics,tidy)
-importFrom(stats,anova)
-importFrom(stats,coef)
-importFrom(stats,complete.cases)
-importFrom(stats,confint)
-importFrom(stats,delete.response)
-importFrom(stats,fitted)
-importFrom(stats,hatvalues)
-importFrom(stats,lm)
-importFrom(stats,model.frame)
-importFrom(stats,model.matrix)
-importFrom(stats,model.response)
-importFrom(stats,na.pass)
-importFrom(stats,naresid)
-importFrom(stats,nobs)
-importFrom(stats,pf)
-importFrom(stats,predict)
-importFrom(stats,printCoefmat)
-importFrom(stats,pt)
-importFrom(stats,qnorm)
-importFrom(stats,qt)
-importFrom(stats,quantile)
-importFrom(stats,residuals)
-importFrom(stats,terms)
-importFrom(stats,update.default)
-importFrom(stats,vcov)
-importFrom(stats,weights)
-importFrom(utils,setTxtProgressBar)
-importFrom(utils,txtProgressBar)
+importFrom(generics,
+  augment,
+  glance,
+  tidy
+)
+importFrom(stats,
+  anova,
+  coef,
+  complete.cases,
+  confint,
+  delete.response,
+  fitted,
+  hatvalues,
+  lm,
+  model.frame,
+  model.matrix,
+  model.response,
+  na.pass,
+  naresid,
+  nobs,
+  pf,
+  predict,
+  printCoefmat,
+  pt,
+  qnorm,
+  qt,
+  quantile,
+  residuals,
+  terms,
+  update.default,
+  vcov,
+  weights
+)
+importFrom(utils,
+  setTxtProgressBar,
+  txtProgressBar
+)

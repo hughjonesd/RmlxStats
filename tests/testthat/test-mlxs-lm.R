@@ -1,3 +1,22 @@
+test_that("linear model precision checks detect numerical displacement", {
+  fit <- mlxs_lm(mpg ~ cyl + disp, data = mtcars, weights = wt)
+  device <- Rmlx::mlx_device()
+  expect_lt(mlxs_lm_precision(fit), 1e-3)
+  expect_equal(Rmlx::mlx_device(), device)
+
+  fit$coefficients <- fit$coefficients + 1
+  expect_warning(error <- mlxs_lm_precision(fit),
+                  "Numerical coefficient error")
+  expect_gt(error, 1)
+  expect_equal(mlxs_lm_precision(fit, tol = Inf), error)
+  expect_error(mlxs_lm_precision(fit, tol = -1), "non-negative")
+
+  factor_fit <- mlxs_lm(mpg ~ factor(cyl), data = mtcars)
+  precision <- mlxs_lm_precision(factor_fit)
+  withr::local_options(contrasts = c("contr.sum", "contr.poly"))
+  expect_equal(mlxs_lm_precision(factor_fit), precision, tolerance = 1e-6)
+})
+
 test_that("mlxs_lm matches stats::lm coefficients and fitted values", {
   formula <- mpg ~ cyl + disp
   subset_expr <- mtcars$mpg > 20
