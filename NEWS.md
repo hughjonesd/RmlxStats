@@ -1,7 +1,12 @@
 # RmlxStats (development version)
 
+* Case bootstrap summaries and confidence intervals now work on CPU-only
+  systems when coefficient samples use float32.
 * Fix the `setNames()` import and the Rmlx device API call in float64
   randomized PCA. Document the model `output` and PCA plot `main` arguments.
+
+# RmlxStats 0.4.0
+
 * GPU linear-model solves now receive a residual correction when Rmlx omits
   its correction, including QR fallbacks. This improves coefficient and
   residual precision for nearly deterministic models.
@@ -10,8 +15,6 @@
   times its statistical uncertainty. Use
   `precision_tol = NULL` to disable the check. Checked fits store the
   estimated error as `precision_error`.
-
-# RmlxStats 0.4.0
 
 * `mlxs_lm_fit()` now uses Rmlx's specialized code for QR on the GPU when the
   design has more than 10 million elements, with `qr_method` available for
