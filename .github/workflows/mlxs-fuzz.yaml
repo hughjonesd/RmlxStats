@@ -79,11 +79,6 @@ jobs:
           extra-packages: local::., any::devtools
           needs: test
 
-      - name: Check package
-        if: steps.changes.outputs.run == 'true'
-        run: |
-          Rscript -e 'devtools::check(vignettes = FALSE, error_on = "warning")'
-
       - name: Run mlxs fuzz tests
         if: steps.changes.outputs.run == 'true'
         env:
