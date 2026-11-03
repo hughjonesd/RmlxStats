@@ -95,6 +95,22 @@ test_that("mlxs_prcomp randomized path approximates leading components", {
   expect_identical(fit$method, "randomized")
 })
 
+test_that("mlxs_prcomp randomized path accepts float64 MLX input", {
+  Rmlx::local_device("cpu")
+  set.seed(9)
+  x <- matrix(rnorm(120), nrow = 30, ncol = 4)
+  x_mlx <- Rmlx::as_mlx(x, dtype = "float64")
+
+  fit <- mlxs_prcomp(x_mlx, rank. = 2, oversample = 2, seed = 99)
+  ref <- stats::prcomp(x, rank. = 2)
+
+  expect_identical(Rmlx::mlx_dtype(fit$rotation), "float64")
+  expect_equal(as.numeric(fit$sdev), ref$sdev[1:2], tolerance = 1e-6)
+  rotation <- align_pca_columns(as.matrix(fit$rotation), ref$rotation)
+  expect_equal(unname(rotation), unname(ref$rotation), tolerance = 1e-6)
+  expect_identical(fit$method, "randomized")
+})
+
 test_that("mlxs_prcomp randomized path recovers known large low-rank structure", {
   set.seed(8)
   fixture <- make_known_pca_fixture(

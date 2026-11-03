@@ -16,6 +16,9 @@
 \item{...}{Additional arguments passed to underlying methods.}
 
 \item{evaluate}{Logical; evaluate the updated call?}
+
+\item{output}{Return coefficients as a named R vector (\code{"vector"}, the
+default) or as an MLX array (\code{"mlx"}).}
 }
 \description{
 Methods for behavior shared by \code{mlxs_lm} and \code{mlxs_glm} through their

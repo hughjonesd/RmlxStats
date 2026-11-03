@@ -516,7 +516,7 @@ mlxs_prcomp <- function(x,
 #' @return MLX matrix of standard-normal values.
 #' @noRd
 .mlxs_prcomp_random_normal <- function(dim, seed, dtype) {
-  if (identical(dtype, "float64")) Rmlx::mlx_local_device("cpu")
+  if (identical(dtype, "float64")) Rmlx::local_device("cpu")
   base_key <- Rmlx::mlx_key(seed)
   subkeys <- Rmlx::mlx_key_split(base_key, num = 2L)
   u1_bits <- Rmlx::mlx_key_bits(dim, key = subkeys[[1L]])
@@ -541,6 +541,8 @@ mlxs_prcomp <- function(x,
 #'
 #' @param object,x A fitted `mlxs_prcomp` object.
 #' @param newdata Optional new observations to project.
+#' @param main Title for the PCA scree plot. Defaults to the expression supplied
+#'   as `x`.
 #' @param data Optional original data to append PCA scores to in
 #'   `augment.mlxs_prcomp()`.
 #' @param output Output format for `augment.mlxs_prcomp()`: either a data frame

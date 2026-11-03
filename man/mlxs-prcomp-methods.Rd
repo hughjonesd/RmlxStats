@@ -35,6 +35,9 @@
 
 \item{...}{Passed through to the corresponding base method.}
 
+\item{main}{Title for the PCA scree plot. Defaults to the expression supplied
+as \code{x}.}
+
 \item{data}{Optional original data to append PCA scores to in
 \code{augment.mlxs_prcomp()}.}
 

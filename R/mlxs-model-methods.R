@@ -6,9 +6,11 @@
 #' @param object An `mlxs_model` fit.
 #' @param ... Additional arguments passed to underlying methods.
 #' @param evaluate Logical; evaluate the updated call?
+#' @param output Return coefficients as a named R vector (`"vector"`, the
+#'   default) or as an MLX array (`"mlx"`).
 #'
 #' @name mlxs-model-methods
-#' @importFrom stats update.default
+#' @importFrom stats setNames update.default
 NULL
 
 #' @export

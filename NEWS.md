@@ -1,5 +1,7 @@
 # RmlxStats (development version)
 
+* Fix the `setNames()` import and the Rmlx device API call in float64
+  randomized PCA. Document the model `output` and PCA plot `main` arguments.
 * GPU linear-model solves now receive a residual correction when Rmlx omits
   its correction, including QR fallbacks. This improves coefficient and
   residual precision for nearly deterministic models.
