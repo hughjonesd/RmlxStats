@@ -1,4 +1,4 @@
-# RmlxStats (development version)
+# RmlxStats 0.4.1
 
 * Case bootstrap summaries and confidence intervals now work on CPU-only
   systems when coefficient samples use float32.
